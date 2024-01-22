@@ -1,4 +1,4 @@
-# This is my package laravel-podman
+# Laravel Podman
 
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/foxws/laravel-podman.svg?style=flat-square)](https://packagist.org/packages/foxws/laravel-podman)
 [![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/foxws/laravel-podman/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/foxws/laravel-podman/actions?query=workflow%3Arun-tests+branch%3Amain)

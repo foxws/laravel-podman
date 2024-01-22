@@ -33,6 +33,9 @@
         "phpstan/phpstan-phpunit": "^1.0",
         "spatie/laravel-ray": "^1.26"
     },
+    "bin": [
+        "bin/pod"
+    ],
     "autoload": {
         "psr-4": {
             "Foxws\\LaravelPodman\\": "src/"
@@ -60,7 +63,8 @@
         "analyse": "vendor/bin/phpstan analyse",
         "test": "vendor/bin/pest",
         "test-coverage": "vendor/bin/pest --coverage",
-        "format": "vendor/bin/pint"
+        "format": "vendor/bin/pint",
+        "pod": "vendor/bin/pod"
     },
     "config": {
         "sort-packages": true,

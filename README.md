@@ -5,15 +5,15 @@
 [![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/foxws/laravel-podman/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/foxws/laravel-podman/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/foxws/laravel-podman.svg?style=flat-square)](https://packagist.org/packages/foxws/laravel-podman)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+This aims to be a [Laravel Sail](https://github.com/laravel/sail) clone, with a few additional changes:
 
-## Support us
-
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/laravel-podman.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/laravel-podman)
-
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
-
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+- Only [Podman](https://podman.io/) is supported
+- It works in rootless mode
+- It does require a certificate (free, open-source and easy using `mkcert`)
+- It comes with a clone of `sail` utility, named `pod`
+- It can run multiple sites because it's using Nginx as webserver
+- It's build upon [Alpine Linux](https://www.alpinelinux.org/) instead of Ubuntu, making it faster to build and more lightweight
+- By default it includes Nginx, PHP 8.3, NPM, Mariadb, Meilisearch, Redis, Soketi, and Mailpit. However, one can easily modify `docker-compose.yml` and `Dockerfile`'s'.
 
 ## Installation
 
@@ -23,38 +23,58 @@ You can install the package via composer:
 composer require foxws/laravel-podman
 ```
 
-You can publish and run the migrations with:
-
-```bash
-php artisan vendor:publish --tag="laravel-podman-migrations"
-php artisan migrate
-```
-
-You can publish the config file with:
-
-```bash
-php artisan vendor:publish --tag="laravel-podman-config"
-```
-
-This is the contents of the published config file:
-
-```php
-return [
-];
-```
-
-Optionally, you can publish the views using
-
-```bash
-php artisan vendor:publish --tag="laravel-podman-views"
-```
-
 ## Usage
 
-```php
-$laravelPodman = new Foxws\LaravelPodman();
-echo $laravelPodman->echoPhrase('Hello, Foxws!');
+### mkcert
+
+> **NOTE:** See <https://github.com/FiloSottile/mkcert> for details and installation.
+
+Create a script to manage your local certificates, e.g. `~/Code/dev/cert.sh`, and replace `192.168.1.100` with the device IP-addresses:
+
+```bash
+#!/bin/sh
+mkcert -install \
+&& mkcert -key-file key.pem -cert-file cert.pem \
+  laravel.test *.laravel.test \
+  192.168.1.100 \
+  127.0.0.1 ::1
 ```
+
+Execute the script:
+
+```bash
+chmod +x ~/Code/dev/cert.sh
+./cert.sh
+```
+
+Generate an one-time `dhparam.pem` file:
+
+```bash
+openssl dhparam -out dhparam.pem 2048
+```
+
+> **TIP:** You may want to setup [mobile devices](https://github.com/FiloSottile/mkcert#mobile-devices).
+
+Copy the generated `key.pem`, `dhparam.pem` and `cert.pem` to the `docker/ssl` directory of your projects root.
+
+### Interact
+
+Use the `pod` utility to control the Podman instances:
+
+```bash
+bin/pod help
+bin/pod build --no-cache
+bin/pod up -d
+bin/pod shell
+```
+
+When using zsh, one may want to configure an alias in `~/.zshrc`:
+
+```zsh
+alias pod='[ -f pod ] && sh pod || sh bin/pod'
+```
+
+Your project should now listen on <https://laravel.test>.
 
 ## Testing
 

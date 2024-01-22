@@ -3,7 +3,7 @@ version: "3.9"
 services:
   app:
     build:
-      context: ./build/app
+      context: ./docker/app
       dockerfile: Dockerfile
       args:
         - UID=${UID:-1000}
@@ -34,7 +34,7 @@ services:
       - pod
   nginx:
     build:
-      context: ./build/nginx
+      context: ./docker/nginx
       dockerfile: Dockerfile
       args:
         - UID=${UID:-1000}

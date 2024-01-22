@@ -2,9 +2,9 @@
 
 namespace Foxws\LaravelPodman\Tests;
 
+use Foxws\LaravelPodman\LaravelPodmanServiceProvider;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use Orchestra\Testbench\TestCase as Orchestra;
-use Foxws\LaravelPodman\LaravelPodmanServiceProvider;
 
 class TestCase extends Orchestra
 {

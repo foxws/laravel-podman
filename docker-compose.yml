@@ -45,7 +45,7 @@ services:
     restart: always
     userns_mode: keep-id
     user: ${UID:-1000}:${GID:-1000}
-    hostname: pod.test
+    hostname: laravel.test
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:

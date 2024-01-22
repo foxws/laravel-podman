@@ -4,4 +4,5 @@ namespace Foxws\LaravelPodman;
 
 class LaravelPodman
 {
+    //
 }

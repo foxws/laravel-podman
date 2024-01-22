@@ -21,8 +21,7 @@ services:
     ports:
       - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
     volumes:
-      - ./app:/app:rw,z,U
-      - ./docker:/docker:ro,z
+      - ".:/app:rw,z,U"
     secrets:
       - source: ssl-cert
         target: cert.pem
@@ -53,8 +52,7 @@ services:
       - "${HTTP_PORT:-80}:8080"
       - "${HTTPS_PORT:-443}:4443"
     volumes:
-      - ./app:/app:ro,z
-      - ./docker:/docker:ro,z
+      - ".:/app:ro,z"
     secrets:
       - source: ssl-cert
         target: cert.pem

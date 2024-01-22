@@ -24,11 +24,11 @@ services:
       - ./app:/app:rw,z,U
       - ./docker:/docker:ro,z
     secrets:
-      - source: ssl-cert
+      - source: docker-cert
         target: cert.pem
-      - source: ssl-key
+      - source: docker-key
         target: key.pem
-      - source: ssl-dhparam
+      - source: docker-dhparam
         target: dhparam.pem
     networks:
       - pod
@@ -56,11 +56,11 @@ services:
       - ./app:/app:ro,z
       - ./docker:/docker:ro,z
     secrets:
-      - source: ssl-cert
+      - source: docker-cert
         target: cert.pem
-      - source: ssl-key
+      - source: docker-key
         target: key.pem
-      - source: ssl-dhparam
+      - source: docker-dhparam
         target: dhparam.pem
     networks:
       - pod
@@ -127,12 +127,12 @@ services:
     networks:
       - pod
 secrets:
-  ssl-cert:
-    file: ./ssl/cert.pem
-  ssl-key:
-    file: ./ssl/key.pem
-  ssl-dhparam:
-    file: ./ssl/dhparam.pem
+  docker-cert:
+    file: ./docker/cert.pem
+  docker-key:
+    file: ./docker/key.pem
+  docker-dhparam:
+    file: ./docker/dhparam.pem
 volumes:
   mariadb:
     name: pod-mariadb

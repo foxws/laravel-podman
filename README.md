@@ -25,11 +25,17 @@ composer require foxws/laravel-podman
 
 ## Usage
 
-### mkcert
+Laravel Podman requires a certificate, you may use a self-signed solution like mkcert (see provided steps below).
+
+Copy the your `key.pem`, `dhparam.pem` and `cert.pem` to the `docker/ssl` directory of the projects root.
+
+### Self-signed certificate
 
 > **NOTE:** See <https://github.com/FiloSottile/mkcert> for details and installation.
 
-Create a script to manage your local certificates, e.g. `~/Code/dev/cert.sh`, and replace `192.168.1.100` with the device IP-addresses:
+It's easier to create a script to manage your local certificates, e.g. `~/Code/dev/cert.sh`.
+
+Replace `192.168.1.100` with the device IP-addresses that are going to host the Laravel application:
 
 ```bash
 #!/bin/sh
@@ -47,15 +53,15 @@ chmod +x ~/Code/dev/cert.sh
 ./cert.sh
 ```
 
-Generate an one-time `dhparam.pem` file:
+Generate an **one-time** `dhparam.pem` file:
 
 ```bash
 openssl dhparam -out dhparam.pem 2048
 ```
 
-> **TIP:** You may want to setup [mobile devices](https://github.com/FiloSottile/mkcert#mobile-devices).
+Copy the generated `key.pem`, `dhparam.pem` and `cert.pem` to the `docker/ssl` directory of the projects root.
 
-Copy the generated `key.pem`, `dhparam.pem` and `cert.pem` to the `docker/ssl` directory of your projects root.
+> **TIP:** You may want to setup [mobile devices](https://github.com/FiloSottile/mkcert#mobile-devices) as well.
 
 ### Interact
 

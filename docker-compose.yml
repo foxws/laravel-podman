@@ -94,7 +94,7 @@ services:
     image: getmeili/meilisearch:latest
     container_name: pod-meilisearch
     environment:
-      MEILI_MASTER_KEY: "${MEILI_MASTER_KEY}"
+      MEILI_MASTER_KEY: "${MEILI_MASTER_KEY:-masterKey}"
       MEILI_NO_ANALYTICS: ${MEILI_NO_ANALYTICS:-true}
       MEILI_ENV: "${MEILI_ENV:-development}"
     restart: always
@@ -128,11 +128,11 @@ services:
       - pod
 secrets:
   ssl-cert:
-    file: ./docker/cert.pem
+    file: ./docker/ssl/cert.pem
   ssl-key:
-    file: ./docker/key.pem
+    file: ./docker/ssl/key.pem
   ssl-dhparam:
-    file: ./docker/dhparam.pem
+    file: ./docker/ssl/dhparam.pem
 volumes:
   mariadb:
     name: pod-mariadb

@@ -2,9 +2,9 @@
 
 namespace Foxws\LaravelPodman;
 
+use Foxws\LaravelPodman\Commands\LaravelPodmanCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use Foxws\LaravelPodman\Commands\LaravelPodmanCommand;
 
 class LaravelPodmanServiceProvider extends PackageServiceProvider
 {

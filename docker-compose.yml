@@ -1,0 +1,145 @@
+version: "3.9"
+
+services:
+  app:
+    build:
+      context: ./build/app
+      dockerfile: Dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    container_name: pod-app
+    depends_on:
+      - mailpit
+      - mariadb
+      - meilisearch
+      - redis
+      - soketi
+    restart: always
+    userns_mode: keep-id
+    user: ${UID:-1000}:${GID:-1000}
+    ports:
+      - "${VITE_PORT:-5173}:${VITE_PORT:-5173}"
+    volumes:
+      - ./app:/app:rw,z,U
+      - ./docker:/docker:ro,z
+    secrets:
+      - source: ssl-cert
+        target: cert.pem
+      - source: ssl-key
+        target: key.pem
+      - source: ssl-dhparam
+        target: dhparam.pem
+    networks:
+      - pod
+  nginx:
+    build:
+      context: ./build/nginx
+      dockerfile: Dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+    container_name: pod-nginx
+    depends_on:
+      - app
+      - soketi
+    restart: always
+    userns_mode: keep-id
+    user: ${UID:-1000}:${GID:-1000}
+    hostname: pod.test
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - "${HTTP_PORT:-80}:8080"
+      - "${HTTPS_PORT:-443}:4443"
+    volumes:
+      - ./app:/app:ro,z
+      - ./docker:/docker:ro,z
+    secrets:
+      - source: ssl-cert
+        target: cert.pem
+      - source: ssl-key
+        target: key.pem
+      - source: ssl-dhparam
+        target: dhparam.pem
+    networks:
+      - pod
+  mariadb:
+    image: mariadb:latest
+    container_name: pod-mariadb
+    environment:
+      MYSQL_ROOT_PASSWORD: "${DB_PASSWORD}"
+      MYSQL_ROOT_HOST: "%"
+      MYSQL_DATABASE: "${DB_DATABASE}"
+      MYSQL_USER: "${DB_USER}"
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+    restart: always
+    networks:
+      - pod
+    ports:
+      - "${FORWARD_DB_PORT:-3306}:3306"
+    volumes:
+      - mariadb:/var/lib/mysql:rw,Z
+  redis:
+    image: redis:latest
+    container_name: pod-redis
+    restart: always
+    expose:
+      - "${FORWARD_REDIS_PORT:-6379}"
+    volumes:
+      - redis:/data:rw,Z
+    networks:
+      - pod
+  meilisearch:
+    image: getmeili/meilisearch:latest
+    container_name: pod-meilisearch
+    environment:
+      MEILI_MASTER_KEY: "${MEILI_MASTER_KEY}"
+      MEILI_NO_ANALYTICS: ${MEILI_NO_ANALYTICS:-true}
+      MEILI_ENV: "${MEILI_ENV:-development}"
+    restart: always
+    ports:
+      - "${FORWARD_MEILISEARCH_PORT:-7700}:7700"
+    volumes:
+      - meilisearch:/meili_data:rw,Z
+    networks:
+      - pod
+  soketi:
+    image: quay.io/soketi/soketi:latest
+    container_name: pod-soketi
+    environment:
+      DEFAULT_APP_ID: "${SOKETI_APP_ID:-app-id}"
+      DEFAULT_APP_KEY: "${SOKETI_APP_KEY:-app-key}"
+      DEFAULT_APP_SECRET: "${SOKETI_APP_SECRET:-app-secret}"
+    restart: always
+    ports:
+      - "${PUSHER_PORT:-6001}:6001"
+      - "${PUSHER_METRICS_PORT:-9601}:9601"
+    networks:
+      - pod
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: pod-mailpit
+    restart: always
+    ports:
+      - "${FORWARD_MAILPIT_PORT:-1025}:1025"
+      - "${FORWARD_MAILPIT_DASHBOARD_PORT:-8025}:8025"
+    networks:
+      - pod
+secrets:
+  ssl-cert:
+    file: ./ssl/cert.pem
+  ssl-key:
+    file: ./ssl/key.pem
+  ssl-dhparam:
+    file: ./ssl/dhparam.pem
+volumes:
+  mariadb:
+    name: pod-mariadb
+  redis:
+    name: pod-redis
+  meilisearch:
+    name: pod-melisearch
+networks:
+  pod:
+    driver: bridge

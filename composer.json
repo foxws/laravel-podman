@@ -35,8 +35,7 @@
     },
     "autoload": {
         "psr-4": {
-            "Foxws\\LaravelPodman\\": "src/",
-            "Foxws\\LaravelPodman\\Database\\Factories\\": "database/factories/"
+            "Foxws\\LaravelPodman\\": "src/"
         }
     },
     "autoload-dev": {

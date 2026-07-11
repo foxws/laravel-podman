@@ -1,12 +1,12 @@
 <?php
 
-namespace VendorName\Skeleton\Commands;
+namespace Foxws\Podman\Commands;
 
 use Illuminate\Console\Command;
 
-class SkeletonCommand extends Command
+class PodmanCommand extends Command
 {
-    public $signature = 'skeleton';
+    public $signature = 'laravel-podman';
 
     public $description = 'My command';
 

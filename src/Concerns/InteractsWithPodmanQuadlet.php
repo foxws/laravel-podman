@@ -16,15 +16,15 @@ trait InteractsWithPodmanQuadlet
         ?string $application = null,
         ?bool $replace = null,
     ): Process {
-        $command = ["podman", "quadlet", "install"];
+        $command = ['podman', 'quadlet', 'install'];
 
         if ($application) {
-            $command[] = "--application";
+            $command[] = '--application';
             $command[] = $application;
         }
 
         if ($replace) {
-            $command[] = "--replace";
+            $command[] = '--replace';
         }
 
         $command[] = "{$service}.quadlets";
@@ -34,18 +34,18 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletPath(): string
     {
-        return Config::string("podman.quadlet_path");
+        return Config::string('podman.quadlet_path');
     }
 
     protected function shouldReloadSystemd(): bool
     {
-        return Config::boolean("podman.reload_systemd");
+        return Config::boolean('podman.reload_systemd');
     }
 
     protected function getPodmanQuadletServices(): array
     {
         return Collection::make(PodmanService::cases())
-            ->pluck("name", "value")
+            ->pluck('name', 'value')
             ->toArray();
     }
 }

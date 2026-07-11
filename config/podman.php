@@ -15,6 +15,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Podman Quadlet Service Path
+    |--------------------------------------------------------------------------
+    |
+    | This value is the path where Podman quadlet service files are placed.
+    | The default value is the vendor service path, which can be overruled when needed.
+    |
+    */
+
+    'quadlet_services_path' => env('PODMAN_QUADLET_SERVICE_PATH'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Podman Quadlet Path
     |--------------------------------------------------------------------------
     |

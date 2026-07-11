@@ -6,11 +6,11 @@ namespace Foxws\Podman\Concerns;
 
 use Composer\InstalledVersions;
 use Foxws\Podman\Enums\PodmanMode;
-use Foxws\Podman\Enums\PodmanService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use SplFileInfo;
 use Symfony\Component\Process\Process;
 
 trait InteractsWithPodmanQuadlet
@@ -67,8 +67,7 @@ trait InteractsWithPodmanQuadlet
         ?string $filter = null,
         ?string $format = null,
         ?bool $noheading = null,
-    ): Process
-    {
+    ): Process {
         $command = ['podman', 'quadlet', 'list'];
 
         if ($filter) {
@@ -84,6 +83,14 @@ trait InteractsWithPodmanQuadlet
         if ($noheading) {
             $command[] = '--noheading';
         }
+
+        return new Process($command);
+    }
+
+    protected function printPodmanQuadlet(
+        string $service,
+    ): Process {
+        $command = ['podman', 'quadlet', 'print', $service];
 
         return new Process($command);
     }
@@ -107,7 +114,7 @@ trait InteractsWithPodmanQuadlet
 
     protected function preparePodmanQuadletSource(string $service): string
     {
-        $source = "{$this->getPodmanQuadletVendorPath()}/quadlets/{$service}.quadlets";
+        $source = "{$this->getPodmanQuadletServicesPath()}/{$service}.quadlets";
 
         $contents = Str::replace(
             'stub',
@@ -179,6 +186,14 @@ trait InteractsWithPodmanQuadlet
         return PodmanMode::from(Config::string('podman.quadlet_mode'));
     }
 
+    protected function getPodmanQuadletServicesPath(): string
+    {
+        return Config::string(
+            'podman.quadlet_services_path',
+            "{$this->getPodmanQuadletVendorPath()}/quadlets",
+        );
+    }
+
     protected function getPodmanQuadletPrefix(): string
     {
         return Config::string('podman.quadlet_prefix');
@@ -196,8 +211,12 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletServices(): array
     {
-        return Collection::make(PodmanService::cases())
-            ->pluck('name', 'value')
+        return Collection::make(File::files($this->getPodmanQuadletServicesPath()))
+            ->filter(fn (SplFileInfo $file): bool => $file->getExtension() === 'quadlets')
+            ->map(fn (SplFileInfo $file): string => $file->getBasename('.'.$file->getExtension()))
+            ->sort()
+            ->values()
+            ->mapWithKeys(fn (string $service): array => [$service => $service])
             ->toArray();
     }
 }

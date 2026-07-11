@@ -19,15 +19,15 @@ trait InteractsWithPodmanQuadlet
         ?string $application = null,
         ?bool $replace = null,
     ): Process {
-        $command = ["podman", "quadlet", "install"];
+        $command = ['podman', 'quadlet', 'install'];
 
         if ($application) {
-            $command[] = "--application";
+            $command[] = '--application';
             $command[] = $application;
         }
 
         if ($replace) {
-            $command[] = "--replace";
+            $command[] = '--replace';
         }
 
         $command[] = $this->preparePodmanQuadletSource($service);
@@ -41,7 +41,7 @@ trait InteractsWithPodmanQuadlet
         $source = "{$this->getPodmanQuadletVendorPath()}/quadlets/{$service}.quadlets";
 
         $contents = Str::replace(
-            "stub",
+            'stub',
             $this->getPodmanQuadletPrefix(),
             File::get($source),
         );
@@ -64,24 +64,24 @@ trait InteractsWithPodmanQuadlet
         return preg_replace_callback(
             '/^Volume=(.*)$/m',
             function (array $matches): string {
-                $segments = explode(":", $matches[1]);
+                $segments = explode(':', $matches[1]);
 
                 if (count($segments) < 3) {
                     return "Volume={$matches[1]}";
                 }
 
                 $options = array_diff(
-                    explode(",", $segments[2]),
-                    ["Z", "z", "U"],
+                    explode(',', $segments[2]),
+                    ['Z', 'z', 'U'],
                 );
 
                 if ($options === []) {
                     unset($segments[2]);
                 } else {
-                    $segments[2] = implode(",", $options);
+                    $segments[2] = implode(',', $options);
                 }
 
-                return "Volume=".implode(":", $segments);
+                return 'Volume='.implode(':', $segments);
             },
             $contents,
         );
@@ -89,41 +89,41 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletTemporaryPath(): string
     {
-        return Config::string("podman.temporary_path");
+        return Config::string('podman.temporary_path');
     }
 
     protected function getPodmanQuadletVendorPath(): string
     {
         return rtrim(
-            InstalledVersions::getInstallPath("foxws/laravel-podman"),
-            "/",
+            InstalledVersions::getInstallPath('foxws/laravel-podman'),
+            '/',
         );
     }
 
     protected function getPodmanQuadletPath(): string
     {
-        return Config::string("podman.quadlet_path");
+        return Config::string('podman.quadlet_path');
     }
 
     protected function getPodmanQuadletPrefix(): string
     {
-        return Config::string("podman.quadlet_prefix");
+        return Config::string('podman.quadlet_prefix');
     }
 
     protected function shouldReloadSystemd(): bool
     {
-        return Config::boolean("podman.reload_systemd");
+        return Config::boolean('podman.reload_systemd');
     }
 
     protected function shouldUseSelinuxVolumeMapping(): bool
     {
-        return Config::boolean("podman.selinux_volume_mapping");
+        return Config::boolean('podman.selinux_volume_mapping');
     }
 
     protected function getPodmanQuadletServices(): array
     {
         return Collection::make(PodmanService::cases())
-            ->pluck("name", "value")
+            ->pluck('name', 'value')
             ->toArray();
     }
 }

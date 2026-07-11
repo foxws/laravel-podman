@@ -11,7 +11,7 @@ return [
     |
     */
 
-    "quadlet_path" => env("PODMAN_QUADLET_PATH", "~/.config/containers/podman"),
+    'quadlet_path' => env('PODMAN_QUADLET_PATH', '~/.config/containers/podman'),
 
     /*
     |--------------------------------------------------------------------------
@@ -21,7 +21,7 @@ return [
     |
     */
 
-    "quadlet_prefix" => env("PODMAN_QUADLET_PREFIX", "laravel"),
+    'quadlet_prefix' => env('PODMAN_QUADLET_PREFIX', 'laravel'),
 
     /*
     |--------------------------------------------------------------------------
@@ -34,7 +34,7 @@ return [
     |
     */
 
-    "temporary_path" => env("PODMAN_TEMPORARY_PATH", sys_get_temp_dir()),
+    'temporary_path' => env('PODMAN_TEMPORARY_PATH', sys_get_temp_dir()),
 
     /*
     |--------------------------------------------------------------------------
@@ -47,7 +47,7 @@ return [
     |
     */
 
-    "selinux_volume_mapping" => env("PODMAN_SELINUX_VOLUME_MAPPING", true),
+    'selinux_volume_mapping' => env('PODMAN_SELINUX_VOLUME_MAPPING', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -59,5 +59,5 @@ return [
     |
     */
 
-    "reload_systemd" => env("PODMAN_RELOAD_SYSTEMD", true),
+    'reload_systemd' => env('PODMAN_RELOAD_SYSTEMD', true),
 ];

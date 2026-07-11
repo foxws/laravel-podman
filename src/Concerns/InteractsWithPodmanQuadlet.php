@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Podman\Concerns;
 
 use Composer\InstalledVersions;
+use Foxws\Podman\Enums\PodmanMode;
 use Foxws\Podman\Enums\PodmanService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
@@ -30,6 +31,10 @@ trait InteractsWithPodmanQuadlet
             $command[] = '--replace';
         }
 
+        if (! $this->shouldReloadSystemd()) {
+            $command[] = '--reload-systemd=false';
+        }
+
         $command[] = $this->preparePodmanQuadletSource($service);
         $command[] = $this->getPodmanQuadletPath();
 
@@ -40,8 +45,7 @@ trait InteractsWithPodmanQuadlet
         string $service,
         ?bool $ignore = null,
         ?bool $force = null,
-    ): Process
-    {
+    ): Process {
         $command = ['podman', 'quadlet', 'rm', $service];
 
         if ($ignore) {
@@ -52,18 +56,25 @@ trait InteractsWithPodmanQuadlet
             $command[] = '--force';
         }
 
+        if (! $this->shouldReloadSystemd()) {
+            $command[] = '--reload-systemd=false';
+        }
+
         return new Process($command);
     }
 
     protected function uninstallPodmanQuadlet(
         string $application,
         ?bool $force = null,
-    ): Process
-    {
+    ): Process {
         $command = ['podman', 'quadlet', 'rm', '--recursive', $application];
 
         if ($force) {
             $command[] = '--force';
+        }
+
+        if (! $this->shouldReloadSystemd()) {
+            $command[] = '--reload-systemd=false';
         }
 
         return new Process($command);
@@ -132,7 +143,15 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletPath(): string
     {
-        return Config::string('podman.quadlet_path');
+        return match ($this->getPodmanQuadletMode()) {
+            PodmanMode::Root => Config::string('podman.quadlet_root_path'),
+            PodmanMode::Rootless => Config::string('podman.quadlet_rootless_path'),
+        };
+    }
+
+    protected function getPodmanQuadletMode(): PodmanMode
+    {
+        return PodmanMode::from(Config::string('podman.quadlet_mode'));
     }
 
     protected function getPodmanQuadletPrefix(): string

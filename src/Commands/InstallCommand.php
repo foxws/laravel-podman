@@ -19,7 +19,6 @@ class InstallCommand extends Command
     use InteractsWithPodmanQuadlet;
 
     public $signature = 'podman:install
-        {--reload-systemd : Reload systemd after installation}
         {--replace : Replace the service if it already exists}
     ';
 

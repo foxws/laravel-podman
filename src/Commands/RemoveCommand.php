@@ -20,7 +20,6 @@ class RemoveCommand extends Command
     public $signature = 'podman:remove
         {--force : Force removal of running services}
         {--ignore: Ignore missing services and continue with removal}
-        {--reload-systemd : Reload systemd after removal}
     ';
 
     public $description = "Remove a Podman Quadlet service or application.";

@@ -3,21 +3,37 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Podman Quadlet Path
+    | Podman Quadlet Mode
     |--------------------------------------------------------------------------
     |
-    | This value is the path where the Podman quadlet files are stored.
-    | The default value is rootless Podman quadlet path, which is ~/.config/containers/podman/.
+    | This value determines the mode in which Podman operates. The default value
+    | is 'rootless', which means Podman will run and install without root privileges.
     |
     */
 
-    'quadlet_path' => env('PODMAN_QUADLET_PATH', '~/.config/containers/podman'),
+    'quadlet_mode' => env('PODMAN_QUADLET_MODE', 'rootless'),
 
     /*
     |--------------------------------------------------------------------------
-    | Podman Quadlet Services
+    | Podman Quadlet Path
     |--------------------------------------------------------------------------
     |
+    | This value is the path where Podman quadlet files are written to. The
+    | default value is the user's home directory, which can be overruled when needed.
+    |
+    */
+
+    'quadlet_root_path' => env('PODMAN_QUADLET_ROOT_PATH', '/etc/containers/systemd'),
+
+    'quadlet_rootless_path' => env('PODMAN_QUADLET_ROOTLESS_PATH', '~/.config/containers/systemd'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Quadlet Prefix
+    |--------------------------------------------------------------------------
+    |
+    | This value is the prefix used for Podman quadlet files. The default value
+    | is 'laravel', which can be overruled when needed.
     |
     */
 

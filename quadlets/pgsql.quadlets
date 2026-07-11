@@ -5,7 +5,10 @@ Description=PostgreSQL container
 [Container]
 Image=docker.io/library/postgres:latest
 AutoUpdate=registry
-EnvironmentFile=./%n/stub.env
+Environment=PGPASSWORD=${PGPASSWORD:-password}
+Environment=POSTGRES_DB=${POSTGRES_DB:-stub}
+Environment=POSTGRES_USER=${POSTGRES_USER:-user}
+Environment=POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-password}
 ShmSize=512m
 Volume=stub-pgsql:/var/lib/postgresql:rw,Z,U
 Network=stub.network
@@ -17,6 +20,6 @@ RestartSec=5
 TimeoutStartSec=120
 TimeoutStopSec=60
 ---
-# FileName=stub-pgsql-volume
+# FileName=stub-pgsql-storage
 [Volume]
 Label=stub-pgsql

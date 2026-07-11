@@ -1,0 +1,28 @@
+# FileName=stub-app
+[Unit]
+Description=Laravel App container
+
+[Container]
+ImageTag=localhost/stub-app:latest
+AutoUpdate=local
+UserNS=keep-id
+ShmSize=128m
+Volume=stub-cache:/cache:rw,z,U
+Network=stub.network
+PublishPort=80:80
+PublishPort=443:443
+PublishPort=443:443/udp
+PublicPort=5173:5173
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=300
+TimeoutStopSec=30
+---
+# FileName=stub-cache-storage
+[Volume]
+Label=stub-cache
+---
+# FileName=stub-network
+[Network]

@@ -3,18 +3,6 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Podman Quadlet Mode
-    |--------------------------------------------------------------------------
-    |
-    | This value determines the mode in which Podman operates. The default value
-    | is 'rootless', which means Podman will run and install without root privileges.
-    |
-    */
-
-    'quadlet_mode' => env('PODMAN_QUADLET_MODE', 'rootless'),
-
-    /*
-    |--------------------------------------------------------------------------
     | Podman Quadlet Service Path
     |--------------------------------------------------------------------------
     |
@@ -24,32 +12,6 @@ return [
     */
 
     'quadlet_services_path' => env('PODMAN_QUADLET_SERVICE_PATH'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Podman Quadlet Path
-    |--------------------------------------------------------------------------
-    |
-    | This value is the path where Podman quadlet files are written to. The
-    | default value is the user's home directory, which can be overruled when needed.
-    |
-    */
-
-    'quadlet_root_path' => env('PODMAN_QUADLET_ROOT_PATH', '/etc/containers/systemd'),
-
-    'quadlet_rootless_path' => env('PODMAN_QUADLET_ROOTLESS_PATH', '~/.config/containers/systemd'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Quadlet Prefix
-    |--------------------------------------------------------------------------
-    |
-    | This value is the prefix used for Podman quadlet files. The default value
-    | is 'laravel', which can be overruled when needed.
-    |
-    */
-
-    'quadlet_prefix' => env('PODMAN_QUADLET_PREFIX', 'laravel'),
 
     /*
     |--------------------------------------------------------------------------
@@ -63,6 +25,18 @@ return [
     */
 
     'temporary_path' => env('PODMAN_TEMPORARY_PATH', sys_get_temp_dir()),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Quadlet Prefix
+    |--------------------------------------------------------------------------
+    |
+    | This value is the prefix used for Podman quadlet files. The default value
+    | is 'laravel', which can be overruled when needed.
+    |
+    */
+
+    'quadlet_prefix' => env('PODMAN_QUADLET_PREFIX', 'laravel'),
 
     /*
     |--------------------------------------------------------------------------

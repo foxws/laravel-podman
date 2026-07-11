@@ -3,30 +3,9 @@
 declare(strict_types=1);
 
 use Foxws\Podman\Concerns\InteractsWithPodmanQuadlet;
-use Foxws\Podman\Enums\PodmanMode;
 use Illuminate\Support\Facades\File;
 
 uses(InteractsWithPodmanQuadlet::class);
-
-it('defaults to rootless mode', function () {
-    expect($this->getPodmanQuadletMode())->toBe(PodmanMode::Rootless);
-});
-
-it('resolves root mode when configured', function () {
-    config(['podman.quadlet_mode' => 'root']);
-
-    expect($this->getPodmanQuadletMode())->toBe(PodmanMode::Root);
-});
-
-it('resolves the rootless quadlet path by default', function () {
-    expect($this->getPodmanQuadletPath())->toBe(config('podman.quadlet_rootless_path'));
-});
-
-it('resolves the root quadlet path when in root mode', function () {
-    config(['podman.quadlet_mode' => 'root']);
-
-    expect($this->getPodmanQuadletPath())->toBe(config('podman.quadlet_root_path'));
-});
 
 it('defaults the services path to the vendor quadlets directory', function () {
     expect($this->getPodmanQuadletServicesPath())

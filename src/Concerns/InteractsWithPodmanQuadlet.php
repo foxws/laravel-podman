@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Foxws\Podman\Concerns;
 
 use Composer\InstalledVersions;
-use Foxws\Podman\Enums\PodmanMode;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
@@ -36,7 +35,6 @@ trait InteractsWithPodmanQuadlet
         }
 
         $command[] = $this->preparePodmanQuadletSource($service);
-        $command[] = $this->getPodmanQuadletPath();
 
         return new Process($command);
     }
@@ -171,19 +169,6 @@ trait InteractsWithPodmanQuadlet
             InstalledVersions::getInstallPath('foxws/laravel-podman'),
             '/',
         );
-    }
-
-    protected function getPodmanQuadletPath(): string
-    {
-        return match ($this->getPodmanQuadletMode()) {
-            PodmanMode::Root => Config::string('podman.quadlet_root_path'),
-            PodmanMode::Rootless => Config::string('podman.quadlet_rootless_path'),
-        };
-    }
-
-    protected function getPodmanQuadletMode(): PodmanMode
-    {
-        return PodmanMode::from(Config::string('podman.quadlet_mode'));
     }
 
     protected function getPodmanQuadletServicesPath(): string

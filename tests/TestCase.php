@@ -3,7 +3,6 @@
 namespace Foxws\Podman\Tests;
 
 use Foxws\Podman\PodmanServiceProvider;
-use Illuminate\Database\Eloquent\Factories\Factory;
 use Illuminate\Support\Facades\File;
 use Orchestra\Testbench\TestCase as Orchestra;
 
@@ -14,10 +13,6 @@ class TestCase extends Orchestra
     protected function setUp(): void
     {
         parent::setUp();
-
-        Factory::guessFactoryNamesUsing(
-            fn (string $modelName) => 'Foxws\\Podman\\Database\\Factories\\'.class_basename($modelName).'Factory'
-        );
 
         $this->originalPath = (string) getenv('PATH');
     }
@@ -69,10 +64,9 @@ class TestCase extends Orchestra
         putenv("PATH={$this->originalPath}");
         putenv('PODMAN_TEST_EXIT_CODE');
 
-        unset($_SERVER['PODMAN_TEST_EXIT_CODE'], $_ENV['PODMAN_TEST_EXIT_CODE']);
-
         $_SERVER['PATH'] = $this->originalPath;
         $_ENV['PATH'] = $this->originalPath;
+        unset($_SERVER['PODMAN_TEST_EXIT_CODE'], $_ENV['PODMAN_TEST_EXIT_CODE']);
     }
 
     /**

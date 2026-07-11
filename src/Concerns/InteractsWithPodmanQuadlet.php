@@ -36,6 +36,39 @@ trait InteractsWithPodmanQuadlet
         return new Process($command);
     }
 
+    protected function removePodmanQuadlet(
+        string $service,
+        ?bool $ignore = null,
+        ?bool $force = null,
+    ): Process
+    {
+        $command = ['podman', 'quadlet', 'rm', $service];
+
+        if ($ignore) {
+            $command[] = '--ignore';
+        }
+
+        if ($force) {
+            $command[] = '--force';
+        }
+
+        return new Process($command);
+    }
+
+    protected function uninstallPodmanQuadlet(
+        string $application,
+        ?bool $force = null,
+    ): Process
+    {
+        $command = ['podman', 'quadlet', 'rm', '--recursive', $application];
+
+        if ($force) {
+            $command[] = '--force';
+        }
+
+        return new Process($command);
+    }
+
     protected function preparePodmanQuadletSource(string $service): string
     {
         $source = "{$this->getPodmanQuadletVendorPath()}/quadlets/{$service}.quadlets";
@@ -64,24 +97,21 @@ trait InteractsWithPodmanQuadlet
         return preg_replace_callback(
             '/^Volume=(.*)$/m',
             function (array $matches): string {
-                $segments = explode(':', $matches[1]);
+                $segments = Str::of($matches[1])->explode(':');
 
-                if (count($segments) < 3) {
+                if ($segments->count() < 3) {
                     return "Volume={$matches[1]}";
                 }
 
-                $options = array_diff(
-                    explode(',', $segments[2]),
-                    ['Z', 'z', 'U'],
-                );
+                $options = Str::of($segments->get(2))
+                    ->explode(',')
+                    ->diff(['Z', 'z', 'U']);
 
-                if ($options === []) {
-                    unset($segments[2]);
-                } else {
-                    $segments[2] = implode(',', $options);
-                }
+                $segments = $options->isEmpty()
+                    ? $segments->take(2)
+                    : $segments->put(2, $options->implode(','));
 
-                return 'Volume='.implode(':', $segments);
+                return 'Volume='.$segments->implode(':');
             },
             $contents,
         );
@@ -94,7 +124,7 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletVendorPath(): string
     {
-        return rtrim(
+        return Str::rtrim(
             InstalledVersions::getInstallPath('foxws/laravel-podman'),
             '/',
         );

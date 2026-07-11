@@ -27,6 +27,26 @@ it('falls back to the vendor quadlets directory when the configured path does no
         ->toBe("{$this->getPodmanQuadletVendorPath()}/quadlets");
 });
 
+it('defaults the container path to the project base path', function () {
+    expect($this->getPodmanQuadletContainerPath())->toBe(base_path());
+});
+
+it('uses the configured container path when it exists', function () {
+    $path = sys_get_temp_dir().'/podman-containers-'.uniqid();
+    File::ensureDirectoryExists($path);
+    config(['podman.quadlet_container_path' => $path]);
+
+    expect($this->getPodmanQuadletContainerPath())->toBe($path);
+
+    File::deleteDirectory($path);
+});
+
+it('falls back to the project base path when the configured container path does not exist', function () {
+    config(['podman.quadlet_container_path' => sys_get_temp_dir().'/podman-containers-missing-'.uniqid()]);
+
+    expect($this->getPodmanQuadletContainerPath())->toBe(base_path());
+});
+
 it('lists the available services discovered in the services path', function () {
     $path = $this->makeQuadletServicesPath(['pgsql', 'mariadb']);
     File::put("{$path}/README.md", 'not a service');
@@ -68,9 +88,37 @@ it('prepares a quadlet source file with the prefix replaced', function () {
     File::deleteDirectory($path);
 });
 
+it('replaces the app-path placeholder with the application base path', function () {
+    $path = $this->makeQuadletServicesPath();
+    File::put("{$path}/app.quadlets", "SetWorkingDirectory={{app-path}}\nEnvironmentFile={{app-path}}/env\n");
+
+    $source = $this->preparePodmanQuadletSource('app');
+
+    expect(File::get($source))->toBe('SetWorkingDirectory='.base_path()."\nEnvironmentFile=".base_path()."/env\n");
+
+    File::delete($source);
+    File::deleteDirectory($path);
+});
+
+it('replaces the container-path placeholder with the configured container path', function () {
+    $path = $this->makeQuadletServicesPath();
+    $containerPath = sys_get_temp_dir().'/podman-containers-'.uniqid();
+    File::ensureDirectoryExists($containerPath);
+    config(['podman.quadlet_container_path' => $containerPath]);
+    File::put("{$path}/app.quadlets", "File={{container-path}}/Containerfile\n");
+
+    $source = $this->preparePodmanQuadletSource('app');
+
+    expect(File::get($source))->toBe("File={$containerPath}/Containerfile\n");
+
+    File::delete($source);
+    File::deleteDirectory($path);
+    File::deleteDirectory($containerPath);
+});
+
 it('strips selinux volume flags while preparing the quadlet source when disabled', function () {
     $path = $this->makeQuadletServicesPath();
-    File::put("{$path}/pgsql.quadlets", "Volume=stub-pgsql:/var/lib/postgresql:rw,Z,U\n");
+    File::put("{$path}/pgsql.quadlets", "Volume={{application}}-pgsql:/var/lib/postgresql:rw,Z,U\n");
     config(['podman.selinux_volume_mapping' => false]);
 
     $source = $this->preparePodmanQuadletSource('pgsql');

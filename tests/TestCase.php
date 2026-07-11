@@ -82,7 +82,7 @@ class TestCase extends Orchestra
         File::ensureDirectoryExists($path);
 
         foreach ($services as $service) {
-            File::put("{$path}/{$service}.quadlets", "# FileName=stub-{$service}\n[Unit]\nDescription={$service} container\n");
+            File::put("{$path}/{$service}.quadlets", "# FileName={{application}}-{$service}\n[Unit]\nDescription={$service} container\n");
         }
 
         config(['podman.quadlet_services_path' => $path]);

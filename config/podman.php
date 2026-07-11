@@ -15,6 +15,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Podman Quadlet Container Path
+    |--------------------------------------------------------------------------
+    |
+    | This value is the path where Podman quadlet container files are placed.
+    | The default value is the vendor container path, which can be overruled when needed.
+    |
+    */
+
+    'quadlet_container_path' => env('PODMAN_QUADLET_CONTAINER_PATH', 'storage/app/containers'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Temporary Path
     |--------------------------------------------------------------------------
     |

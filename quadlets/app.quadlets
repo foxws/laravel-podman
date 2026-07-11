@@ -1,18 +1,30 @@
-# FileName=stub-app
+# FileName={{application}}
+[Build]
+ImageTag=localhost/{{application}}:latest
+Environment=UID=${UID:-1000}
+Environment=GID=${GID:-1000}
+Target=production
+File={{container-path}}/Containerfile
+SetWorkingDirectory={{container-path}}
+
+[Service]
+EnvironmentFile={{container-path}}/{{application}}.env
+---
+# FileName={{application}}
 [Unit]
 Description=Laravel App container
 
 [Container]
-ImageTag=localhost/stub-app:latest
+Image={{application}}.build
 AutoUpdate=local
 UserNS=keep-id
 ShmSize=128m
-Volume=stub-cache:/cache:rw,z,U
-Network=stub.network
+Volume={{application}}-cache:/cache:rw,z,U
+Network={{application}}.network
 PublishPort=80:80
 PublishPort=443:443
 PublishPort=443:443/udp
-PublicPort=5173:5173
+PublishPort=5173:5173
 
 [Service]
 Restart=always
@@ -20,9 +32,9 @@ RestartSec=5
 TimeoutStartSec=300
 TimeoutStopSec=30
 ---
-# FileName=stub-cache-storage
+# FileName={{application}}-cache-storage
 [Volume]
-Label=stub-cache
+Label={{application}}-cache
 ---
-# FileName=stub-network
+# FileName={{application}}-network
 [Network]

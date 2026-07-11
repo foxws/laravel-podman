@@ -114,11 +114,11 @@ trait InteractsWithPodmanQuadlet
     {
         $source = "{$this->getPodmanQuadletServicesPath()}/{$service}.quadlets";
 
-        $contents = Str::replace(
-            'stub',
-            $this->getPodmanQuadletPrefix(),
-            File::get($source),
-        );
+        $contents = strtr(File::get($source), [
+            '{{application}}' => $this->getPodmanQuadletPrefix(),
+            '{{base-path}}' => base_path(),
+            '{{container-path}}' => $this->getPodmanQuadletContainerPath(),
+        ]);
 
         if (! $this->shouldUseSelinuxVolumeMapping()) {
             $contents = $this->removeSelinuxVolumeFlags($contents);
@@ -158,11 +158,6 @@ trait InteractsWithPodmanQuadlet
         );
     }
 
-    protected function getPodmanQuadletTemporaryPath(): string
-    {
-        return Config::string('podman.temporary_path');
-    }
-
     protected function getPodmanQuadletVendorPath(): string
     {
         return Str::rtrim(
@@ -182,6 +177,39 @@ trait InteractsWithPodmanQuadlet
         return "{$this->getPodmanQuadletVendorPath()}/quadlets";
     }
 
+    protected function getPodmanQuadletContainerPath(): string
+    {
+        $path = Config::get('podman.quadlet_container_path');
+
+        if ($path && File::isDirectory($path)) {
+            return $path;
+        }
+
+        return base_path();
+    }
+
+    protected function getPodmanQuadletServices(): array
+    {
+        return Collection::make(File::files($this->getPodmanQuadletServicesPath()))
+            ->filter(fn (SplFileInfo $file): bool => $file->getExtension() === 'quadlets')
+            ->map(fn (SplFileInfo $file): string => $file->getBasename('.'.$file->getExtension()))
+            ->sort()
+            ->values()
+            ->mapWithKeys(fn (string $service): array => [$service => $service])
+            ->toArray();
+    }
+
+    protected function getPodmanQuadletTemporaryPath(): string
+    {
+        $path = Config::get('podman.quadlet_temporary_path');
+
+        if ($path && File::isDirectory($path)) {
+            return $path;
+        }
+
+        return sys_get_temp_dir();
+    }
+
     protected function getPodmanQuadletPrefix(): string
     {
         return Config::string('podman.quadlet_prefix');
@@ -195,16 +223,5 @@ trait InteractsWithPodmanQuadlet
     protected function shouldUseSelinuxVolumeMapping(): bool
     {
         return Config::boolean('podman.selinux_volume_mapping');
-    }
-
-    protected function getPodmanQuadletServices(): array
-    {
-        return Collection::make(File::files($this->getPodmanQuadletServicesPath()))
-            ->filter(fn (SplFileInfo $file): bool => $file->getExtension() === 'quadlets')
-            ->map(fn (SplFileInfo $file): string => $file->getBasename('.'.$file->getExtension()))
-            ->sort()
-            ->values()
-            ->mapWithKeys(fn (string $service): array => [$service => $service])
-            ->toArray();
     }
 }

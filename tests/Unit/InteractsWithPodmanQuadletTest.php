@@ -62,6 +62,8 @@ it('prepares a quadlet source file with the prefix replaced', function () {
         ->toContain('acme-pgsql')
         ->not->toContain('stub-pgsql');
 
+    expect($source)->toEndWith('.quadlets');
+
     File::delete($source);
     File::deleteDirectory($path);
 });

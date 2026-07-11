@@ -124,7 +124,7 @@ trait InteractsWithPodmanQuadlet
             $contents = $this->removeSelinuxVolumeFlags($contents);
         }
 
-        $path = "{$this->getPodmanQuadletTemporaryPath()}/quadlet-".Str::random(16);
+        $path = "{$this->getPodmanQuadletTemporaryPath()}/".Str::random(16).'.quadlets';
 
         File::put($path, $contents);
 

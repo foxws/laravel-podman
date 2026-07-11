@@ -12,7 +12,7 @@ use function Laravel\Prompts\info;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
 
-#[AsCommand(name: "podman:install")]
+#[AsCommand(name: 'podman:install')]
 class InstallCommand extends Command
 {
     use InteractsWithPodmanQuadlet;
@@ -22,17 +22,17 @@ class InstallCommand extends Command
         {--replace : Replace the service if it already exists}
     ';
 
-    public $description = "Install a service for the application to run with Podman";
+    public $description = 'Install a service for the application to run with Podman';
 
     public function handle(): int
     {
         $application = text(
-            label: "Enter the application name",
-            placeholder: "my-app",
+            label: 'Enter the application name',
+            placeholder: 'my-app',
         );
 
         $service = select(
-            label: "Select a service to install",
+            label: 'Select a service to install',
             options: $this->getPodmanQuadletServices(),
             required: true,
         );
@@ -40,7 +40,7 @@ class InstallCommand extends Command
         $this->installPodmanQuadlet(
             application: $application,
             service: $service,
-            replace: $this->option("replace"),
+            replace: $this->option('replace'),
         );
 
         info("Service {$service} installed for application {$application}");

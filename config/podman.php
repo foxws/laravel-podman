@@ -11,5 +11,5 @@ return [
     |
     */
 
-    "quadlet_path" => env("PODMAN_QUADLET_PATH", "~/.config/containers/podman"),
+    'quadlet_path' => env('PODMAN_QUADLET_PATH', '~/.config/containers/podman'),
 ];

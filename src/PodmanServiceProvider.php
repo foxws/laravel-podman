@@ -16,8 +16,8 @@ class PodmanServiceProvider extends PackageServiceProvider
          * More info: https://github.com/spatie/laravel-package-tools
          */
         $package
-            ->name("laravel-podman")
-            ->hasConfigFile("podman")
+            ->name('laravel-podman')
+            ->hasConfigFile('podman')
             ->hasCommand(InstallCommand::class);
     }
 }

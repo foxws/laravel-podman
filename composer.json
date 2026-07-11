@@ -4,7 +4,10 @@
     "keywords": [
         "Foxws",
         "laravel",
-        "laravel-podman"
+        "laravel-podman",
+        "podman",
+        "podman-quadlet",
+        "podman-quadlets"
     ],
     "homepage": "https://github.com/foxws/laravel-podman",
     "license": "MIT",
@@ -18,7 +21,10 @@
     "require": {
         "php": "^8.4",
         "spatie/laravel-package-tools": "^1.16",
-        "illuminate/contracts": "^11.0||^12.0||^13.0"
+        "illuminate/console": "^11.0|^12.0|^13.0",
+        "illuminate/contracts": "^11.0||^12.0||^13.0",
+        "illuminate/support": "^11.0|^12.0|^13.0",
+        "symfony/console": "^6.0|^7.0|^8.0"
     },
     "require-dev": {
         "laravel/pint": "^1.14",
@@ -33,10 +39,12 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "spatie/laravel-ray": "^1.35"
     },
+    "bin": [
+        "bin/lpod"
+    ],
     "autoload": {
         "psr-4": {
-            "Foxws\\Podman\\": "src/",
-            "Foxws\\Podman\\Database\\Factories\\": "database/factories/"
+            "Foxws\\Podman\\": "src/"
         }
     },
     "autoload-dev": {

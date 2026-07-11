@@ -2,7 +2,7 @@
 
 namespace Foxws\Podman;
 
-use Foxws\Podman\Commands\PodmanCommand;
+use Foxws\Podman\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 
@@ -15,6 +15,9 @@ class PodmanServiceProvider extends PackageServiceProvider
          *
          * More info: https://github.com/spatie/laravel-package-tools
          */
-        $package->name('laravel-podman')->hasCommand(PodmanCommand::class);
+        $package
+            ->name("laravel-podman")
+            ->hasConfigFile("podman")
+            ->hasCommand(InstallCommand::class);
     }
 }

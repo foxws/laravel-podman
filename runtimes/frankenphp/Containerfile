@@ -73,13 +73,16 @@ RUN if [ -n "$PHP_EXTENSIONS" ]; then \
     install-php-extensions $PHP_EXTENSIONS; \
 fi
 
-# Custom PHP configuration
-COPY containers/runtimes/php-production.ini /usr/local/etc/php/conf.d/xx-php-user.ini
+# Strip file capabilities from frankenphp
+RUN setcap -r /usr/local/bin/frankenphp
 
 # Node.js Configuration
 RUN npm install -g npm@latest corepack@latest svgo@latest \
     && corepack enable && corepack prepare pnpm@latest --activate \
     && pnpm config set store-dir ${PNPM_HOME}/store
+
+# Custom PHP configuration
+COPY containers/runtimes/php-production.ini /usr/local/etc/php/conf.d/xx-php-user.ini
 
 # Entrypoint
 COPY --chmod=755 containers/runtimes/entrypoint.sh /usr/local/bin/entrypoint.sh

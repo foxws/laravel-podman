@@ -12,22 +12,22 @@ use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\select;
 
-#[AsCommand(name: "podman:remove")]
+#[AsCommand(name: 'podman:remove')]
 class RemoveCommand extends Command
 {
     use InteractsWithPodmanQuadlet;
 
     public $signature = 'podman:remove
         {--force : Force removal of running services}
-        {--ignore: Ignore missing services and continue with removal}
+        {--ignore : Ignore missing services and continue with removal}
     ';
 
-    public $description = "Remove a Podman Quadlet service or application.";
+    public $description = 'Remove a Podman Quadlet service or application.';
 
     public function handle(): int
     {
         $service = select(
-            label: "Select a service to remove",
+            label: 'Select a service to remove',
             options: $this->getPodmanQuadletServices(),
             required: true,
         );
@@ -40,7 +40,7 @@ class RemoveCommand extends Command
 
         $process->run();
 
-        if (!$process->isSuccessful()) {
+        if (! $process->isSuccessful()) {
             error($process->getErrorOutput());
 
             return self::FAILURE;

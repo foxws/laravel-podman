@@ -16,8 +16,8 @@ class ListCommand extends Command
     use InteractsWithPodmanQuadlet;
 
     public $signature = 'podman:list
-        {--filter : Filter output based on conditions give}
-        {--format : Format the output}
+        {--filter= : Filter output based on conditions give}
+        {--format= : Format the output}
         {--noheading : Do not print column headings}
     ';
 

@@ -130,7 +130,7 @@ trait InteractsWithPodmanQuadlet
 
         File::put($path, $contents);
 
-        register_shutdown_function(static fn () => File::exists($path) && File::delete($path));
+        register_shutdown_function(static fn () => is_file($path) && unlink($path));
 
         return $path;
     }
@@ -188,10 +188,8 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletServicesPath(): string
     {
-        return Config::string(
-            'podman.quadlet_services_path',
-            "{$this->getPodmanQuadletVendorPath()}/quadlets",
-        );
+        return Config::get('podman.quadlet_services_path')
+            ?: "{$this->getPodmanQuadletVendorPath()}/quadlets";
     }
 
     protected function getPodmanQuadletPrefix(): string

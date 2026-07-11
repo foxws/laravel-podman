@@ -1,0 +1,11 @@
+# FileName=stub-app
+[Build]
+ImageTag=localhost/stub-app:latest
+Environment=UID=${UID:-1000}
+Environment=GID=${GID:-1000}
+Target=development
+File=containers/Containerfile
+SetWorkingDirectory=${APP_PATH}
+
+[Service]
+EnvironmentFile=./%n/stub.dev.env

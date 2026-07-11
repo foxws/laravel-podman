@@ -36,7 +36,7 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletVendorPath(): string
     {
-        return rtrim(InstalledVersions::getInstallPath("foxws/laravel-podman"), "/");
+        return rtrim(InstalledVersions::getInstallPath('foxws/laravel-podman'), '/');
     }
 
     protected function getPodmanQuadletPath(): string

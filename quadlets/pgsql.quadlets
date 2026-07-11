@@ -20,8 +20,3 @@ TimeoutStopSec=60
 # FileName=stub-pgsql-volume
 [Volume]
 Label=stub-pgsql
-# FileName=stub-pgsql-config
-PGPASSWORD=password
-POSTGRES_DB=stub
-POSTGRES_USER=user
-POSTGRES_PASSWORD=password

@@ -4,24 +4,37 @@ declare(strict_types=1);
 
 namespace Foxws\Podman\Commands;
 
+use Foxws\Podman\Concerns\InteractsWithPodmanQuadlet;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Attribute\AsCommand;
 
-#[AsCommand(name: 'sail:install')]
+use function Laravel\Prompts\select;
+use function Laravel\Prompts\text;
+
+#[AsCommand(name: 'podman:install')]
 class InstallCommand extends Command
 {
+    use InteractsWithPodmanQuadlet;
+
     public $signature = 'podman:install
-        {--service= : The service to install}
-        {--application= : The application name, installed under a directory with this name}
         {--reload-systemd : Reload systemd after installation}
         {--replace : Replace the service if it already exists}
     ';
 
-    public $description = 'Install a service for the application to run in Podman';
+    public $description = 'Install a service for the application to run with Podman';
 
     public function handle(): int
     {
-        $this->comment('All done');
+        $application = text(
+            label: 'Enter the application name',
+            placeholder: 'my-app',
+        );
+
+        $service = select(
+            label: 'Select a service to install',
+            options: $this->getPodmanQuadletServices(),
+            required: true,
+        );
 
         return self::SUCCESS;
     }

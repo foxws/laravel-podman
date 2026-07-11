@@ -12,4 +12,16 @@ return [
     */
 
     'quadlet_path' => env('PODMAN_QUADLET_PATH', '~/.config/containers/podman'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reload Systemd
+    |--------------------------------------------------------------------------
+    |
+    | This value determines whether to reload systemd after installing a service.
+    | The default value is true, which means that systemd will be reloaded after installation.
+    |
+    */
+
+    'reload_systemd' => env('PODMAN_RELOAD_SYSTEMD', true),
 ];

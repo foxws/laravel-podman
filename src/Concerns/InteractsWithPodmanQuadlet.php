@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Foxws\Podman\Concerns;
 
+use Composer\InstalledVersions;
 use Foxws\Podman\Enums\PodmanService;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
@@ -27,9 +28,15 @@ trait InteractsWithPodmanQuadlet
             $command[] = '--replace';
         }
 
-        $command[] = "{$service}.quadlets";
+        $command[] = "{$this->getPodmanQuadletVendorPath()}/quadlets/{$service}.quadlets";
+        $command[] = $this->getPodmanQuadletPath();
 
         return new Process($command);
+    }
+
+    protected function getPodmanQuadletVendorPath(): string
+    {
+        return rtrim(InstalledVersions::getInstallPath("foxws/laravel-podman"), "/");
     }
 
     protected function getPodmanQuadletPath(): string

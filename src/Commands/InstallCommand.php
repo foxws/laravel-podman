@@ -8,6 +8,7 @@ use Foxws\Podman\Concerns\InteractsWithPodmanQuadlet;
 use Illuminate\Console\Command;
 use Symfony\Component\Console\Attribute\AsCommand;
 
+use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\select;
 use function Laravel\Prompts\text;
@@ -37,11 +38,19 @@ class InstallCommand extends Command
             required: true,
         );
 
-        $this->installPodmanQuadlet(
+        $process = $this->installPodmanQuadlet(
             application: $application,
             service: $service,
             replace: $this->option('replace'),
         );
+
+        $process->run();
+
+        if (! $process->isSuccessful()) {
+            error($process->getErrorOutput());
+
+            return self::FAILURE;
+        }
 
         info("Service {$service} installed for application {$application}");
 

@@ -63,6 +63,31 @@ trait InteractsWithPodmanQuadlet
         return new Process($command);
     }
 
+    protected function listPodmanQuadlet(
+        ?string $filter = null,
+        ?string $format = null,
+        ?bool $noheading = null,
+    ): Process
+    {
+        $command = ['podman', 'quadlet', 'list'];
+
+        if ($filter) {
+            $command[] = '--filter';
+            $command[] = $filter;
+        }
+
+        if ($format) {
+            $command[] = '--format';
+            $command[] = $format;
+        }
+
+        if ($noheading) {
+            $command[] = '--noheading';
+        }
+
+        return new Process($command);
+    }
+
     protected function uninstallPodmanQuadlet(
         string $application,
         ?bool $force = null,

@@ -173,8 +173,13 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletServicesPath(): string
     {
-        return Config::get('podman.quadlet_services_path')
-            ?: "{$this->getPodmanQuadletVendorPath()}/quadlets";
+        $path = Config::get('podman.quadlet_services_path');
+
+        if ($path && File::isDirectory($path)) {
+            return $path;
+        }
+
+        return "{$this->getPodmanQuadletVendorPath()}/quadlets";
     }
 
     protected function getPodmanQuadletPrefix(): string

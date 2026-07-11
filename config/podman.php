@@ -11,7 +11,7 @@ return [
     |
     */
 
-    'quadlet_services_path' => env('PODMAN_QUADLET_SERVICE_PATH'),
+    'quadlet_services_path' => env('PODMAN_QUADLET_SERVICE_PATH', 'storage/app/quadlets'),
 
     /*
     |--------------------------------------------------------------------------

@@ -20,6 +20,13 @@ it('uses the configured services path when set', function () {
     File::deleteDirectory($path);
 });
 
+it('falls back to the vendor quadlets directory when the configured path does not exist', function () {
+    config(['podman.quadlet_services_path' => sys_get_temp_dir().'/podman-quadlets-missing-'.uniqid()]);
+
+    expect($this->getPodmanQuadletServicesPath())
+        ->toBe("{$this->getPodmanQuadletVendorPath()}/quadlets");
+});
+
 it('lists the available services discovered in the services path', function () {
     $path = $this->makeQuadletServicesPath(['pgsql', 'mariadb']);
     File::put("{$path}/README.md", 'not a service');

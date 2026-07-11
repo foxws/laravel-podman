@@ -1,14 +1,14 @@
-# FileName=laravel-pgsql
+# FileName=stub-pgsql
 [Unit]
 Description=PostgreSQL container
 
 [Container]
 Image=docker.io/library/postgres:latest
 AutoUpdate=registry
-EnvironmentFile=./%n/laravel.env
+EnvironmentFile=./%n/stub.env
 ShmSize=512m
-Volume=laravel-pgsql:/var/lib/postgresql:rw,Z,U
-Network=laravel.network
+Volume=stub-pgsql:/var/lib/postgresql:rw,Z,U
+Network=stub.network
 ExposeHostPort=5432
 
 [Service]
@@ -17,6 +17,11 @@ RestartSec=5
 TimeoutStartSec=120
 TimeoutStopSec=60
 ---
-# FileName=laravel-pgsql-volume
+# FileName=stub-pgsql-volume
 [Volume]
-Label=laravel-pgsql
+Label=stub-pgsql
+# FileName=stub-pgsql-config
+PGPASSWORD=password
+POSTGRES_DB=stub
+POSTGRES_USER=user
+POSTGRES_PASSWORD=password

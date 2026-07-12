@@ -281,7 +281,7 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletPrefix(): string
     {
-        return Config::string('podman.quadlet_prefix');
+        return Str::kebab(Config::string('podman.quadlet_prefix'));
     }
 
     protected function shouldReloadSystemd(): bool

@@ -48,7 +48,7 @@ return [
     |
     */
 
-    'quadlet_prefix' => env('PODMAN_QUADLET_PREFIX', 'laravel'),
+    'quadlet_prefix' => env('PODMAN_QUADLET_PREFIX', env('APP_NAME', 'laravel')),
 
     /*
     |--------------------------------------------------------------------------

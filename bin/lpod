@@ -35,9 +35,9 @@ function display_help {
     echo "${YELLOW}Usage:${NC}" >&2
     echo "  lpod COMMAND [options] [arguments]"
     echo
-    echo "Unknown commands are passed to the docker-compose binary."
+    echo "Unknown commands are passed to the podman binary."
     echo
-    echo "${YELLOW}docker-compose Commands:${NC}"
+    echo "${YELLOW}Podman Commands:${NC}"
     echo "  ${GREEN}lpod up${NC}        Start the application"
     echo "  ${GREEN}lpod up -d${NC}     Start the application in the background"
     echo "  ${GREEN}lpod stop${NC}      Stop the application"
@@ -334,8 +334,8 @@ elif [ "$1" == "run" ]; then
         lpod_is_not_running
     fi
 
-# Proxy docker-compose commands to the docker-compose binary on the application container...
-elif [ "$1" == "docker-compose" ]; then
+# Proxy podman commands to the podman binary on the application container...
+elif [ "$1" == "podman" ]; then
     shift 1
 
     if [ "$EXEC" == "yes" ]; then

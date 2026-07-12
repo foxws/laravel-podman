@@ -6,12 +6,12 @@ return [
     | Podman Service Path
     |--------------------------------------------------------------------------
     |
-    | This value is the path where Podman quadlet service files are placed.
-    | The default value is the vendor service path, which can be overruled when needed.
+    | This value is the path where Podman quadlet quadlet files are placed.
+    | The default value is the vendor quadlet path, which can be overruled when needed.
     |
     */
 
-    'service_path' => env('PODMAN_SERVICE_PATH', 'services'),
+    'quadlet_path' => env('PODMAN_QUADLET_PATH', 'quadlets'),
 
     /*
     |--------------------------------------------------------------------------
@@ -23,7 +23,7 @@ return [
     |
     */
 
-    'service_prefix' => env('PODMAN_SERVICE_PREFIX', env('APP_NAME', 'laravel')),
+    'quadlet_prefix' => env('PODMAN_QUADLET_PREFIX', env('APP_NAME', 'laravel')),
 
     /*
     |--------------------------------------------------------------------------
@@ -36,9 +36,9 @@ return [
     |
     */
 
-    'service_uid' => env('PODMAN_SERVICE_UID', null),
+    'quadlet_uid' => env('PODMAN_QUADLET_UID', null),
 
-    'service_gid' => env('PODMAN_SERVICE_GID', null),
+    'quadlet_gid' => env('PODMAN_QUADLET_GID', null),
 
     /*
     |--------------------------------------------------------------------------
@@ -97,7 +97,7 @@ return [
     | Reload Systemd
     |--------------------------------------------------------------------------
     |
-    | This value determines whether to reload systemd after installing a service.
+    | This value determines whether to reload systemd after installing a quadlet.
     | The default value is true, which means that systemd will be reloaded after installation.
     |
     */

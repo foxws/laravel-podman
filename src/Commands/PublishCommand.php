@@ -35,12 +35,7 @@ class PublishCommand extends Command
             return self::FAILURE;
         }
 
-        if (! $this->publishPodmanQuadletProxy(force: $this->option('force'))) {
-            return self::FAILURE;
-        }
-
         info("Runtime {$runtime} published to {$this->getPodmanQuadletContainerPublishPath()}");
-        info("Proxy configuration published to {$this->getPodmanQuadletProxyPublishPath()}");
 
         return self::SUCCESS;
     }

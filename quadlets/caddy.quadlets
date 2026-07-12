@@ -23,11 +23,11 @@ TimeoutStopSec=60
 [Install]
 WantedBy=default.target
 ---
-# FileName={{proxy}}-config-storage
+# FileName={{proxy}}-config
 [Volume]
 Label={{proxy}}-config
 ---
-# FileName={{proxy}}-data-storage
+# FileName={{proxy}}-data
 [Volume]
 Label={{proxy}}-data
 ---

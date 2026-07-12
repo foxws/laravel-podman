@@ -1,4 +1,4 @@
-# FileName={{application}}-cache-storage
+# FileName={{application}}-cache
 [Volume]
 Label={{application}}-cache
 ---

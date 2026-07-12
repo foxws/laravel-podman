@@ -20,6 +20,6 @@ RestartSec=5
 TimeoutStartSec=120
 TimeoutStopSec=60
 ---
-# FileName={{application}}-mailpit-storage
+# FileName={{application}}-mailpit
 [Volume]
 Label={{application}}-mailpit

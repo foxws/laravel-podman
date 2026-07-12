@@ -20,6 +20,6 @@ RestartSec=5
 TimeoutStartSec=120
 TimeoutStopSec=60
 ---
-# FileName={{application}}-pgsql-storage
+# FileName={{application}}-pgsql
 [Volume]
 Label={{application}}-pgsql

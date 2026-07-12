@@ -35,7 +35,7 @@ it('accepts the runtime name as an argument, skipping the prompt', function () {
 });
 
 it('refuses to overwrite an existing runtimes directory without the force option', function () {
-    File::ensureDirectoryExists($this->runtimesPath);
+    File::ensureDirectoryExists("{$this->runtimesPath}/frankenphp-octane");
     File::put("{$this->runtimesPath}/frankenphp-octane/Containerfile", 'existing');
 
     $this->artisan('podman:publish')
@@ -46,7 +46,7 @@ it('refuses to overwrite an existing runtimes directory without the force option
 });
 
 it('overwrites existing files when the force option is passed', function () {
-    File::ensureDirectoryExists($this->runtimesPath);
+    File::ensureDirectoryExists("{$this->runtimesPath}/frankenphp-octane");
     File::put("{$this->runtimesPath}/frankenphp-octane/Containerfile", 'existing');
 
     $this->artisan('podman:publish', ['--force' => true])

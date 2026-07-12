@@ -63,16 +63,28 @@ it('falls back to the vendor runtimes directory when the configured runtimes pat
     expect($this->path->runtimesPath())->toBe("{$this->path->vendorPath()}/runtimes");
 });
 
-it('resolves the configured runtime path', function () {
+it('resolves a relative runtime path against the base path', function () {
     config(['podman.runtime_path' => 'runtimes']);
 
-    expect($this->path->runtimePath())->toBe('runtimes');
+    expect($this->path->runtimePath())->toBe(base_path('runtimes'));
 });
 
-it('resolves the configured config path', function () {
+it('keeps an absolute runtime path as-is', function () {
+    config(['podman.runtime_path' => '/srv/runtimes']);
+
+    expect($this->path->runtimePath())->toBe('/srv/runtimes');
+});
+
+it('resolves a relative config path against the base path', function () {
     config(['podman.config_path' => 'runtimes/config']);
 
-    expect($this->path->configPath())->toBe('runtimes/config');
+    expect($this->path->configPath())->toBe(base_path('runtimes/config'));
+});
+
+it('keeps an absolute config path as-is', function () {
+    config(['podman.config_path' => '/srv/runtimes/config']);
+
+    expect($this->path->configPath())->toBe('/srv/runtimes/config');
 });
 
 it('resolves the domain from the app url', function () {

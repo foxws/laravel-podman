@@ -56,7 +56,7 @@ it('replaces the base-path, config-path and runtime-path placeholders', function
 
     $this->file->prepareSource($source, $target);
 
-    expect(File::get($target))->toBe('SetWorkingDirectory='.base_path()."\nRuntime=runtimes\nConfig=runtimes/config\n");
+    expect(File::get($target))->toBe('SetWorkingDirectory='.base_path()."\nRuntime=".base_path('runtimes')."\nConfig=".base_path('runtimes/config')."\n");
 
     File::delete($source);
     File::delete($target);

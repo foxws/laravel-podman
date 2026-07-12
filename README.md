@@ -55,7 +55,21 @@ return [
 
 The package discovers its Quadlet service definitions (`*.quadlets` files) and its container runtimes (folders containing a `Containerfile`) on disk, and exposes them through the commands below. Every command that needs a service or runtime name will prompt you to select one interactively when it's omitted.
 
-### `podman:install`
+
+### Publish Container Runtime
+
+Publishes a container runtime (e.g. the bundled `frankenphp-octane` runtime) so it can be customized before you build your application image.
+
+> **Note:** This is a requirement for `podman:install` to work, since the runtime must be present on disk before Podman can build the image.
+
+```bash
+php artisan podman:publish frankenphp-octane
+
+# Overwrite files that were already published
+php artisan podman:publish frankenphp-octane --force
+```
+
+### Install Services
 
 Installs one or more Quadlet services so systemd can manage them. Omitting the service name(s) prompts you to select one or more services from a checklist. If installing multiple services in one run, a failure on one service doesn't stop the rest — failures are collected and reported in a summary at the end, and the command exits non-zero if any service failed.
 
@@ -75,7 +89,7 @@ php artisan podman:install pgsql --replace
 php artisan podman:install pgsql --secrets
 ```
 
-### `podman:secret`
+### Set Secrets
 
 Prompts for and sets the Podman secrets used by a service, without installing it.
 
@@ -88,7 +102,7 @@ php artisan podman:secret pgsql --replace
 
 Secrets are read from the `Secret=` directives in a service's `.quadlets` file. `type=env` secrets prompt for a value directly, while `type=mount` secrets prompt for a file path (defaulting to your project's `.env`) whose contents are stored as the secret.
 
-### `podman:list`
+### List Services
 
 Lists the Quadlets configured for the current user.
 
@@ -106,7 +120,7 @@ Prints the generated systemd unit for a service, as Podman would install it.
 php artisan podman:print pgsql
 ```
 
-### `podman:remove`
+### Remove Services
 
 Removes an installed Quadlet service.
 
@@ -117,7 +131,9 @@ php artisan podman:remove pgsql
 php artisan podman:remove pgsql --force --ignore
 ```
 
-### `podman:uninstall`
+### Uninstall Application
+
+> **WARNING**: This command is destructive and will remove all of the services installed for the application, including any data stored in volumes. Use with caution.
 
 Removes an application and all of its installed services in one go.
 
@@ -125,17 +141,6 @@ Removes an application and all of its installed services in one go.
 php artisan podman:uninstall my-app
 
 php artisan podman:uninstall my-app --force
-```
-
-### `podman:publish`
-
-Publishes a container runtime (e.g. the bundled `frankenphp-octane` runtime) so it can be customized before you build your application image.
-
-```bash
-php artisan podman:publish frankenphp-octane
-
-# Overwrite files that were already published
-php artisan podman:publish frankenphp-octane --force
 ```
 
 ## The `lpod` utility

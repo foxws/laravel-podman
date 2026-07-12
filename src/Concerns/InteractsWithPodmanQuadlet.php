@@ -14,6 +14,7 @@ use Symfony\Component\Process\Process;
 
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\password;
+use function Laravel\Prompts\text;
 
 trait InteractsWithPodmanQuadlet
 {
@@ -132,11 +133,27 @@ trait InteractsWithPodmanQuadlet
 
     protected function promptForPodmanQuadletSecrets(string $service, ?bool $replace = null): bool
     {
-        foreach ($this->getPodmanQuadletSecrets($service) as $secret => $targets) {
-            $value = password(
-                label: "Enter the value for {$secret} (".implode(', ', $targets).')',
-                required: true,
-            );
+        foreach ($this->getPodmanQuadletSecrets($service) as $secret => $definition) {
+            if ($definition['type'] === 'mount') {
+                $path = text(
+                    label: "Enter the file path for {$secret} (".implode(', ', $definition['targets']).')',
+                    default: base_path('.env'),
+                    required: true,
+                );
+
+                if (! File::exists($path)) {
+                    error("The file {$path} does not exist.");
+
+                    return false;
+                }
+
+                $value = File::get($path);
+            } else {
+                $value = password(
+                    label: "Enter the value for {$secret} (".implode(', ', $definition['targets']).')',
+                    required: true,
+                );
+            }
 
             $process = $this->setPodmanSecret(
                 secret: $secret,
@@ -245,6 +262,16 @@ trait InteractsWithPodmanQuadlet
             ->toArray();
     }
 
+    protected function getPodmanQuadletRuntimes(): array
+    {
+        return Collection::make(File::directories("{$this->getPodmanQuadletVendorPath()}/runtimes"))
+            ->map(fn (string $path): string => basename($path))
+            ->sort()
+            ->values()
+            ->mapWithKeys(fn (string $runtime): array => [$runtime => $runtime])
+            ->toArray();
+    }
+
     protected function getPodmanQuadletSecrets(string $service): array
     {
         $source = $this->preparePodmanQuadletSource($service);
@@ -258,11 +285,21 @@ trait InteractsWithPodmanQuadlet
 
             $options = explode(',', Str::after($line, 'Secret='));
             $name = array_shift($options);
+            $type = 'mount';
+            $target = $name;
 
-            $target = Collection::make($options)
-                ->first(fn (string $option): bool => Str::startsWith($option, 'target='));
+            foreach ($options as $option) {
+                if (Str::startsWith($option, 'type=')) {
+                    $type = Str::after($option, 'type=');
+                }
 
-            $secrets[$name][] = $target ? Str::after($target, 'target=') : $name;
+                if (Str::startsWith($option, 'target=')) {
+                    $target = Str::after($option, 'target=');
+                }
+            }
+
+            $secrets[$name]['type'] = $type;
+            $secrets[$name]['targets'][] = $target;
         }
 
         return $secrets;

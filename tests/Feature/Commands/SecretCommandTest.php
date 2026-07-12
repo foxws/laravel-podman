@@ -60,3 +60,31 @@ it('accepts the replace option', function () {
         ->expectsQuestion('Enter the value for laravel-pgsql-db (POSTGRES_DB)', 'myapp')
         ->assertExitCode(0);
 });
+
+it('reads the file at the provided path for a mount-type secret', function () {
+    File::put("{$this->quadletsPath}/pgsql.quadlets", "Secret=laravel-env,target=/config/app.env,mode=0400\n");
+
+    $envPath = sys_get_temp_dir().'/podman-env-'.uniqid();
+    File::put($envPath, "APP_NAME=Test\n");
+
+    $this->useFakePodmanBinary(0);
+
+    $this->artisan('podman:secret')
+        ->expectsQuestion('Select a service to configure', 'pgsql')
+        ->expectsQuestion('Enter the file path for laravel-env (/config/app.env)', $envPath)
+        ->expectsOutputToContain('Secrets for service pgsql have been set.')
+        ->assertExitCode(0);
+
+    File::delete($envPath);
+});
+
+it('reports an error when the provided file path for a mount-type secret does not exist', function () {
+    File::put("{$this->quadletsPath}/pgsql.quadlets", "Secret=laravel-env,target=/config/app.env,mode=0400\n");
+
+    $this->useFakePodmanBinary(0);
+
+    $this->artisan('podman:secret')
+        ->expectsQuestion('Select a service to configure', 'pgsql')
+        ->expectsQuestion('Enter the file path for laravel-env (/config/app.env)', '/nonexistent/.env')
+        ->assertExitCode(1);
+});

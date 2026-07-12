@@ -19,7 +19,7 @@ Image={{application}}.build
 AutoUpdate=local
 UserNS=keep-id
 ShmSize=128m
-Volume={{container-path}}/.env:/config/app.env:ro,z
+Secret={{application}}-env,target=/config/app.env,mode=0400
 Volume={{application}}-cache:/cache:rw,z,U
 Network={{application}}.network
 Network=proxy.network

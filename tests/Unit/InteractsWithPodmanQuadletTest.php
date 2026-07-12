@@ -59,6 +59,12 @@ it('lists the available services discovered in the services path', function () {
     File::deleteDirectory($path);
 });
 
+it('lists the available runtimes discovered in the vendor runtimes directory', function () {
+    expect($this->getPodmanQuadletRuntimes())->toBe([
+        'frankenphp-octane' => 'frankenphp-octane',
+    ]);
+});
+
 it('removes selinux volume flags from quadlet contents', function () {
     $contents = "Volume=stub-pgsql:/var/lib/postgresql:rw,Z,U\nOther=value";
 
@@ -222,8 +228,19 @@ it('discovers the secrets required by a service, grouping shared secrets by targ
     );
 
     expect($this->getPodmanQuadletSecrets('pgsql'))->toBe([
-        'laravel-pgsql-db' => ['POSTGRES_DB'],
-        'laravel-pgsql-password' => ['POSTGRES_PASSWORD', 'PGPASSWORD'],
+        'laravel-pgsql-db' => ['type' => 'env', 'targets' => ['POSTGRES_DB']],
+        'laravel-pgsql-password' => ['type' => 'env', 'targets' => ['POSTGRES_PASSWORD', 'PGPASSWORD']],
+    ]);
+
+    File::deleteDirectory($path);
+});
+
+it('defaults a secret to the mount type when type is not specified', function () {
+    $path = $this->makeQuadletServicesPath(['app']);
+    File::put("{$path}/app.quadlets", "Secret={{application}}-env,target=/config/app.env,mode=0400\n");
+
+    expect($this->getPodmanQuadletSecrets('app'))->toBe([
+        'laravel-env' => ['type' => 'mount', 'targets' => ['/config/app.env']],
     ]);
 
     File::deleteDirectory($path);

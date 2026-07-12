@@ -22,6 +22,7 @@ it('publishes the selected runtime to the runtimes directory, creating it if nee
 
     expect(File::exists("{$this->runtimesPath}/Containerfile"))->toBeTrue()
         ->and(File::exists("{$this->runtimesPath}/entrypoint.sh"))->toBeTrue()
+        ->and(File::exists("{$this->runtimesPath}/start-container.sh"))->toBeTrue()
         ->and(File::exists("{$this->runtimesPath}/php-production.ini"))->toBeTrue()
         ->and(File::exists("{$this->runtimesPath}/php-development.ini"))->toBeTrue();
 });

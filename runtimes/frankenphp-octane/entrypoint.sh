@@ -2,9 +2,6 @@
 set -euo pipefail
 
 APP_COMMAND=${APP_COMMAND:-'/usr/bin/bash'}
-APP_ENV=${APP_ENV:-'production'}
-APP_PORT=${APP_PORT:-80}
-VITE_PORT=${VITE_PORT:-5173}
 
 log() {
     local type="$1"
@@ -12,48 +9,8 @@ log() {
     echo "[$type] $message"
 }
 
-# Set up SQLite database
-if [ ! -f "database/database.sqlite" ]; then
-    log "INFO" "Creating SQLite database..."
-    touch database/database.sqlite
-fi
-
-# Set up environment configuration
-if [ ! -f "/config/app.env" ]; then
-    log "ERROR" "Missing /config/app.env. Provide a Laravel env file mounted at: /config/app.env"
-    exit 1
-fi
-
-log "INFO" "Loading runtime environment configuration from /config/app.env..."
-cp /config/app.env /app/.env
-
-# Ensure APP_KEY is provided in runtime configuration
-if ! grep -q '^APP_KEY=.' /app/.env && [ -z "${APP_KEY:-}" ]; then
-    GENERATED_KEY="$(${FRANKEN_CLI} key:generate --show || true)"
-
-    if [ -n "${GENERATED_KEY}" ]; then
-        log "ERROR" "APP_KEY is missing from runtime configuration. Paste this line into app.env: APP_KEY=${GENERATED_KEY}"
-    else
-        log "ERROR" "APP_KEY is missing from runtime configuration and generation failed."
-    fi
-
-    exit 1
-fi
-
-# Clear any stale caches
-log "INFO" "Clearing stale caches..."
-${FRANKEN_CLI} optimize:clear
-
-# Create storage symlinks
-log "INFO" "Creating storage symlinks..."
-${FRANKEN_CLI} storage:link
-
-# Optimize for production
-if [ "${APP_ENV}" = "production" ]; then
-    # Ensure all caches are warmed up
-    log "INFO" "Optimizing application..."
-    ${FRANKEN_CLI} optimize
-fi
+# Prepare the application (env, database/cache readiness, caches, storage)...
+/usr/local/bin/start-container.sh
 
 log "INFO" "Starting command..."
 exec ${APP_COMMAND}

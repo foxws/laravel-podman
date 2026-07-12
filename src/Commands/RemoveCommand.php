@@ -10,7 +10,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
-use function Laravel\Prompts\select;
+use function Laravel\Prompts\text;
 
 #[AsCommand(name: 'podman:remove')]
 class RemoveCommand extends Command
@@ -26,9 +26,8 @@ class RemoveCommand extends Command
 
     public function handle(): int
     {
-        $service = select(
-            label: 'Select a service to remove',
-            options: $this->getPodmanQuadletServices(),
+        $service = text(
+            label: 'Enter the name of the service to remove',
             required: true,
         );
 

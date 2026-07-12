@@ -1,0 +1,21 @@
+{{site-address}} {
+	import compress
+	reverse_proxy systemd-{{application}}:8000
+}
+
+vite.{{site-address}} {
+	import compress
+	reverse_proxy systemd-{{application}}:5173
+}
+
+ws.{{site-address}} {
+	reverse_proxy systemd-{{application}}-reverb:6001
+}
+
+s3.{{site-address}} {
+	reverse_proxy systemd-{{application}}-rustfs:9000
+}
+
+fs.{{site-address}} {
+	reverse_proxy systemd-{{application}}-rustfs:9001
+}

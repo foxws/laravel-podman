@@ -1,6 +1,6 @@
-# FileName={{application}}-octane
+# FileName={{application}}
 [Build]
-ImageTag=localhost/{{application}}-octane:latest
+ImageTag=localhost/{{application}}:latest
 Target={{app-env}}
 Environment=APP_ENV={{app-env}}
 Environment=UID={{app-uid}}
@@ -8,7 +8,7 @@ Environment=GID={{app-gid}}
 File={{container-path}}/Containerfile
 SetWorkingDirectory={{container-path}}
 ---
-# FileName={{application}}-octane
+# FileName={{application}}
 [Unit]
 Description=Laravel Octane container
 

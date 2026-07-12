@@ -52,16 +52,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Quadlet Site Address
+    |--------------------------------------------------------------------------
+    |
+    | This value is the site address used for the proxy configuration. The
+    | default value is 'laravel.test', which can be overruled when needed.
+    |
+    */
+
+    'quadlet_site_address' => env('PODMAN_QUADLET_SITE_ADDRESS', 'laravel.test'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Quadlet Proxy Path and Prefix
     |--------------------------------------------------------------------------
     |
     | These values determine the path and prefix used for Podman quadlet proxy files.
-    | The default values are 'storage/app/containers' and 'proxy', which can be
+    | The default values are 'runtimes/proxy' and 'proxy', which can be
     | overruled when needed.
     |
     */
 
-    'quadlet_proxy_path' => env('PODMAN_QUADLET_PROXY_PATH', 'storage/app/containers'),
+    'quadlet_proxy_path' => env('PODMAN_QUADLET_PROXY_PATH', 'runtimes/proxy'),
 
     'quadlet_proxy_prefix' => env('PODMAN_QUADLET_PROXY_PREFIX', 'proxy'),
 

@@ -173,11 +173,9 @@ trait InteractsWithPodmanQuadlet
         return true;
     }
 
-    protected function preparePodmanQuadletSource(string $service): string
+    protected function getPodmanQuadletSubstitutions(): array
     {
-        $source = "{$this->getPodmanQuadletServicesPath()}/{$service}.quadlets";
-
-        $contents = strtr(File::get($source), [
+        return [
             '{{app-env}}' => Config::string('app.env'),
             '{{app-uid}}' => (string) $this->getPodmanQuadletUid(),
             '{{app-gid}}' => (string) $this->getPodmanQuadletGid(),
@@ -186,7 +184,69 @@ trait InteractsWithPodmanQuadlet
             '{{container-path}}' => $this->getPodmanQuadletContainerPath(),
             '{{proxy}}' => $this->getPodmanQuadletProxyPrefix(),
             '{{proxy-path}}' => $this->getPodmanQuadletProxyPath(),
-        ]);
+            '{{site-address}}' => $this->getPodmanQuadletSiteAddress(),
+        ];
+    }
+
+    protected function publishPodmanQuadletDirectory(string $source, string $target): void
+    {
+        File::ensureDirectoryExists($target);
+
+        foreach (File::allFiles($source) as $file) {
+            $destination = "{$target}/{$file->getRelativePathname()}";
+
+            File::ensureDirectoryExists(dirname($destination));
+
+            File::put($destination, strtr(File::get($file->getPathname()), $this->getPodmanQuadletSubstitutions()));
+        }
+    }
+
+    protected function publishPodmanQuadletRuntime(string $runtime, ?bool $force = null): bool
+    {
+        $source = "{$this->getPodmanQuadletVendorPath()}/runtimes/{$runtime}";
+        $target = $this->getPodmanQuadletContainerPublishPath();
+
+        if (File::exists("{$target}/Containerfile") && ! $force) {
+            error("A Containerfile already exists at {$target}. Use --force to overwrite.");
+
+            return false;
+        }
+
+        File::ensureDirectoryExists("{$target}/runtimes");
+        File::copy("{$source}/Containerfile", "{$target}/Containerfile");
+
+        foreach (File::files($source) as $file) {
+            if ($file->getFilename() === 'Containerfile') {
+                continue;
+            }
+
+            File::copy($file->getPathname(), "{$target}/runtimes/{$file->getFilename()}");
+        }
+
+        return true;
+    }
+
+    protected function publishPodmanQuadletProxy(?bool $force = null): bool
+    {
+        $source = $this->getPodmanQuadletProxyVendorPath();
+        $target = $this->getPodmanQuadletProxyPublishPath();
+
+        if (File::exists("{$target}/Caddyfile") && ! $force) {
+            error("A Caddyfile already exists at {$target}. Use --force to overwrite.");
+
+            return false;
+        }
+
+        $this->publishPodmanQuadletDirectory($source, $target);
+
+        return true;
+    }
+
+    protected function preparePodmanQuadletSource(string $service): string
+    {
+        $source = "{$this->getPodmanQuadletServicesPath()}/{$service}.quadlets";
+
+        $contents = strtr(File::get($source), $this->getPodmanQuadletSubstitutions());
 
         if (! $this->shouldUseSelinuxVolumeMapping()) {
             $contents = $this->removeSelinuxVolumeFlags($contents);
@@ -267,9 +327,29 @@ trait InteractsWithPodmanQuadlet
         return base_path();
     }
 
+    protected function getPodmanQuadletContainerPublishPath(): string
+    {
+        return Config::get('podman.quadlet_container_path') ?: base_path();
+    }
+
+    protected function getPodmanQuadletProxyPublishPath(): string
+    {
+        return Config::get('podman.quadlet_proxy_path') ?: base_path();
+    }
+
     protected function getPodmanQuadletProxyPrefix(): string
     {
         return Str::kebab(Config::string('podman.quadlet_proxy_prefix'));
+    }
+
+    protected function getPodmanQuadletSiteAddress(): string
+    {
+        return Config::string('podman.quadlet_site_address');
+    }
+
+    protected function getPodmanQuadletProxyVendorPath(): string
+    {
+        return "{$this->getPodmanQuadletVendorPath()}/runtimes/proxy";
     }
 
     protected function getPodmanQuadletServices(): array
@@ -287,6 +367,7 @@ trait InteractsWithPodmanQuadlet
     {
         return Collection::make(File::directories("{$this->getPodmanQuadletVendorPath()}/runtimes"))
             ->map(fn (string $path): string => basename($path))
+            ->reject(fn (string $runtime): bool => $runtime === 'proxy')
             ->sort()
             ->values()
             ->mapWithKeys(fn (string $runtime): array => [$runtime => $runtime])

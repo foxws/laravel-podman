@@ -1,0 +1,12 @@
+# Published by `podman:publish` — customize this for your application.
+#
+# Caddy automatically provisions and renews TLS certificates for any real
+# domain name placed in the site address below. See:
+# https://caddyserver.com/docs/automatic-https
+#
+# The site address below is resolved from the "quadlet_site_address" config
+# value (default "laravel.test") when this file is published.
+
+{{site-address}} {
+	reverse_proxy systemd-{{application}}:8000
+}

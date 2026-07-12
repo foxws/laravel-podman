@@ -69,8 +69,8 @@ it('uses the configured proxy prefix when set', function () {
     expect($this->getPodmanQuadletProxyPrefix())->toBe('edge-proxy');
 });
 
-it('defaults the proxy path to the project base path', function () {
-    expect($this->getPodmanQuadletProxyPath())->toBe(base_path());
+it('defaults the proxy path to the "runtimes/proxy" directory published alongside the app', function () {
+    expect($this->getPodmanQuadletProxyPath())->toBe('runtimes/proxy');
 });
 
 it('uses the configured proxy path when it exists', function () {
@@ -87,6 +87,32 @@ it('falls back to the project base path when the configured proxy path does not 
     config(['podman.quadlet_proxy_path' => sys_get_temp_dir().'/podman-proxy-missing-'.uniqid()]);
 
     expect($this->getPodmanQuadletProxyPath())->toBe(base_path());
+});
+
+it('resolves the configured container publish path even when it does not yet exist', function () {
+    $path = sys_get_temp_dir().'/podman-container-publish-missing-'.uniqid();
+    config(['podman.quadlet_container_path' => $path]);
+
+    expect($this->getPodmanQuadletContainerPublishPath())->toBe($path);
+});
+
+it('falls back to the project base path when no container publish path is configured', function () {
+    config(['podman.quadlet_container_path' => null]);
+
+    expect($this->getPodmanQuadletContainerPublishPath())->toBe(base_path());
+});
+
+it('resolves the configured proxy publish path even when it does not yet exist', function () {
+    $path = sys_get_temp_dir().'/podman-proxy-publish-missing-'.uniqid();
+    config(['podman.quadlet_proxy_path' => $path]);
+
+    expect($this->getPodmanQuadletProxyPublishPath())->toBe($path);
+});
+
+it('falls back to the project base path when no proxy publish path is configured', function () {
+    config(['podman.quadlet_proxy_path' => null]);
+
+    expect($this->getPodmanQuadletProxyPublishPath())->toBe(base_path());
 });
 
 it('lists the available services discovered in the services path', function () {
@@ -178,6 +204,47 @@ it('replaces the proxy and proxy-path placeholders', function () {
     File::delete($source);
     File::deleteDirectory($path);
     File::deleteDirectory($proxyPath);
+});
+
+it('defaults the site address to "laravel.test"', function () {
+    expect($this->getPodmanQuadletSiteAddress())->toBe('laravel.test');
+});
+
+it('uses the configured site address when set', function () {
+    config(['podman.quadlet_site_address' => 'example.test']);
+
+    expect($this->getPodmanQuadletSiteAddress())->toBe('example.test');
+});
+
+it('replaces the site-address placeholder', function () {
+    $path = $this->makeQuadletServicesPath();
+    config(['podman.quadlet_site_address' => 'example.test']);
+    File::put("{$path}/app.quadlets", "{{site-address}} {\n\treverse_proxy systemd-{{application}}:8000\n}\n");
+
+    $source = $this->preparePodmanQuadletSource('app');
+
+    expect(File::get($source))->toBe("example.test {\n\treverse_proxy systemd-laravel:8000\n}\n");
+
+    File::delete($source);
+    File::deleteDirectory($path);
+});
+
+it('publishes a directory recursively while substituting placeholders in every file', function () {
+    config(['podman.quadlet_prefix' => 'acme']);
+
+    $source = sys_get_temp_dir().'/podman-publish-source-'.uniqid();
+    $target = sys_get_temp_dir().'/podman-publish-target-'.uniqid();
+    File::ensureDirectoryExists("{$source}/sites");
+    File::put("{$source}/Caddyfile", "import sites/*\n");
+    File::put("{$source}/sites/app.Caddyfile", "reverse_proxy systemd-{{application}}:8000\n");
+
+    $this->publishPodmanQuadletDirectory($source, $target);
+
+    expect(File::get("{$target}/Caddyfile"))->toBe("import sites/*\n")
+        ->and(File::get("{$target}/sites/app.Caddyfile"))->toBe("reverse_proxy systemd-acme:8000\n");
+
+    File::deleteDirectory($source);
+    File::deleteDirectory($target);
 });
 
 it('replaces the app-env, app-uid and app-gid placeholders', function () {

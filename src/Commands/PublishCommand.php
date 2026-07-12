@@ -6,10 +6,8 @@ namespace Foxws\Podman\Commands;
 
 use Foxws\Podman\Concerns\InteractsWithPodmanQuadlet;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\File;
 use Symfony\Component\Console\Attribute\AsCommand;
 
-use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\select;
 
@@ -33,27 +31,16 @@ class PublishCommand extends Command
             required: true,
         );
 
-        $source = "{$this->getPodmanQuadletVendorPath()}/runtimes/{$runtime}";
-        $target = $this->getPodmanQuadletContainerPath();
-
-        if (File::exists("{$target}/Containerfile") && ! $this->option('force')) {
-            error("A Containerfile already exists at {$target}. Use --force to overwrite.");
-
+        if (! $this->publishPodmanQuadletRuntime($runtime, force: $this->option('force'))) {
             return self::FAILURE;
         }
 
-        File::ensureDirectoryExists("{$target}/runtimes");
-        File::copy("{$source}/Containerfile", "{$target}/Containerfile");
-
-        foreach (File::files($source) as $file) {
-            if ($file->getFilename() === 'Containerfile') {
-                continue;
-            }
-
-            File::copy($file->getPathname(), "{$target}/runtimes/{$file->getFilename()}");
+        if (! $this->publishPodmanQuadletProxy(force: $this->option('force'))) {
+            return self::FAILURE;
         }
 
-        info("Runtime {$runtime} published to {$target}");
+        info("Runtime {$runtime} published to {$this->getPodmanQuadletContainerPublishPath()}");
+        info("Proxy configuration published to {$this->getPodmanQuadletProxyPublishPath()}");
 
         return self::SUCCESS;
     }

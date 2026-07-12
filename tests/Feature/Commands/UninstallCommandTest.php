@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-it('uninstalls the given application', function () {
+it('prompts for the application name when no argument is given', function () {
     $this->useFakePodmanBinary(0);
 
     $this->artisan('podman:uninstall')
@@ -11,18 +11,24 @@ it('uninstalls the given application', function () {
         ->assertExitCode(0);
 });
 
+it('accepts the application name as an argument, skipping the prompt', function () {
+    $this->useFakePodmanBinary(0);
+
+    $this->artisan('podman:uninstall', ['application' => 'my-app'])
+        ->expectsOutputToContain("Application 'my-app' has been uninstalled successfully.")
+        ->assertExitCode(0);
+});
+
 it('accepts the force option', function () {
     $this->useFakePodmanBinary(0);
 
-    $this->artisan('podman:uninstall', ['--force' => true])
-        ->expectsQuestion('Enter the application name to remove', 'my-app')
+    $this->artisan('podman:uninstall', ['application' => 'my-app', '--force' => true])
         ->assertExitCode(0);
 });
 
 it('reports an error when the uninstall process fails', function () {
     $this->useFakePodmanBinary(1);
 
-    $this->artisan('podman:uninstall')
-        ->expectsQuestion('Enter the application name to remove', 'my-app')
+    $this->artisan('podman:uninstall', ['application' => 'my-app'])
         ->assertExitCode(1);
 });

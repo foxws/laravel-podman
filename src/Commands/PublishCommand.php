@@ -19,6 +19,7 @@ class PublishCommand extends Command
     use InteractsWithPodmanQuadlet;
 
     public $signature = 'podman:publish
+        {runtime? : The name of the runtime to publish}
         {--force : Overwrite existing files}
     ';
 
@@ -26,7 +27,7 @@ class PublishCommand extends Command
 
     public function handle(): int
     {
-        $runtime = select(
+        $runtime = $this->argument('runtime') ?? select(
             label: 'Select a runtime to publish',
             options: $this->getPodmanQuadletRuntimes(),
             required: true,

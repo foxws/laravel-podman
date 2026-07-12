@@ -30,6 +30,17 @@ it('sets the secrets used by a service', function () {
         ->assertExitCode(0);
 });
 
+it('accepts the service name as an argument, skipping the prompt', function () {
+    File::put("{$this->quadletsPath}/pgsql.quadlets", "Secret=laravel-pgsql-db,type=env,target=POSTGRES_DB\n");
+
+    $this->useFakePodmanBinary(0);
+
+    $this->artisan('podman:secret', ['service' => 'pgsql'])
+        ->expectsQuestion('Enter the value for laravel-pgsql-db (POSTGRES_DB)', 'myapp')
+        ->expectsOutputToContain('Secrets for service pgsql have been set.')
+        ->assertExitCode(0);
+});
+
 it('reports when the selected service does not use any secrets', function () {
     $this->useFakePodmanBinary(0);
 

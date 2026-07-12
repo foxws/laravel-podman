@@ -18,6 +18,7 @@ class RemoveCommand extends Command
     use InteractsWithPodmanQuadlet;
 
     public $signature = 'podman:remove
+        {service? : The name of the service to remove}
         {--force : Force removal of running services}
         {--ignore : Ignore missing services and continue with removal}
     ';
@@ -26,7 +27,7 @@ class RemoveCommand extends Command
 
     public function handle(): int
     {
-        $service = text(
+        $service = $this->argument('service') ?? text(
             label: 'Enter the name of the service to remove',
             required: true,
         );

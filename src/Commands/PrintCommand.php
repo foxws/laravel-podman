@@ -9,22 +9,21 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 use function Laravel\Prompts\error;
-use function Laravel\Prompts\select;
+use function Laravel\Prompts\text;
 
 #[AsCommand(name: 'podman:print')]
 class PrintCommand extends Command
 {
     use InteractsWithPodmanQuadlet;
 
-    public $signature = 'podman:print';
+    public $signature = 'podman:print {service? : The name of the service to print}';
 
     public $description = 'List all Quadlets configured for the current user.';
 
     public function handle(): int
     {
-        $service = select(
-            label: 'Select a service to print',
-            options: $this->getPodmanQuadletServices(),
+        $service = $this->argument('service') ?? text(
+            label: 'Enter the name of the service to print',
             required: true,
         );
 
@@ -39,6 +38,8 @@ class PrintCommand extends Command
 
             return self::FAILURE;
         }
+
+        $this->line($process->getOutput());
 
         return self::SUCCESS;
     }

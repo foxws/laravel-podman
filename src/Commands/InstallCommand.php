@@ -11,7 +11,6 @@ use Symfony\Component\Console\Attribute\AsCommand;
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\select;
-use function Laravel\Prompts\text;
 
 #[AsCommand(name: 'podman:install')]
 class InstallCommand extends Command
@@ -19,6 +18,8 @@ class InstallCommand extends Command
     use InteractsWithPodmanQuadlet;
 
     public $signature = 'podman:install
+        {service? : The name of the service to install}
+        {--application= : The name of the application, installed in its own subdirectory (requires Podman 6+)}
         {--replace : Replace the service if it already exists}
         {--secrets : Also prompt for and set the secrets required by the service}
     ';
@@ -27,12 +28,7 @@ class InstallCommand extends Command
 
     public function handle(): int
     {
-        $application = text(
-            label: 'Enter the application name',
-            placeholder: 'my-app',
-        );
-
-        $service = select(
+        $service = $this->argument('service') ?? select(
             label: 'Select a service to install',
             options: $this->getPodmanQuadletServices(),
             required: true,
@@ -43,8 +39,8 @@ class InstallCommand extends Command
         }
 
         $process = $this->installPodmanQuadlet(
-            application: $application,
             service: $service,
+            application: $this->option('application'),
             replace: $this->option('replace'),
         );
 
@@ -56,7 +52,7 @@ class InstallCommand extends Command
             return self::FAILURE;
         }
 
-        info("Service {$service} installed for application {$application}");
+        info("Service {$service} installed successfully.");
 
         return self::SUCCESS;
     }

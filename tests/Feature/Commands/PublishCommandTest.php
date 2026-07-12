@@ -27,6 +27,14 @@ it('publishes the selected runtime to the container path', function () {
         ->and(File::exists("{$this->containerPath}/runtimes/Containerfile"))->toBeFalse();
 });
 
+it('accepts the runtime name as an argument, skipping the prompt', function () {
+    $this->artisan('podman:publish', ['runtime' => 'frankenphp-octane'])
+        ->expectsOutputToContain("Runtime frankenphp-octane published to {$this->containerPath}")
+        ->assertExitCode(0);
+
+    expect(File::exists("{$this->containerPath}/Containerfile"))->toBeTrue();
+});
+
 it('refuses to overwrite an existing Containerfile without the force option', function () {
     File::put("{$this->containerPath}/Containerfile", 'existing');
 

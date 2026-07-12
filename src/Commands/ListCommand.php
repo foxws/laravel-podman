@@ -39,6 +39,8 @@ class ListCommand extends Command
             return self::FAILURE;
         }
 
+        $this->line($process->getOutput());
+
         return self::SUCCESS;
     }
 }

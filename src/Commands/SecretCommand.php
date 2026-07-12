@@ -17,6 +17,7 @@ class SecretCommand extends Command
     use InteractsWithPodmanQuadlet;
 
     public $signature = 'podman:secret
+        {service? : The name of the service to configure}
         {--replace : Replace the secret if it already exists}
     ';
 
@@ -24,7 +25,7 @@ class SecretCommand extends Command
 
     public function handle(): int
     {
-        $service = select(
+        $service = $this->argument('service') ?? select(
             label: 'Select a service to configure',
             options: $this->getPodmanQuadletServices(),
             required: true,

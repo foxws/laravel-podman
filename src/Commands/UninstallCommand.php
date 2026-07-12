@@ -12,22 +12,23 @@ use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
 use function Laravel\Prompts\text;
 
-#[AsCommand(name: "podman:uninstall")]
+#[AsCommand(name: 'podman:uninstall')]
 class UninstallCommand extends Command
 {
     use InteractsWithPodmanQuadlet;
 
     public $signature = 'podman:uninstall
+        {application? : The name of the application to uninstall}
         {--force : Force removal of running services}
         {--reload-systemd : Reload systemd after removal}
     ';
 
-    public $description = "Uninstall a Podman Quadlet application and remove its service.";
+    public $description = 'Uninstall a Podman Quadlet application and remove its service.';
 
     public function handle(): int
     {
-        $application = text(
-            label: "Enter the application name to remove",
+        $application = $this->argument('application') ?? text(
+            label: 'Enter the application name to remove',
             required: true,
         );
 
@@ -38,7 +39,7 @@ class UninstallCommand extends Command
 
         $process->run();
 
-        if (!$process->isSuccessful()) {
+        if (! $process->isSuccessful()) {
             error($process->getErrorOutput());
 
             return self::FAILURE;

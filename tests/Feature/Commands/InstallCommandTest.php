@@ -12,13 +12,20 @@ afterEach(function () {
     File::deleteDirectory($this->quadletsPath);
 });
 
-it('installs a service for an application', function () {
+it('prompts for the service when no argument is given', function () {
     $this->useFakePodmanBinary(0);
 
     $this->artisan('podman:install')
-        ->expectsQuestion('Enter the application name', 'my-app')
         ->expectsQuestion('Select a service to install', 'pgsql')
-        ->expectsOutputToContain('Service pgsql installed for application my-app')
+        ->expectsOutputToContain('Service pgsql installed successfully.')
+        ->assertExitCode(0);
+});
+
+it('accepts the service as an argument, skipping the prompt', function () {
+    $this->useFakePodmanBinary(0);
+
+    $this->artisan('podman:install', ['service' => 'pgsql'])
+        ->expectsOutputToContain('Service pgsql installed successfully.')
         ->assertExitCode(0);
 });
 
@@ -26,7 +33,6 @@ it('reports an error when the install process fails', function () {
     $this->useFakePodmanBinary(1);
 
     $this->artisan('podman:install')
-        ->expectsQuestion('Enter the application name', 'my-app')
         ->expectsQuestion('Select a service to install', 'pgsql')
         ->assertExitCode(1);
 });
@@ -35,8 +41,15 @@ it('accepts the replace option', function () {
     $this->useFakePodmanBinary(0);
 
     $this->artisan('podman:install', ['--replace' => true])
-        ->expectsQuestion('Enter the application name', 'my-app')
         ->expectsQuestion('Select a service to install', 'pgsql')
+        ->assertExitCode(0);
+});
+
+it('accepts the application option', function () {
+    $this->useFakePodmanBinary(0);
+
+    $this->artisan('podman:install', ['service' => 'pgsql', '--application' => 'my-app'])
+        ->expectsOutputToContain('Service pgsql installed successfully.')
         ->assertExitCode(0);
 });
 
@@ -45,11 +58,9 @@ it('prompts for and sets secrets before installing when the secrets option is pa
 
     $this->useFakePodmanBinary(0);
 
-    $this->artisan('podman:install', ['--secrets' => true])
-        ->expectsQuestion('Enter the application name', 'my-app')
-        ->expectsQuestion('Select a service to install', 'pgsql')
+    $this->artisan('podman:install', ['service' => 'pgsql', '--secrets' => true])
         ->expectsQuestion('Enter the value for laravel-pgsql-db (POSTGRES_DB)', 'myapp')
-        ->expectsOutputToContain('Service pgsql installed for application my-app')
+        ->expectsOutputToContain('Service pgsql installed successfully.')
         ->assertExitCode(0);
 });
 
@@ -58,9 +69,7 @@ it('does not prompt for secrets when the secrets option is not passed', function
 
     $this->useFakePodmanBinary(0);
 
-    $this->artisan('podman:install')
-        ->expectsQuestion('Enter the application name', 'my-app')
-        ->expectsQuestion('Select a service to install', 'pgsql')
+    $this->artisan('podman:install', ['service' => 'pgsql'])
         ->assertExitCode(0);
 });
 
@@ -69,9 +78,7 @@ it('reports an error when setting a secret fails before installing', function ()
 
     $this->useFakePodmanBinary(1);
 
-    $this->artisan('podman:install', ['--secrets' => true])
-        ->expectsQuestion('Enter the application name', 'my-app')
-        ->expectsQuestion('Select a service to install', 'pgsql')
+    $this->artisan('podman:install', ['service' => 'pgsql', '--secrets' => true])
         ->expectsQuestion('Enter the value for laravel-pgsql-db (POSTGRES_DB)', 'myapp')
         ->assertExitCode(1);
 });

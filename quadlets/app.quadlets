@@ -8,7 +8,7 @@ File={{container-path}}/Containerfile
 SetWorkingDirectory={{container-path}}
 
 [Service]
-EnvironmentFile={{container-path}}/{{application}}.env
+EnvironmentFile={{container-path}}/.env
 ---
 # FileName={{application}}
 [Unit]

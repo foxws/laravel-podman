@@ -12,6 +12,9 @@ use Illuminate\Support\Str;
 use SplFileInfo;
 use Symfony\Component\Process\Process;
 
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\password;
+
 trait InteractsWithPodmanQuadlet
 {
     protected function installPodmanQuadlet(
@@ -110,6 +113,49 @@ trait InteractsWithPodmanQuadlet
         return new Process($command);
     }
 
+    protected function setPodmanSecret(
+        string $secret,
+        string $value,
+        ?bool $replace = null,
+    ): Process {
+        $command = ['podman', 'secret', 'create', $secret, '-'];
+
+        if ($replace) {
+            $command[] = '--replace';
+        }
+
+        $process = new Process($command);
+        $process->setInput($value);
+
+        return $process;
+    }
+
+    protected function promptForPodmanQuadletSecrets(string $service, ?bool $replace = null): bool
+    {
+        foreach ($this->getPodmanQuadletSecrets($service) as $secret => $targets) {
+            $value = password(
+                label: "Enter the value for {$secret} (".implode(', ', $targets).')',
+                required: true,
+            );
+
+            $process = $this->setPodmanSecret(
+                secret: $secret,
+                value: $value,
+                replace: $replace,
+            );
+
+            $process->run();
+
+            if (! $process->isSuccessful()) {
+                error($process->getErrorOutput());
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     protected function preparePodmanQuadletSource(string $service): string
     {
         $source = "{$this->getPodmanQuadletServicesPath()}/{$service}.quadlets";
@@ -199,9 +245,32 @@ trait InteractsWithPodmanQuadlet
             ->toArray();
     }
 
+    protected function getPodmanQuadletSecrets(string $service): array
+    {
+        $source = $this->preparePodmanQuadletSource($service);
+
+        $secrets = [];
+
+        foreach (explode("\n", File::get($source)) as $line) {
+            if (! Str::startsWith($line, 'Secret=')) {
+                continue;
+            }
+
+            $options = explode(',', Str::after($line, 'Secret='));
+            $name = array_shift($options);
+
+            $target = Collection::make($options)
+                ->first(fn (string $option): bool => Str::startsWith($option, 'target='));
+
+            $secrets[$name][] = $target ? Str::after($target, 'target=') : $name;
+        }
+
+        return $secrets;
+    }
+
     protected function getPodmanQuadletTemporaryPath(): string
     {
-        $path = Config::get('podman.quadlet_temporary_path');
+        $path = Config::get('podman.temporary_path');
 
         if ($path && File::isDirectory($path)) {
             return $path;

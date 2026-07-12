@@ -20,6 +20,7 @@ class InstallCommand extends Command
 
     public $signature = 'podman:install
         {--replace : Replace the service if it already exists}
+        {--secrets : Also prompt for and set the secrets required by the service}
     ';
 
     public $description = 'Install a service for the application to run with Podman';
@@ -36,6 +37,10 @@ class InstallCommand extends Command
             options: $this->getPodmanQuadletServices(),
             required: true,
         );
+
+        if ($this->option('secrets') && ! $this->promptForPodmanQuadletSecrets($service, replace: $this->option('replace'))) {
+            return self::FAILURE;
+        }
 
         $process = $this->installPodmanQuadlet(
             application: $application,

@@ -90,7 +90,7 @@ it('prepares a quadlet source file with the prefix replaced', function () {
 
 it('replaces the app-path placeholder with the application base path', function () {
     $path = $this->makeQuadletServicesPath();
-    File::put("{$path}/app.quadlets", "SetWorkingDirectory={{app-path}}\nEnvironmentFile={{app-path}}/env\n");
+    File::put("{$path}/app.quadlets", "SetWorkingDirectory={{base-path}}\nEnvironmentFile={{base-path}}/env\n");
 
     $source = $this->preparePodmanQuadletSource('app');
 
@@ -194,4 +194,45 @@ it('builds the print quadlet process command', function () {
     $process = $this->printPodmanQuadlet(service: 'pgsql');
 
     expect($process->getCommandLine())->toBe("'podman' 'quadlet' 'print' 'pgsql'");
+});
+
+it('builds the set secret process command', function () {
+    $process = $this->setPodmanSecret(secret: 'laravel-pgsql-db', value: 'myapp', replace: true);
+
+    expect($process->getCommandLine())
+        ->toContain("'podman' 'secret' 'create' 'laravel-pgsql-db' '-'")
+        ->toContain("'--replace'");
+
+    expect($process->getInput())->toBe('myapp');
+});
+
+it('omits the replace flag by default when setting a secret', function () {
+    $process = $this->setPodmanSecret(secret: 'laravel-pgsql-db', value: 'myapp');
+
+    expect($process->getCommandLine())->not->toContain('--replace');
+});
+
+it('discovers the secrets required by a service, grouping shared secrets by target', function () {
+    $path = $this->makeQuadletServicesPath(['pgsql']);
+    File::put(
+        "{$path}/pgsql.quadlets",
+        "Secret={{application}}-pgsql-db,type=env,target=POSTGRES_DB\n".
+        "Secret={{application}}-pgsql-password,type=env,target=POSTGRES_PASSWORD\n".
+        "Secret={{application}}-pgsql-password,type=env,target=PGPASSWORD\n",
+    );
+
+    expect($this->getPodmanQuadletSecrets('pgsql'))->toBe([
+        'laravel-pgsql-db' => ['POSTGRES_DB'],
+        'laravel-pgsql-password' => ['POSTGRES_PASSWORD', 'PGPASSWORD'],
+    ]);
+
+    File::deleteDirectory($path);
+});
+
+it('returns no secrets for a service that does not define any', function () {
+    $path = $this->makeQuadletServicesPath(['pgsql']);
+
+    expect($this->getPodmanQuadletSecrets('pgsql'))->toBe([]);
+
+    File::deleteDirectory($path);
 });

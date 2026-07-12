@@ -9,7 +9,7 @@
         "HOME": "/home/docker",
     },
     "build": {
-        "context": "./vendor/foxws/laravel-podman/runtimes/frankenphp",
+        "context": "./vendor/foxws/laravel-podman/runtimes/frankenphp-octane",
         "dockerfile": "Containerfile",
         "args": {
             "UID": "1000", // Replace with your desired UID (id -u)

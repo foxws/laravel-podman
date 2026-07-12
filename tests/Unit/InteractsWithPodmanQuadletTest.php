@@ -59,6 +59,36 @@ it('falls back to the project base path when the configured container path does 
     expect($this->getPodmanQuadletContainerPath())->toBe(base_path());
 });
 
+it('defaults the proxy prefix to "proxy"', function () {
+    expect($this->getPodmanQuadletProxyPrefix())->toBe('proxy');
+});
+
+it('uses the configured proxy prefix when set', function () {
+    config(['podman.quadlet_proxy_prefix' => 'Edge Proxy']);
+
+    expect($this->getPodmanQuadletProxyPrefix())->toBe('edge-proxy');
+});
+
+it('defaults the proxy path to the project base path', function () {
+    expect($this->getPodmanQuadletProxyPath())->toBe(base_path());
+});
+
+it('uses the configured proxy path when it exists', function () {
+    $path = sys_get_temp_dir().'/podman-proxy-'.uniqid();
+    File::ensureDirectoryExists($path);
+    config(['podman.quadlet_proxy_path' => $path]);
+
+    expect($this->getPodmanQuadletProxyPath())->toBe($path);
+
+    File::deleteDirectory($path);
+});
+
+it('falls back to the project base path when the configured proxy path does not exist', function () {
+    config(['podman.quadlet_proxy_path' => sys_get_temp_dir().'/podman-proxy-missing-'.uniqid()]);
+
+    expect($this->getPodmanQuadletProxyPath())->toBe(base_path());
+});
+
 it('lists the available services discovered in the services path', function () {
     $path = $this->makeQuadletServicesPath(['pgsql', 'mariadb']);
     File::put("{$path}/README.md", 'not a service');
@@ -132,6 +162,22 @@ it('replaces the container-path placeholder with the configured container path',
     File::delete($source);
     File::deleteDirectory($path);
     File::deleteDirectory($containerPath);
+});
+
+it('replaces the proxy and proxy-path placeholders', function () {
+    $path = $this->makeQuadletServicesPath();
+    $proxyPath = sys_get_temp_dir().'/podman-proxy-'.uniqid();
+    File::ensureDirectoryExists($proxyPath);
+    config(['podman.quadlet_proxy_prefix' => 'edge', 'podman.quadlet_proxy_path' => $proxyPath]);
+    File::put("{$path}/app.quadlets", "Network={{proxy}}.network\nVolume={{proxy-path}}:/etc/caddy:rw,Z,U\n");
+
+    $source = $this->preparePodmanQuadletSource('app');
+
+    expect(File::get($source))->toBe("Network=edge.network\nVolume={$proxyPath}:/etc/caddy:rw,Z,U\n");
+
+    File::delete($source);
+    File::deleteDirectory($path);
+    File::deleteDirectory($proxyPath);
 });
 
 it('replaces the app-env, app-uid and app-gid placeholders', function () {

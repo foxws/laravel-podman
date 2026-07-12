@@ -135,7 +135,7 @@ fi
 # Define environment variables...
 export APP_PORT=${APP_PORT:-80}
 export APP_USER=${APP_USER:-"docker"}
-export LPOD_DOCKER_BINARY=${LPOD_DOCKER_BINARY:-"podman"}
+export LPOD_PODMAN_BINARY=${LPOD_PODMAN_BINARY:-"podman"}
 
 # AI agent environment variables to forward into containers...
 AGENT_ENV_VARS=(
@@ -401,8 +401,8 @@ case "$COMMAND" in
 
     # Unknown commands are passed through to the podman binary...
     *)
-        exec "${LPOD_DOCKER_BINARY}" "$COMMAND" "$@"
+        exec "${LPOD_PODMAN_BINARY}" "$COMMAND" "$@"
         ;;
 esac
 
-exec "${LPOD_DOCKER_BINARY}" "${ARGS[@]}" "$@"
+exec "${LPOD_PODMAN_BINARY}" "${ARGS[@]}" "$@"

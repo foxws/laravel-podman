@@ -57,18 +57,21 @@ The package discovers its Quadlet service definitions (`*.quadlets` files) and i
 
 ### `podman:install`
 
-Installs a Quadlet service so systemd can manage it.
+Installs one or more Quadlet services so systemd can manage them. Omitting the service name(s) prompts you to select one or more services from a checklist. If installing multiple services in one run, a failure on one service doesn't stop the rest — failures are collected and reported in a summary at the end, and the command exits non-zero if any service failed.
 
 ```bash
 php artisan podman:install pgsql
 
+# Install multiple services in one go
+php artisan podman:install pgsql valkey
+
 # Install into a named application subdirectory (requires Podman 6+)
 php artisan podman:install pgsql --application=my-app
 
-# Replace the service if it already exists
+# Replace the service(s) if they already exist
 php artisan podman:install pgsql --replace
 
-# Prompt for and set the secrets required by the service before installing
+# Prompt for and set the secrets required by each service before installing
 php artisan podman:install pgsql --secrets
 ```
 

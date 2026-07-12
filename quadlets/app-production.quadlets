@@ -36,11 +36,11 @@ TimeoutStopSec=30
 [Volume]
 Label={{application}}-cache
 ---
-# FileName={{application}}-network
+# FileName={{application}}
 [Network]
 Label={{application}}
 ---
-# FileName=proxy-network
+# FileName=proxy
 [Network]
 Label=proxy
 IPv6=true

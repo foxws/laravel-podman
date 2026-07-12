@@ -7,6 +7,7 @@ namespace Foxws\Podman\Concerns;
 use Foxws\Podman\Support\PodmanQuadletFile;
 use Foxws\Podman\Support\PodmanQuadletPath;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
@@ -14,6 +15,7 @@ use SplFileInfo;
 use Symfony\Component\Process\Process;
 
 use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\text;
 
@@ -67,6 +69,50 @@ trait InteractsWithPodmanQuadlet
         $command[] = $this->podmanQuadletFile()->prepareSource($source, $target);
 
         return new Process($command);
+    }
+
+    /**
+     * Install one or more services, prompting for and setting their secrets
+     * first when requested. Returns the names of the services that failed.
+     *
+     * @param  array<int, string>  $services
+     * @return array<int, string>
+     */
+    protected function installPodmanQuadlets(
+        array $services,
+        ?string $application = null,
+        ?bool $replace = null,
+        ?bool $secrets = null,
+    ): array {
+        $failed = [];
+
+        foreach ($services as $service) {
+            if ($secrets && ! $this->promptForPodmanQuadletSecrets($service, replace: $replace)) {
+                $failed[] = $service;
+
+                continue;
+            }
+
+            $process = $this->installPodmanQuadlet(
+                service: $service,
+                application: $application,
+                replace: $replace,
+            );
+
+            $process->run();
+
+            if (! $process->isSuccessful()) {
+                error($process->getErrorOutput());
+
+                $failed[] = $service;
+
+                continue;
+            }
+
+            info("Service {$service} installed successfully.");
+        }
+
+        return $failed;
     }
 
     protected function removePodmanQuadlet(
@@ -223,6 +269,16 @@ trait InteractsWithPodmanQuadlet
             ->sort()
             ->values()
             ->mapWithKeys(fn (string $service): array => [$service => $service])
+            ->toArray();
+    }
+
+    protected function getPodmanQuadletDefaultServices(): array
+    {
+        return Collection::make(Config::array('podman.services', []))
+            ->filter(fn (array $service): bool => (bool) ($service['default'] ?? false))
+            ->keys()
+            ->sort()
+            ->values()
             ->toArray();
     }
 

@@ -76,4 +76,69 @@ return [
     */
 
     'reload_systemd' => env('PODMAN_RELOAD_SYSTEMD', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Services
+    |--------------------------------------------------------------------------
+    |
+    | This value describes the services available to install. The 'default'
+    | flag marks the services installed by the "podman:setup" command when
+    | no explicit service is given. The 'requires' list names sibling
+    | services that must be running first; these are wired into the
+    | generated Quadlet files as Requires=/After= directives.
+    |
+    */
+
+    'services' => [
+        'pgsql' => [
+            'default' => true,
+            'requires' => [],
+        ],
+
+        'valkey' => [
+            'default' => true,
+            'requires' => [],
+        ],
+
+        'app' => [
+            'default' => true,
+            'requires' => ['pgsql', 'valkey'],
+        ],
+
+        'horizon' => [
+            'default' => true,
+            'requires' => ['valkey'],
+        ],
+
+        'reverb' => [
+            'default' => true,
+            'requires' => [],
+        ],
+
+        'schedule' => [
+            'default' => true,
+            'requires' => [],
+        ],
+
+        'inertia-ssr' => [
+            'default' => false,
+            'requires' => [],
+        ],
+
+        'mailpit' => [
+            'default' => false,
+            'requires' => [],
+        ],
+
+        'rustfs' => [
+            'default' => false,
+            'requires' => [],
+        ],
+
+        'typesense' => [
+            'default' => false,
+            'requires' => [],
+        ],
+    ],
 ];

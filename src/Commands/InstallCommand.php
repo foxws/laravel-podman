@@ -10,7 +10,6 @@ use Illuminate\Support\Arr;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 use function Laravel\Prompts\error;
-use function Laravel\Prompts\info;
 use function Laravel\Prompts\multiselect;
 
 #[AsCommand(name: 'podman:install')]
@@ -35,33 +34,12 @@ class InstallCommand extends Command
             required: true,
         );
 
-        $failed = [];
-
-        foreach ($services as $service) {
-            if ($this->option('secrets') && ! $this->promptForPodmanQuadletSecrets($service, replace: $this->option('replace'))) {
-                $failed[] = $service;
-
-                continue;
-            }
-
-            $process = $this->installPodmanQuadlet(
-                service: $service,
-                application: $this->option('application'),
-                replace: $this->option('replace'),
-            );
-
-            $process->run();
-
-            if (! $process->isSuccessful()) {
-                error($process->getErrorOutput());
-
-                $failed[] = $service;
-
-                continue;
-            }
-
-            info("Service {$service} installed successfully.");
-        }
+        $failed = $this->installPodmanQuadlets(
+            services: $services,
+            application: $this->option('application'),
+            replace: $this->option('replace'),
+            secrets: $this->option('secrets'),
+        );
 
         if ($failed !== []) {
             error('Failed to install: '.implode(', ', $failed));

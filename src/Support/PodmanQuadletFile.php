@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Foxws\Podman\Support;
 
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -17,7 +18,7 @@ class PodmanQuadletFile
     /**
      * @return array<string, string>
      */
-    public function substitutions(): array
+    public function substitutions(?string $service = null): array
     {
         return [
             '{{app-env}}' => Config::string('app.env'),
@@ -30,12 +31,15 @@ class PodmanQuadletFile
             '{{base-path}}' => base_path(),
             '{{config-path}}' => $this->path->configPath(),
             '{{runtime-path}}' => $this->path->runtimePath(),
+            '{{requirements}}' => $this->requirements($service),
         ];
     }
 
     public function renderSource(string $source): string
     {
-        $contents = strtr(File::get($source), $this->substitutions());
+        $service = pathinfo($source, PATHINFO_FILENAME);
+
+        $contents = strtr(File::get($source), $this->substitutions($service));
 
         if (! $this->path->shouldUseSelinuxVolumeMapping()) {
             $contents = $this->removeSelinuxVolumeFlags($contents);
@@ -62,6 +66,34 @@ class PodmanQuadletFile
 
             $this->prepareSource($file->getRealPath(), $destination);
         }
+    }
+
+    /**
+     * Build the Requires=/After= lines for the services a Quadlet depends on,
+     * as configured under "podman.services.{service}.requires".
+     */
+    protected function requirements(?string $service): string
+    {
+        if ($service === null) {
+            return '';
+        }
+
+        $units = Collection::make(Config::array("podman.services.{$service}.requires", []))
+            ->map(fn (string $dependency): string => $this->quadletUnitName($dependency))
+            ->implode(' ');
+
+        if ($units === '') {
+            return '';
+        }
+
+        return "Requires={$units}\nAfter={$units}";
+    }
+
+    protected function quadletUnitName(string $service): string
+    {
+        $prefix = $this->path->prefix();
+
+        return $service === 'app' ? "{$prefix}.container" : "{$prefix}-{$service}.container";
     }
 
     public function removeSelinuxVolumeFlags(string $contents): string

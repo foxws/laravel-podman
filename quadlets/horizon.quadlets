@@ -3,6 +3,7 @@
 Description=Laravel Horizon container
 After={{application}}.container
 BindsTo={{application}}.container
+{{requirements}}
 
 [Container]
 Image={{application}}.build

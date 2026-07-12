@@ -109,3 +109,50 @@ it('publishes a directory recursively while substituting placeholders in every f
     File::deleteDirectory($source);
     File::deleteDirectory($target);
 });
+
+it('renders the requirements placeholder from the configured service dependencies', function () {
+    $source = sys_get_temp_dir().'/app.quadlets';
+    File::put($source, "[Unit]\n{{requirements}}\n");
+    config([
+        'podman.quadlet_prefix' => 'acme',
+        'podman.services.app.requires' => ['pgsql', 'valkey'],
+    ]);
+
+    expect($this->file->renderSource($source))->toBe(
+        "[Unit]\nRequires=acme-pgsql.container acme-valkey.container\nAfter=acme-pgsql.container acme-valkey.container\n",
+    );
+
+    File::delete($source);
+});
+
+it('maps an "app" dependency to the bare application container unit', function () {
+    $source = sys_get_temp_dir().'/horizon.quadlets';
+    File::put($source, '{{requirements}}');
+    config([
+        'podman.quadlet_prefix' => 'acme',
+        'podman.services.horizon.requires' => ['app'],
+    ]);
+
+    expect($this->file->renderSource($source))->toBe("Requires=acme.container\nAfter=acme.container");
+
+    File::delete($source);
+});
+
+it('renders an empty requirements placeholder when a service has no dependencies', function () {
+    $source = sys_get_temp_dir().'/pgsql.quadlets';
+    File::put($source, "before\n{{requirements}}\nafter\n");
+    config(['podman.services.pgsql.requires' => []]);
+
+    expect($this->file->renderSource($source))->toBe("before\n\nafter\n");
+
+    File::delete($source);
+});
+
+it('renders an empty requirements placeholder for a service that is not configured', function () {
+    $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
+    File::put($source, "before\n{{requirements}}\nafter\n");
+
+    expect($this->file->renderSource($source))->toBe("before\n\nafter\n");
+
+    File::delete($source);
+});

@@ -25,6 +25,24 @@ it('lists the available runtimes discovered in the vendor runtimes directory', f
     ]);
 });
 
+it('returns only the services marked as default from configuration, sorted', function () {
+    config(['podman.services' => [
+        'valkey' => ['default' => true, 'requires' => []],
+        'app' => ['default' => true, 'requires' => []],
+        'mailpit' => ['default' => false, 'requires' => []],
+    ]]);
+
+    expect($this->getPodmanQuadletDefaultServices())->toBe(['app', 'valkey']);
+});
+
+it('returns no default services when none are configured', function () {
+    config(['podman.services' => [
+        'mailpit' => ['default' => false, 'requires' => []],
+    ]]);
+
+    expect($this->getPodmanQuadletDefaultServices())->toBe([]);
+});
+
 it('resolves the configured runtime path against the base path', function () {
     config(['podman.runtime_path' => 'runtimes']);
 
@@ -123,6 +141,24 @@ it('deletes the temporary directory once it is no longer referenced', function (
     gc_collect_cycles();
 
     expect(File::isDirectory($location))->toBeFalse();
+
+    File::deleteDirectory($path);
+});
+
+it('installs multiple services, returning no failures on success', function () {
+    $path = $this->makeQuadletsPath(['pgsql', 'valkey']);
+    $this->useFakePodmanBinary(0);
+
+    expect($this->installPodmanQuadlets(['pgsql', 'valkey']))->toBe([]);
+
+    File::deleteDirectory($path);
+});
+
+it('reports the services that failed to install while continuing with the rest', function () {
+    $path = $this->makeQuadletsPath(['pgsql', 'valkey']);
+    $this->useFakePodmanBinary(1);
+
+    expect($this->installPodmanQuadlets(['pgsql', 'valkey']))->toBe(['pgsql', 'valkey']);
 
     File::deleteDirectory($path);
 });

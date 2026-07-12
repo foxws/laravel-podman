@@ -12,6 +12,7 @@ SetWorkingDirectory={{base-path}}
 # FileName={{application}}
 [Unit]
 Description=Laravel Octane container
+{{requirements}}
 
 [Container]
 Image={{application}}.build

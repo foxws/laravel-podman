@@ -1,13 +1,14 @@
 {
     "name": "foxws/laravel-podman",
-    "description": "This is my package laravel-podman",
+    "description": "Podman Quadlet support to your Laravel application",
     "keywords": [
-        "Foxws",
+        "foxws",
         "laravel",
         "laravel-podman",
         "podman",
         "podman-quadlet",
-        "podman-quadlets"
+        "podman-quadlets",
+        "systemd"
     ],
     "homepage": "https://github.com/foxws/laravel-podman",
     "license": "MIT",

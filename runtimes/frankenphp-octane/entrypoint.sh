@@ -11,9 +11,9 @@ log() {
 }
 
 # Set up SQLite database
-if [ ! -f "database/database.sqlite" ]; then
+if [ ! -f "/app/database/database.sqlite" ]; then
     log "INFO" "Creating SQLite database..."
-    touch database/database.sqlite
+    touch /app/database/database.sqlite
 fi
 
 # Set up environment configuration

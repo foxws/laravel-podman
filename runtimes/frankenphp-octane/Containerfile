@@ -6,7 +6,7 @@ ARG NODE_VERSION=24
 ARG POSTGRES_VERSION=18
 ARG PHP_EXTENSIONS=""
 
-WORKDIR /app
+WORKDIR /tmp
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
@@ -54,6 +54,10 @@ RUN mkdir -p /etc/apt/keyrings \
 # Create non-root user
 RUN groupadd --force -g ${GID} docker \
     && useradd -u ${UID} -g docker -d /home/docker -s /bin/bash -m docker
+
+# Create directories and set ownership
+RUN mkdir -p /app /config \
+    && chown -R docker:docker /app /config
 
 # PHP Configuration
 RUN cp ${PHP_INI_DIR}/php.ini-production ${PHP_INI_DIR}/php.ini

@@ -296,11 +296,14 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletSecrets(string $service): array
     {
-        $source = $this->preparePodmanQuadletSource($service);
+        $source = "{$this->getPodmanQuadletsPath()}/{$service}.quadlets";
+        $target = "{$this->getPodmanTemporaryPath()}/{$service}.quadlets";
+
+        $path = $this->preparePodmanQuadletSource($source, $target);
 
         $secrets = [];
 
-        foreach (explode("\n", File::get($source)) as $line) {
+        foreach (explode("\n", File::get($path)) as $line) {
             if (! Str::startsWith($line, 'Secret=')) {
                 continue;
             }

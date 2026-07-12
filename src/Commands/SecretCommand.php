@@ -27,7 +27,7 @@ class SecretCommand extends Command
     {
         $service = $this->argument('service') ?? select(
             label: 'Select a service to configure',
-            options: $this->getPodmanQuadletServices(),
+            options: $this->getPodmanQuadlets(),
             required: true,
         );
 

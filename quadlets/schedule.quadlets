@@ -1,13 +1,13 @@
-# FileName={{application}}-horizon
+# FileName={{application}}-schedule
 [Unit]
-Description=Laravel Horizon container
+Description=Laravel Schedule container
 After={{application}}.container
 BindsTo={{application}}.container
 
 [Container]
 Image={{application}}.build
 AutoUpdate=local
-Environment=APP_COMMAND="php -d variables_order=EGPCS /app/artisan horizon"
+Environment=APP_COMMAND="php -d variables_order=EGPCS /app/artisan schedule:work"
 UserNS=keep-id
 ShmSize=128m
 Secret={{application}}-env,target=/config/app.env,mode=0400

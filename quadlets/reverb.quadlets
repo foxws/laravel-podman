@@ -7,11 +7,11 @@ BindsTo={{application}}.container
 [Container]
 Image={{application}}.build
 AutoUpdate=local
-Environment="APP_COMMAND=php -d variables_order=EGPCS /app/artisan reverb:start"
+Environment=APP_COMMAND="php -d variables_order=EGPCS /app/artisan reverb:start"
 UserNS=keep-id
 ShmSize=128m
 Secret={{application}}-env,target=/config/app.env,mode=0400
-Volume={{application}}-cache:/cache:rw,z,U
+Volume={{application}}-cache:/cache:rw,z
 Network={{application}}.network
 Network={{proxy}}.network
 ExposeHostPort=6001

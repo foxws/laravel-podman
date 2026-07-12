@@ -25,7 +25,7 @@ trait InteractsWithPodmanQuadlet
         ?bool $replace = null,
     ): Process {
         $source = "{$this->getPodmanQuadletsPath()}/{$service}.quadlets";
-        $target = $this->getPodmanTemporaryPath();
+        $target = "{$this->getPodmanTemporaryPath()}/{$service}.quadlets";
 
         $command = ['podman', 'quadlet', 'install'];
 

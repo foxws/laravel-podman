@@ -13,7 +13,6 @@ ShmSize=128m
 Secret={{application}}-env,target=/config/app.env,mode=0400
 Volume={{application}}-cache:/cache:rw,z
 Network={{application}}.network
-Network={{proxy}}.network
 ExposeHostPort=6001
 
 [Service]

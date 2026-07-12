@@ -35,7 +35,7 @@ class PublishCommand extends Command
             return self::FAILURE;
         }
 
-        info("Runtime {$runtime} published to {$this->getPodmanQuadletContainerPublishPath()}");
+        info("Runtime {$runtime} published to {$this->getPodmanQuadletRuntimesPath()}");
 
         return self::SUCCESS;
     }

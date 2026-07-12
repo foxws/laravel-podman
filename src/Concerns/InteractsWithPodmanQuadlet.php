@@ -209,15 +209,9 @@ trait InteractsWithPodmanQuadlet
         $source = "{$this->getPodmanQuadletVendorPath()}/runtimes/{$runtime}";
         $target = $this->getPodmanQuadletRuntimesPath();
 
-        if (File::exists("{$target}/Containerfile") && ! $force) {
-            error("A Containerfile already exists at {$target}. Use --force to overwrite.");
-
-            return false;
-        }
-
         File::ensureDirectoryExists("{$target}/runtimes");
 
-        File::copyDirectory($source, "{$target}/runtimes/{$runtime}");
+        File::copyDirectory($source, "{$target}/{$runtime}");
 
         return true;
     }

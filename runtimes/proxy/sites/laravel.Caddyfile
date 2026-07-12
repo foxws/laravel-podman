@@ -1,10 +1,8 @@
 {{app-host}} {
-	import compress
 	reverse_proxy systemd-{{application}}:8000
 }
 
 vite.{{app-host}} {
-	import compress
 	reverse_proxy systemd-{{application}}:5173
 }
 

@@ -9,6 +9,7 @@ use Foxws\Podman\Support\PodmanQuadletPath;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Spatie\TemporaryDirectory\TemporaryDirectory;
 use SplFileInfo;
 use Symfony\Component\Process\Process;
 
@@ -18,6 +19,8 @@ use function Laravel\Prompts\text;
 
 trait InteractsWithPodmanQuadlet
 {
+    protected ?TemporaryDirectory $podmanQuadletTemporaryDirectory = null;
+
     protected function podmanQuadletPath(): PodmanQuadletPath
     {
         return new PodmanQuadletPath;
@@ -28,6 +31,15 @@ trait InteractsWithPodmanQuadlet
         return new PodmanQuadletFile($this->podmanQuadletPath());
     }
 
+    /**
+     * A directory that is deleted once this command instance is destroyed,
+     * used to materialize quadlet files the podman binary reads from disk.
+     */
+    protected function podmanQuadletTemporaryDirectory(): TemporaryDirectory
+    {
+        return $this->podmanQuadletTemporaryDirectory ??= TemporaryDirectory::make()->deleteWhenDestroyed();
+    }
+
     protected function installPodmanQuadlet(
         string $service,
         ?string $application = null,
@@ -35,7 +47,7 @@ trait InteractsWithPodmanQuadlet
     ): Process {
         $path = $this->podmanQuadletPath();
         $source = "{$path->quadletsPath()}/{$service}.quadlets";
-        $target = "{$path->temporaryPath()}/{$service}.quadlets";
+        $target = $this->podmanQuadletTemporaryDirectory()->path("{$service}.quadlets");
 
         $command = ['podman', 'quadlet', 'install'];
 
@@ -226,15 +238,13 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletSecrets(string $service): array
     {
-        $path = $this->podmanQuadletPath();
-        $source = "{$path->quadletsPath()}/{$service}.quadlets";
-        $target = "{$path->temporaryPath()}/{$service}.quadlets";
+        $source = "{$this->podmanQuadletPath()->quadletsPath()}/{$service}.quadlets";
 
-        $file = $this->podmanQuadletFile()->prepareSource($source, $target);
+        $contents = $this->podmanQuadletFile()->renderSource($source);
 
         $secrets = [];
 
-        foreach (explode("\n", File::get($file)) as $line) {
+        foreach (explode("\n", $contents) as $line) {
             if (! Str::startsWith($line, 'Secret=')) {
                 continue;
             }

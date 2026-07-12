@@ -24,6 +24,16 @@ it('keeps volume entries without selinux flags untouched', function () {
     expect($this->file->removeSelinuxVolumeFlags($contents))->toBe($contents);
 });
 
+it('renders a quadlet source without writing a temporary file', function () {
+    $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
+    File::put($source, "Volume={{application}}-pgsql:/var/lib/postgresql:rw\n");
+    config(['podman.quadlet_prefix' => 'acme']);
+
+    expect($this->file->renderSource($source))->toContain('acme-pgsql');
+
+    File::delete($source);
+});
+
 it('prepares a quadlet source file with the prefix placeholder replaced', function () {
     $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
     $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';

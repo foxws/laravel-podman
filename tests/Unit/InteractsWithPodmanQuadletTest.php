@@ -101,6 +101,32 @@ it('appends reload-systemd=false when reloading systemd is disabled', function (
     File::deleteDirectory($path);
 });
 
+it('materializes the install source inside a dedicated temporary directory', function () {
+    $path = $this->makeQuadletsPath(['pgsql']);
+
+    $this->installPodmanQuadlet(service: 'pgsql');
+    $temporaryDirectory = $this->podmanQuadletTemporaryDirectory();
+
+    expect(File::exists($temporaryDirectory->path('pgsql.quadlets')))->toBeTrue()
+        ->and($temporaryDirectory->path())->not->toBe($path);
+
+    File::deleteDirectory($path);
+});
+
+it('deletes the temporary directory once it is no longer referenced', function () {
+    $path = $this->makeQuadletsPath(['pgsql']);
+
+    $this->installPodmanQuadlet(service: 'pgsql');
+    $location = $this->podmanQuadletTemporaryDirectory()->path();
+
+    $this->podmanQuadletTemporaryDirectory = null;
+    gc_collect_cycles();
+
+    expect(File::isDirectory($location))->toBeFalse();
+
+    File::deleteDirectory($path);
+});
+
 it('builds the remove quadlet process command', function () {
     $process = $this->removePodmanQuadlet(service: 'pgsql', ignore: true, force: true);
 

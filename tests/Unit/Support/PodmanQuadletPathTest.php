@@ -75,12 +75,6 @@ it('resolves the configured config path', function () {
     expect($this->path->configPath())->toBe('runtimes/config');
 });
 
-it('resolves the configured temporary path', function () {
-    config(['podman.temporary_path' => sys_get_temp_dir()]);
-
-    expect($this->path->temporaryPath())->toBe(sys_get_temp_dir());
-});
-
 it('resolves the domain from the app url', function () {
     config(['app.url' => 'https://example.test']);
 

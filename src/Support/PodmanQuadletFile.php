@@ -33,7 +33,7 @@ class PodmanQuadletFile
         ];
     }
 
-    public function prepareSource(string $source, string $target): string
+    public function renderSource(string $source): string
     {
         $contents = strtr(File::get($source), $this->substitutions());
 
@@ -41,9 +41,14 @@ class PodmanQuadletFile
             $contents = $this->removeSelinuxVolumeFlags($contents);
         }
 
+        return $contents;
+    }
+
+    public function prepareSource(string $source, string $target): string
+    {
         File::ensureDirectoryExists(dirname($target));
 
-        File::put($target, $contents);
+        File::put($target, $this->renderSource($source));
 
         return $target;
     }

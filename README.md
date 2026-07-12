@@ -11,8 +11,8 @@ A Sail-inspired `lpod` CLI script is also included for day-to-day interaction wi
 
 ## Requirements
 
+- Linux with systemd (rootless or system-wide); macOS and Windows, including WSL, are not supported
 - A recent version of Podman with the `quadlet` CLI plugin (`podman quadlet --help` should work); the `--application` option used by `podman:install` requires Podman 6+
-- systemd (rootless or system-wide)
 - PHP 8.4+
 
 ## Installation
@@ -46,8 +46,6 @@ return [
     'selinux_volume_mapping' => env('PODMAN_SELINUX_VOLUME_MAPPING', true),
 
     'reload_systemd' => env('PODMAN_RELOAD_SYSTEMD', true),
-
-    'temporary_path' => env('PODMAN_TEMPORARY_PATH', sys_get_temp_dir()),
 ];
 ```
 
@@ -142,10 +140,45 @@ php artisan podman:publish frankenphp-octane --force
 The package ships a `lpod` CLI script, installed as a Composer binary at `vendor/bin/lpod`. It's a thin wrapper around `podman exec` and `systemctl` for the Quadlet services you installed with `podman:install`, similar in spirit to Laravel Sail's `sail` script. Any command it doesn't recognize is passed straight through to the `podman` binary.
 
 ```bash
-lpod SERVICE COMMAND [options] [arguments]
+vendor/bin/lpod SERVICE COMMAND [options] [arguments]
 ```
 
 `SERVICE` is the name of a Quadlet service (e.g. your application's service, or a sibling service such as `pgsql`).
+
+### Shortening the `vendor/bin/lpod` call
+
+Typing `vendor/bin/lpod` for every command gets old fast, so pick one of the following.
+
+**Add a shell alias.** This resolves `lpod` relative to your current directory, so it keeps working correctly no matter which project you're in.
+
+Bash or Zsh, in `~/.bashrc` / `~/.zshrc`:
+
+```bash
+alias lpod='[ -f vendor/bin/lpod ] && bash vendor/bin/lpod || bash "$(git rev-parse --show-toplevel)/vendor/bin/lpod"'
+```
+
+Fish, in `~/.config/fish/config.fish`:
+
+```fish
+function lpod
+    if test -f vendor/bin/lpod
+        bash vendor/bin/lpod $argv
+    else
+        bash (git rev-parse --show-toplevel)/vendor/bin/lpod $argv
+    end
+end
+```
+
+**Or install it onto your `PATH`.** This is simplest if you're only working with a single Podman-managed application on the machine, since the symlink always points at the `vendor/bin/lpod` of the project you created it from:
+
+```bash
+ln -s "$(pwd)/vendor/bin/lpod" ~/.local/bin/lpod
+
+# or, to make it available to every user on the machine
+sudo ln -s "$(pwd)/vendor/bin/lpod" /usr/local/bin/lpod
+```
+
+Make sure the target directory (`~/.local/bin` or `/usr/local/bin`) is on your `PATH`. Once installed either way, the examples below can be run as `lpod ...` instead of `vendor/bin/lpod ...`.
 
 **Lifecycle**
 
@@ -160,6 +193,8 @@ lpod my-app status     # Show the status of the "my-app" service
 
 ```bash
 lpod my-app artisan queue:work
+lpod my-app art queue:work     # Alias for "artisan"
+lpod my-app a queue:work       # Alias for "artisan"
 lpod my-app php -v
 lpod my-app composer require laravel/sanctum
 lpod my-app debug queue:work   # Artisan command with Xdebug enabled

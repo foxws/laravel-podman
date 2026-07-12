@@ -3,14 +3,8 @@
 UNAMEOUT="$(uname -s)"
 
 # Verify operating system is supported...
-case "${UNAMEOUT}" in
-    Linux*)             MACHINE=linux;;
-    Darwin*)            MACHINE=mac;;
-    *)                  MACHINE="UNKNOWN"
-esac
-
-if [ "$MACHINE" == "UNKNOWN" ]; then
-    echo "Unsupported operating system [$(uname -s)]. Laravel Podman supports macOS, Linux, and Windows (WSL2)." >&2
+if [ "$UNAMEOUT" != "Linux" ]; then
+    echo "Unsupported operating system [$(uname -s)]. Laravel Podman requires Linux with systemd; macOS and Windows, including WSL, are not supported." >&2
 
     exit 1
 fi
@@ -380,12 +374,8 @@ case "$COMMAND" in
 
     # Open the application URL in the browser...
     open)
-        if command -v open &>/dev/null; then
-            OPEN="open"
-        elif command -v xdg-open &>/dev/null; then
-            OPEN="xdg-open"
-        else
-            echo "Neither open nor xdg-open is available. Exiting." >&2
+        if ! command -v xdg-open &>/dev/null; then
+            echo "xdg-open is not available. Exiting." >&2
 
             exit 1
         fi
@@ -396,7 +386,7 @@ case "$COMMAND" in
             FULL_URL="$APP_URL"
         fi
 
-        exec "$OPEN" "$FULL_URL"
+        exec xdg-open "$FULL_URL"
         ;;
 
     # Unknown commands are passed through to the podman binary...

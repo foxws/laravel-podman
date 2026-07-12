@@ -52,11 +52,6 @@ class PodmanQuadletPath
         return Config::get('podman.config_path');
     }
 
-    public function temporaryPath(): string
-    {
-        return Config::get('podman.temporary_path');
-    }
-
     public function domain(): string
     {
         return Uri::of(Config::string('app.url'))->host();

@@ -76,17 +76,4 @@ return [
     */
 
     'reload_systemd' => env('PODMAN_RELOAD_SYSTEMD', true),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Temporary Path
-    |--------------------------------------------------------------------------
-    |
-    | This value is the path where temporary Podman quadlet files are written
-    | to before being installed. The default value is the system's temporary
-    | directory, which can be overruled when needed.
-    |
-    */
-
-    'temporary_path' => env('PODMAN_TEMPORARY_PATH', sys_get_temp_dir()),
 ];

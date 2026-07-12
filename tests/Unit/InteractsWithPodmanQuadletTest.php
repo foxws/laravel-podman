@@ -7,6 +7,18 @@ use Illuminate\Support\Facades\File;
 
 uses(InteractsWithPodmanQuadlet::class);
 
+it('resolves the current process uid and gid by default', function () {
+    expect($this->getPodmanQuadletUid())->toBe(posix_getuid())
+        ->and($this->getPodmanQuadletGid())->toBe(posix_getgid());
+});
+
+it('uses the configured uid and gid when set', function () {
+    config(['podman.quadlet_uid' => 2000, 'podman.quadlet_gid' => 2001]);
+
+    expect($this->getPodmanQuadletUid())->toBe(2000)
+        ->and($this->getPodmanQuadletGid())->toBe(2001);
+});
+
 it('defaults the services path to the vendor quadlets directory', function () {
     expect($this->getPodmanQuadletServicesPath())
         ->toBe("{$this->getPodmanQuadletVendorPath()}/quadlets");
@@ -120,6 +132,21 @@ it('replaces the container-path placeholder with the configured container path',
     File::delete($source);
     File::deleteDirectory($path);
     File::deleteDirectory($containerPath);
+});
+
+it('replaces the app-env, app-uid and app-gid placeholders', function () {
+    $path = $this->makeQuadletServicesPath();
+    config(['app.env' => 'testing']);
+    File::put("{$path}/app.quadlets", "Environment=APP_ENV={{app-env}}\nEnvironment=UID={{app-uid}}\nEnvironment=GID={{app-gid}}\n");
+
+    $source = $this->preparePodmanQuadletSource('app');
+
+    expect(File::get($source))->toBe(
+        "Environment=APP_ENV=testing\nEnvironment=UID={$this->getPodmanQuadletUid()}\nEnvironment=GID={$this->getPodmanQuadletGid()}\n",
+    );
+
+    File::delete($source);
+    File::deleteDirectory($path);
 });
 
 it('strips selinux volume flags while preparing the quadlet source when disabled', function () {

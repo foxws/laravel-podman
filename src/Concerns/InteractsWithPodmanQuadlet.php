@@ -181,6 +181,9 @@ trait InteractsWithPodmanQuadlet
             '{{application}}' => $this->getPodmanQuadletPrefix(),
             '{{base-path}}' => base_path(),
             '{{container-path}}' => $this->getPodmanQuadletContainerPath(),
+            '{{app-env}}' => Config::string('app.env'),
+            '{{app-uid}}' => (string) $this->getPodmanQuadletUid(),
+            '{{app-gid}}' => (string) $this->getPodmanQuadletGid(),
         ]);
 
         if (! $this->shouldUseSelinuxVolumeMapping()) {
@@ -319,6 +322,28 @@ trait InteractsWithPodmanQuadlet
     protected function getPodmanQuadletPrefix(): string
     {
         return Str::kebab(Config::string('podman.quadlet_prefix'));
+    }
+
+    protected function getPodmanQuadletUid(): int
+    {
+        $uid = Config::get('podman.quadlet_uid');
+
+        if ($uid !== null) {
+            return (int) $uid;
+        }
+
+        return function_exists('posix_getuid') ? posix_getuid() : 1000;
+    }
+
+    protected function getPodmanQuadletGid(): int
+    {
+        $gid = Config::get('podman.quadlet_gid');
+
+        if ($gid !== null) {
+            return (int) $gid;
+        }
+
+        return function_exists('posix_getgid') ? posix_getgid() : 1000;
     }
 
     protected function shouldReloadSystemd(): bool

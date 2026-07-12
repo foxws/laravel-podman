@@ -1,14 +1,12 @@
 # FileName={{application}}
 [Build]
 ImageTag=localhost/{{application}}:latest
-Environment=UID=${UID:-1000}
-Environment=GID=${GID:-1000}
 Target=production
+Environment=APP_ENV={{app-env}}
+Environment=UID={{app-uid}}
+Environment=GID={{app-gid}}
 File={{container-path}}/Containerfile
 SetWorkingDirectory={{container-path}}
-
-[Service]
-EnvironmentFile={{container-path}}/.env
 ---
 # FileName={{application}}
 [Unit]

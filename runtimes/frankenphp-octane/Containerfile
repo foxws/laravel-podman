@@ -105,7 +105,7 @@ COPY --chown=docker:docker . /app
 # Switch to non-root user
 USER docker
 
-# Make sure an .env file exists
+# Make sure an basic .env file exists
 RUN cp .env.example .env
 
 # Install PHP dependencies

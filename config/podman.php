@@ -52,6 +52,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Quadlet UID and GID
+    |--------------------------------------------------------------------------
+    |
+    | These values determine the UID and GID used for Podman quadlet files.
+    | The default values are null, which means the system's UID and GID
+    | will be used. These can be overruled when needed.
+    |
+    */
+
+    'quadlet_uid' => env('PODMAN_QUADLET_UID', null),
+
+    'quadlet_gid' => env('PODMAN_QUADLET_GID', null),
+
+    /*
+    |--------------------------------------------------------------------------
     | SELinux Volume Mapping
     |--------------------------------------------------------------------------
     |

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APP_SERVICE=${APP_SERVICE:-'octane'}
+APP_COMMAND=${APP_COMMAND:-'/usr/bin/bash'}
 APP_ENV=${APP_ENV:-'production'}
 
 log() {
@@ -54,4 +54,4 @@ if [ "${APP_ENV}" = "production" ]; then
 fi
 
 log "INFO" "Starting command..."
-exec ${PHP_COMMAND}
+exec ${APP_COMMAND}

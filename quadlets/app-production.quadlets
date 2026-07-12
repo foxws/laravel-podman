@@ -12,19 +12,19 @@ EnvironmentFile={{container-path}}/.env
 ---
 # FileName={{application}}
 [Unit]
-Description=Laravel App container
+Description=Laravel Octane container
 
 [Container]
 Image={{application}}.build
 AutoUpdate=local
 UserNS=keep-id
 ShmSize=128m
+Volume={{container-path}}/.env:/config/app.env:ro,z
 Volume={{application}}-cache:/cache:rw,z,U
 Network={{application}}.network
-PublishPort=80:80
-PublishPort=443:443
-PublishPort=443:443/udp
-PublishPort=5173:5173
+Network=proxy.network
+ExposeHostPort=8000
+ExposeHostPort=5173
 
 [Service]
 Restart=always
@@ -38,3 +38,9 @@ Label={{application}}-cache
 ---
 # FileName={{application}}-network
 [Network]
+Label={{application}}
+---
+# FileName=proxy-network
+[Network]
+Label=proxy
+IPv6=true

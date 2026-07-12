@@ -1,21 +1,21 @@
-{{site-address}} {
+{{app-host}} {
 	import compress
 	reverse_proxy systemd-{{application}}:8000
 }
 
-vite.{{site-address}} {
+vite.{{app-host}} {
 	import compress
 	reverse_proxy systemd-{{application}}:5173
 }
 
-ws.{{site-address}} {
+ws.{{app-host}} {
 	reverse_proxy systemd-{{application}}-reverb:6001
 }
 
-s3.{{site-address}} {
+s3.{{app-host}} {
 	reverse_proxy systemd-{{application}}-rustfs:9000
 }
 
-fs.{{site-address}} {
+fs.{{app-host}} {
 	reverse_proxy systemd-{{application}}-rustfs:9001
 }

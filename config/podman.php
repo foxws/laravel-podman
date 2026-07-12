@@ -54,18 +54,6 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Site Address
-    |--------------------------------------------------------------------------
-    |
-    | This value is the site address used for the proxy configuration. The
-    | default value is 'laravel.test', which can be overruled when needed.
-    |
-    */
-
-    'site_address' => env('PODMAN_SITE_ADDRESS', 'laravel.test'),
-
-    /*
-    |--------------------------------------------------------------------------
     | Proxy Path and Prefix
     |--------------------------------------------------------------------------
     |

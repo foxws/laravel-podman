@@ -9,6 +9,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Illuminate\Support\Uri;
 use SplFileInfo;
 use Symfony\Component\Process\Process;
 
@@ -177,6 +178,9 @@ trait InteractsWithPodmanQuadlet
     {
         return [
             '{{app-env}}' => Config::string('app.env'),
+            '{{app-name}}' => Config::string('app.name'),
+            '{{app-url}}' => Config::string('app.url'),
+            '{{app-host}}' => $this->getPodmanQuadletDomain(),
             '{{app-uid}}' => (string) $this->getPodmanQuadletUid(),
             '{{app-gid}}' => (string) $this->getPodmanQuadletGid(),
             '{{application}}' => $this->getPodmanQuadletPrefix(),
@@ -184,7 +188,6 @@ trait InteractsWithPodmanQuadlet
             '{{runtimes-path}}' => $this->getPodmanQuadletRuntimesPath(),
             '{{proxy}}' => $this->getPodmanQuadletProxyPrefix(),
             '{{proxy-path}}' => $this->getPodmanQuadletProxyPath(),
-            '{{site-address}}' => $this->getPodmanQuadletSiteAddress(),
         ];
     }
 
@@ -297,9 +300,9 @@ trait InteractsWithPodmanQuadlet
         return Str::kebab(Config::string('podman.proxy_prefix'));
     }
 
-    protected function getPodmanQuadletSiteAddress(): string
+    protected function getPodmanQuadletDomain(): string
     {
-        return Config::string('podman.site_address');
+        return Uri::of(Config::string('app.url'))->host();
     }
 
     protected function getPodmanQuadletProxyVendorPath(): string

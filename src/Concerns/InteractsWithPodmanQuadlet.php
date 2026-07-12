@@ -39,7 +39,7 @@ trait InteractsWithPodmanQuadlet
             $command[] = '--reload-systemd=false';
         }
 
-        $command[] = $this->preparePodmanQuadletSource($service);
+        $command[] = $this->preparePodmanQuadletSource("{$service}.quadlets");
 
         return new Process($command);
     }
@@ -216,9 +216,10 @@ trait InteractsWithPodmanQuadlet
         return true;
     }
 
-    protected function preparePodmanQuadletSource(string $service): string
+    protected function preparePodmanQuadletSource(string $file): string
     {
-        $source = "{$this->getPodmanQuadletServicesPath()}/{$service}.quadlets";
+        $source = "{$this->getPodmanQuadletServicesPath()}/{file}";
+        $target = "{$this->getPodmanQuadletTemporaryPath()}/laravel-podman";
 
         $contents = strtr(File::get($source), $this->getPodmanQuadletSubstitutions());
 
@@ -226,11 +227,11 @@ trait InteractsWithPodmanQuadlet
             $contents = $this->removeSelinuxVolumeFlags($contents);
         }
 
-        $path = "{$this->getPodmanQuadletTemporaryPath()}/".Str::random(16).'.quadlets';
+        $path = "{$target}/{$file}";
+
+        File::ensureDirectoryExists($target);
 
         File::put($path, $contents);
-
-        register_shutdown_function(static fn () => is_file($path) && unlink($path));
 
         return $path;
     }

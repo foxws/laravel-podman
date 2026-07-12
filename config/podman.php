@@ -65,7 +65,7 @@ return [
 
     'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),
 
-    'proxy_config_path' => env('PODMAN_PROXY_CONFIG_PATH', 'runtimes/proxy'),
+    'proxy_path' => env('PODMAN_PROXY_PATH', 'runtimes/proxy'),
 
     /*
     |--------------------------------------------------------------------------

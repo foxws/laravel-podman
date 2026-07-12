@@ -135,12 +135,14 @@ trait InteractsWithPodmanQuadlet
         return $process;
     }
 
-    protected function publishPodmanQuadletRuntime(string $runtime, ?bool $force = null): void
+    protected function publishPodmanQuadletRuntime(string $runtime, ?bool $force = null): bool
     {
         $source = "{$this->getPodmanQuadletVendorPath()}/runtimes/{$runtime}";
         $target = "{$this->getPodmanQuadletRuntimesPath()}/{$runtime}";
 
         $this->publishPodmanQuadletDirectory($source, $target, $force);
+
+        return true;
     }
 
     protected function promptForPodmanQuadletSecrets(string $service, ?bool $replace = null): bool
@@ -209,7 +211,7 @@ trait InteractsWithPodmanQuadlet
         foreach (File::allFiles($source) as $file) {
             $destination = "{$target}/{$file->getRelativePathname()}";
 
-            $this->preparePodmanQuadletSource($file->getPath(), $destination);
+            $this->preparePodmanQuadletSource($file->getRealPath(), $destination);
         }
     }
 

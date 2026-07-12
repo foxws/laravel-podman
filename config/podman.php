@@ -11,7 +11,7 @@ return [
     |
     */
 
-    'quadlet_path' => env('PODMAN_QUADLET_PATH', '/app/quadlets'),
+    'quadlet_path' => env('PODMAN_QUADLET_PATH', 'quadlets'),
 
     /*
     |--------------------------------------------------------------------------
@@ -50,7 +50,7 @@ return [
     |
     */
 
-    'runtimes_path' => env('PODMAN_RUNTIMES_PATH', '/app/runtimes'),
+    'runtimes_path' => env('PODMAN_RUNTIMES_PATH', 'runtimes'),
 
     /*
     |--------------------------------------------------------------------------
@@ -65,7 +65,7 @@ return [
 
     'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),
 
-    'proxy_config_path' => env('PODMAN_PROXY_CONFIG_PATH', '/app/runtimes/proxy'),
+    'proxy_config_path' => env('PODMAN_PROXY_CONFIG_PATH', 'runtimes/proxy'),
 
     /*
     |--------------------------------------------------------------------------

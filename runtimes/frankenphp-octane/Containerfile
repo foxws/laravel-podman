@@ -23,8 +23,7 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezo
 
 # Main dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg curl ca-certificates zip unzip \
-    git sqlite3 libcap2-bin nano \
+    gnupg curl ca-certificates zip unzip git sqlite3 nano \
     libavif-bin jpegoptim optipng pngquant gifsicle \
     && apt-get -y autoremove \
     && apt-get clean \
@@ -73,9 +72,6 @@ RUN if [ -n "$PHP_EXTENSIONS" ]; then \
     install-php-extensions $PHP_EXTENSIONS; \
 fi
 
-# Strip file capabilities from frankenphp
-RUN setcap -r /usr/local/bin/frankenphp
-
 # Node.js Configuration
 RUN npm install -g npm@latest corepack@latest svgo@latest \
     && corepack enable && corepack prepare pnpm@latest --activate \
@@ -121,6 +117,9 @@ RUN --mount=type=cache,target=/pnpm/store,uid=${UID},gid=${GID} \
 # Complete composer setup and build assets
 RUN composer dump-autoload --optimize \
     && pnpm build && pnpm build:ssr && pnpm prune --prod
+
+# Remove .env file for production
+RUN rm -f .env
 
 EXPOSE 6001 8000 13714
 

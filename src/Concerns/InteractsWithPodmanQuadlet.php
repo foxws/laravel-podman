@@ -209,7 +209,7 @@ trait InteractsWithPodmanQuadlet
         $source = "{$this->getPodmanQuadletVendorPath()}/runtimes/{$runtime}";
         $target = $this->getPodmanQuadletRuntimesPath();
 
-        File::ensureDirectoryExists("{$target}/runtimes");
+        File::ensureDirectoryExists($target);
 
         File::copyDirectory($source, "{$target}/{$runtime}");
 

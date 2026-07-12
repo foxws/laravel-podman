@@ -1,0 +1,114 @@
+<?php
+
+declare(strict_types=1);
+
+use Foxws\Podman\Support\PodmanQuadletPath;
+use Illuminate\Support\Facades\File;
+
+beforeEach(function () {
+    $this->path = new PodmanQuadletPath;
+});
+
+it('resolves the vendor path from the installed package', function () {
+    expect($this->path->vendorPath())->toBeString()->not->toBeEmpty();
+});
+
+it('resolves the current process uid and gid by default', function () {
+    expect($this->path->uid())->toBe(posix_getuid())
+        ->and($this->path->gid())->toBe(posix_getgid());
+});
+
+it('uses the configured uid and gid when set', function () {
+    config(['podman.quadlet_uid' => 2000, 'podman.quadlet_gid' => 2001]);
+
+    expect($this->path->uid())->toBe(2000)
+        ->and($this->path->gid())->toBe(2001);
+});
+
+it('defaults the quadlets path to the vendor quadlets directory', function () {
+    expect($this->path->quadletsPath())->toBe("{$this->path->vendorPath()}/quadlets");
+});
+
+it('uses the configured quadlets path when set', function () {
+    $path = $this->makeQuadletsPath(['pgsql']);
+
+    expect($this->path->quadletsPath())->toBe($path);
+
+    File::deleteDirectory($path);
+});
+
+it('falls back to the vendor quadlets directory when the configured path does not exist', function () {
+    config(['podman.quadlets_path' => sys_get_temp_dir().'/podman-quadlets-missing-'.uniqid()]);
+
+    expect($this->path->quadletsPath())->toBe("{$this->path->vendorPath()}/quadlets");
+});
+
+it('defaults the runtimes path to the vendor runtimes directory', function () {
+    expect($this->path->runtimesPath())->toBe("{$this->path->vendorPath()}/runtimes");
+});
+
+it('uses the configured runtimes path when it exists', function () {
+    $path = sys_get_temp_dir().'/podman-runtimes-'.uniqid();
+    File::ensureDirectoryExists($path);
+    config(['podman.runtimes_path' => $path]);
+
+    expect($this->path->runtimesPath())->toBe($path);
+
+    File::deleteDirectory($path);
+});
+
+it('falls back to the vendor runtimes directory when the configured runtimes path does not exist', function () {
+    config(['podman.runtimes_path' => sys_get_temp_dir().'/podman-runtimes-missing-'.uniqid()]);
+
+    expect($this->path->runtimesPath())->toBe("{$this->path->vendorPath()}/runtimes");
+});
+
+it('resolves the configured runtime path', function () {
+    config(['podman.runtime_path' => 'runtimes']);
+
+    expect($this->path->runtimePath())->toBe('runtimes');
+});
+
+it('resolves the configured config path', function () {
+    config(['podman.config_path' => 'runtimes/config']);
+
+    expect($this->path->configPath())->toBe('runtimes/config');
+});
+
+it('resolves the configured temporary path', function () {
+    config(['podman.temporary_path' => sys_get_temp_dir()]);
+
+    expect($this->path->temporaryPath())->toBe(sys_get_temp_dir());
+});
+
+it('resolves the domain from the app url', function () {
+    config(['app.url' => 'https://example.test']);
+
+    expect($this->path->domain())->toBe('example.test');
+});
+
+it('kebab-cases the configured quadlet prefix', function () {
+    config(['podman.quadlet_prefix' => 'My App']);
+
+    expect($this->path->prefix())->toBe('my-app');
+});
+
+it('defaults reload systemd to true', function () {
+    expect($this->path->shouldReloadSystemd())->toBeTrue();
+});
+
+it('disables reload systemd when configured', function () {
+    config(['podman.reload_systemd' => false]);
+
+    expect($this->path->shouldReloadSystemd())->toBeFalse();
+});
+
+it('defaults selinux volume mapping to true', function () {
+    expect($this->path->shouldUseSelinuxVolumeMapping())->toBeTrue();
+});
+
+it('disables selinux volume mapping when configured', function () {
+    config(['podman.selinux_volume_mapping' => false]);
+
+    expect($this->path->shouldUseSelinuxVolumeMapping())->toBeFalse();
+});

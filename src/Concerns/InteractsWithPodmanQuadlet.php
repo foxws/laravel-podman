@@ -4,12 +4,11 @@ declare(strict_types=1);
 
 namespace Foxws\Podman\Concerns;
 
-use Composer\InstalledVersions;
+use Foxws\Podman\Support\PodmanQuadletFile;
+use Foxws\Podman\Support\PodmanQuadletPath;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Illuminate\Support\Uri;
 use SplFileInfo;
 use Symfony\Component\Process\Process;
 
@@ -19,13 +18,24 @@ use function Laravel\Prompts\text;
 
 trait InteractsWithPodmanQuadlet
 {
+    protected function podmanQuadletPath(): PodmanQuadletPath
+    {
+        return new PodmanQuadletPath;
+    }
+
+    protected function podmanQuadletFile(): PodmanQuadletFile
+    {
+        return new PodmanQuadletFile($this->podmanQuadletPath());
+    }
+
     protected function installPodmanQuadlet(
         string $service,
         ?string $application = null,
         ?bool $replace = null,
     ): Process {
-        $source = "{$this->getPodmanQuadletsPath()}/{$service}.quadlets";
-        $target = "{$this->getPodmanTemporaryPath()}/{$service}.quadlets";
+        $path = $this->podmanQuadletPath();
+        $source = "{$path->quadletsPath()}/{$service}.quadlets";
+        $target = "{$path->temporaryPath()}/{$service}.quadlets";
 
         $command = ['podman', 'quadlet', 'install'];
 
@@ -38,11 +48,11 @@ trait InteractsWithPodmanQuadlet
             $command[] = '--replace';
         }
 
-        if (! $this->shouldReloadSystemd()) {
+        if (! $path->shouldReloadSystemd()) {
             $command[] = '--reload-systemd=false';
         }
 
-        $command[] = $this->preparePodmanQuadletSource($source, $target);
+        $command[] = $this->podmanQuadletFile()->prepareSource($source, $target);
 
         return new Process($command);
     }
@@ -62,7 +72,7 @@ trait InteractsWithPodmanQuadlet
             $command[] = '--force';
         }
 
-        if (! $this->shouldReloadSystemd()) {
+        if (! $this->podmanQuadletPath()->shouldReloadSystemd()) {
             $command[] = '--reload-systemd=false';
         }
 
@@ -111,7 +121,7 @@ trait InteractsWithPodmanQuadlet
             $command[] = '--force';
         }
 
-        if (! $this->shouldReloadSystemd()) {
+        if (! $this->podmanQuadletPath()->shouldReloadSystemd()) {
             $command[] = '--reload-systemd=false';
         }
 
@@ -137,7 +147,7 @@ trait InteractsWithPodmanQuadlet
 
     protected function publishPodmanRuntime(string $runtime, ?bool $force = null): bool
     {
-        $source = "{$this->getPodmanRuntimesPath()}/{$runtime}";
+        $source = "{$this->podmanQuadletPath()->runtimesPath()}/{$runtime}";
         $target = base_path('runtimes');
 
         if (File::exists($target) && ! $force) {
@@ -146,7 +156,7 @@ trait InteractsWithPodmanQuadlet
             return false;
         }
 
-        $this->publishPodmanQuadletDirectory($source, $target);
+        $this->podmanQuadletFile()->publishDirectory($source, $target);
 
         return true;
     }
@@ -193,89 +203,9 @@ trait InteractsWithPodmanQuadlet
         return true;
     }
 
-    protected function getPodmanQuadletSubstitutions(): array
-    {
-        return [
-            '{{app-env}}' => Config::string('app.env'),
-            '{{app-name}}' => Config::string('app.name'),
-            '{{app-url}}' => Config::string('app.url'),
-            '{{app-host}}' => $this->getPodmanQuadletDomain(),
-            '{{app-uid}}' => (string) $this->getPodmanQuadletUid(),
-            '{{app-gid}}' => (string) $this->getPodmanQuadletGid(),
-            '{{application}}' => $this->getPodmanQuadletPrefix(),
-            '{{base-path}}' => base_path(),
-            '{{config-path}}' => $this->getPodmanConfigPath(),
-            '{{runtime-path}}' => $this->getPodmanRuntimePath(),
-        ];
-    }
-
-    protected function publishPodmanQuadletDirectory(string $source, string $target): void
-    {
-        File::ensureDirectoryExists($target);
-
-        foreach (File::allFiles($source) as $file) {
-            $destination = "{$target}/{$file->getRelativePathname()}";
-
-            $this->preparePodmanQuadletSource($file->getRealPath(), $destination);
-        }
-    }
-
-    protected function preparePodmanQuadletSource(string $source, string $target): string
-    {
-        $contents = strtr(File::get($source), $this->getPodmanQuadletSubstitutions());
-
-        if (! $this->shouldUseSelinuxVolumeMapping()) {
-            $contents = $this->removeSelinuxVolumeFlags($contents);
-        }
-
-        File::ensureDirectoryExists(dirname($target));
-
-        File::put($target, $contents);
-
-        return $target;
-    }
-
-    protected function removeSelinuxVolumeFlags(string $contents): string
-    {
-        return preg_replace_callback(
-            '/^Volume=(.*)$/m',
-            function (array $matches): string {
-                $segments = Str::of($matches[1])->explode(':');
-
-                if ($segments->count() < 3) {
-                    return "Volume={$matches[1]}";
-                }
-
-                $options = Str::of($segments->get(2))
-                    ->explode(',')
-                    ->diff(['Z', 'z', 'U']);
-
-                $segments = $options->isEmpty()
-                    ? $segments->take(2)
-                    : $segments->put(2, $options->implode(','));
-
-                return 'Volume='.$segments->implode(':');
-            },
-            $contents,
-        );
-    }
-
-    protected function getPodmanVendorPath(): string
-    {
-        return Str::rtrim(
-            InstalledVersions::getInstallPath('foxws/laravel-podman'),
-            '/',
-        );
-    }
-
-    protected function getPodmanQuadletDomain(): string
-    {
-        return Uri::of(Config::string('app.url'))->host();
-    }
-
     protected function getPodmanQuadlets(): array
     {
-        return Collection::make(File::files($this->getPodmanQuadletsPath()))
+        return Collection::make(File::files($this->podmanQuadletPath()->quadletsPath()))
             ->filter(fn (SplFileInfo $file): bool => $file->getExtension() === 'quadlets')
             ->map(fn (SplFileInfo $file): string => $file->getBasename('.'.$file->getExtension()))
             ->sort()
@@ -286,7 +216,7 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletRuntimes(): array
     {
-        return Collection::make(File::directories($this->getPodmanRuntimesPath()))
+        return Collection::make(File::directories($this->podmanQuadletPath()->runtimesPath()))
             ->map(fn (string $path): string => basename($path))
             ->sort()
             ->values()
@@ -296,14 +226,15 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletSecrets(string $service): array
     {
-        $source = "{$this->getPodmanQuadletsPath()}/{$service}.quadlets";
-        $target = "{$this->getPodmanTemporaryPath()}/{$service}.quadlets";
+        $path = $this->podmanQuadletPath();
+        $source = "{$path->quadletsPath()}/{$service}.quadlets";
+        $target = "{$path->temporaryPath()}/{$service}.quadlets";
 
-        $path = $this->preparePodmanQuadletSource($source, $target);
+        $file = $this->podmanQuadletFile()->prepareSource($source, $target);
 
         $secrets = [];
 
-        foreach (explode("\n", File::get($path)) as $line) {
+        foreach (explode("\n", File::get($file)) as $line) {
             if (! Str::startsWith($line, 'Secret=')) {
                 continue;
             }
@@ -330,77 +261,8 @@ trait InteractsWithPodmanQuadlet
         return $secrets;
     }
 
-    protected function getPodmanQuadletPrefix(): string
-    {
-        return Str::kebab(Config::string('podman.quadlet_prefix'));
-    }
-
-    protected function getPodmanQuadletUid(): int
-    {
-        $uid = Config::get('podman.quadlet_uid');
-
-        if ($uid !== null) {
-            return (int) $uid;
-        }
-
-        return function_exists('posix_getuid') ? posix_getuid() : 1000;
-    }
-
-    protected function getPodmanQuadletGid(): int
-    {
-        $gid = Config::get('podman.quadlet_gid');
-
-        if ($gid !== null) {
-            return (int) $gid;
-        }
-
-        return function_exists('posix_getgid') ? posix_getgid() : 1000;
-    }
-
-    protected function getPodmanQuadletsPath(): string
-    {
-        $path = Config::get('podman.quadlets_path');
-
-        if ($path && File::isDirectory($path)) {
-            return $path;
-        }
-
-        return "{$this->getPodmanVendorPath()}/quadlets";
-    }
-
-    protected function getPodmanRuntimesPath(): string
-    {
-        $path = Config::get('podman.runtimes_path');
-
-        if ($path && File::isDirectory($path)) {
-            return $path;
-        }
-
-        return "{$this->getPodmanVendorPath()}/runtimes";
-    }
-
     protected function getPodmanRuntimePath(): string
     {
-        return Config::get('podman.runtime_path');
-    }
-
-    protected function getPodmanConfigPath(): string
-    {
-        return Config::get('podman.config_path');
-    }
-
-    protected function getPodmanTemporaryPath(): string
-    {
-        return Config::get('podman.temporary_path');
-    }
-
-    protected function shouldReloadSystemd(): bool
-    {
-        return Config::boolean('podman.reload_systemd');
-    }
-
-    protected function shouldUseSelinuxVolumeMapping(): bool
-    {
-        return Config::boolean('podman.selinux_volume_mapping');
+        return $this->podmanQuadletPath()->runtimePath();
     }
 }

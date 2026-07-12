@@ -71,11 +71,11 @@ class TestCase extends Orchestra
 
     /**
      * Create a temporary directory of ".quadlets" service definitions and
-     * point the package's "quadlet_services_path" config at it.
+     * point the package's "quadlets_path" config at it.
      *
      * @param  array<int, string>  $services
      */
-    protected function makeQuadletServicesPath(array $services = ['pgsql', 'mariadb']): string
+    protected function makeQuadletsPath(array $services = ['pgsql', 'mariadb']): string
     {
         $path = sys_get_temp_dir().'/podman-quadlets-'.uniqid();
 
@@ -85,7 +85,7 @@ class TestCase extends Orchestra
             File::put("{$path}/{$service}.quadlets", "# FileName={{application}}-{$service}\n[Unit]\nDescription={$service} container\n");
         }
 
-        config(['podman.quadlet_services_path' => $path]);
+        config(['podman.quadlets_path' => $path]);
 
         return $path;
     }

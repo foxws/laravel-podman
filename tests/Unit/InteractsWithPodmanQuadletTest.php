@@ -7,119 +7,11 @@ use Illuminate\Support\Facades\File;
 
 uses(InteractsWithPodmanQuadlet::class);
 
-it('resolves the current process uid and gid by default', function () {
-    expect($this->getPodmanQuadletUid())->toBe(posix_getuid())
-        ->and($this->getPodmanQuadletGid())->toBe(posix_getgid());
-});
-
-it('uses the configured uid and gid when set', function () {
-    config(['podman.quadlet_uid' => 2000, 'podman.quadlet_gid' => 2001]);
-
-    expect($this->getPodmanQuadletUid())->toBe(2000)
-        ->and($this->getPodmanQuadletGid())->toBe(2001);
-});
-
-it('defaults the services path to the vendor quadlets directory', function () {
-    expect($this->getPodmanQuadletServicesPath())
-        ->toBe("{$this->getPodmanQuadletVendorPath()}/quadlets");
-});
-
-it('uses the configured services path when set', function () {
-    $path = $this->makeQuadletServicesPath(['pgsql']);
-
-    expect($this->getPodmanQuadletServicesPath())->toBe($path);
-
-    File::deleteDirectory($path);
-});
-
-it('falls back to the vendor quadlets directory when the configured path does not exist', function () {
-    config(['podman.quadlet_services_path' => sys_get_temp_dir().'/podman-quadlets-missing-'.uniqid()]);
-
-    expect($this->getPodmanQuadletServicesPath())
-        ->toBe("{$this->getPodmanQuadletVendorPath()}/quadlets");
-});
-
-it('defaults the container path to the project base path', function () {
-    expect($this->getPodmanQuadletContainerPath())->toBe(base_path());
-});
-
-it('uses the configured container path when it exists', function () {
-    $path = sys_get_temp_dir().'/podman-containers-'.uniqid();
-    File::ensureDirectoryExists($path);
-    config(['podman.quadlet_container_path' => $path]);
-
-    expect($this->getPodmanQuadletContainerPath())->toBe($path);
-
-    File::deleteDirectory($path);
-});
-
-it('falls back to the project base path when the configured container path does not exist', function () {
-    config(['podman.quadlet_container_path' => sys_get_temp_dir().'/podman-containers-missing-'.uniqid()]);
-
-    expect($this->getPodmanQuadletContainerPath())->toBe(base_path());
-});
-
-it('defaults the proxy prefix to "proxy"', function () {
-    expect($this->getPodmanQuadletProxyPrefix())->toBe('proxy');
-});
-
-it('uses the configured proxy prefix when set', function () {
-    config(['podman.quadlet_proxy_prefix' => 'Edge Proxy']);
-
-    expect($this->getPodmanQuadletProxyPrefix())->toBe('edge-proxy');
-});
-
-it('defaults the proxy path to the "runtimes/proxy" directory published alongside the app', function () {
-    expect($this->getPodmanQuadletProxyPath())->toBe('runtimes/proxy');
-});
-
-it('uses the configured proxy path when it exists', function () {
-    $path = sys_get_temp_dir().'/podman-proxy-'.uniqid();
-    File::ensureDirectoryExists($path);
-    config(['podman.quadlet_proxy_path' => $path]);
-
-    expect($this->getPodmanQuadletProxyPath())->toBe($path);
-
-    File::deleteDirectory($path);
-});
-
-it('falls back to the project base path when the configured proxy path does not exist', function () {
-    config(['podman.quadlet_proxy_path' => sys_get_temp_dir().'/podman-proxy-missing-'.uniqid()]);
-
-    expect($this->getPodmanQuadletProxyPath())->toBe(base_path());
-});
-
-it('resolves the configured container publish path even when it does not yet exist', function () {
-    $path = sys_get_temp_dir().'/podman-container-publish-missing-'.uniqid();
-    config(['podman.quadlet_container_path' => $path]);
-
-    expect($this->getPodmanQuadletContainerPublishPath())->toBe($path);
-});
-
-it('falls back to the project base path when no container publish path is configured', function () {
-    config(['podman.quadlet_container_path' => null]);
-
-    expect($this->getPodmanQuadletContainerPublishPath())->toBe(base_path());
-});
-
-it('resolves the configured proxy publish path even when it does not yet exist', function () {
-    $path = sys_get_temp_dir().'/podman-proxy-publish-missing-'.uniqid();
-    config(['podman.quadlet_proxy_path' => $path]);
-
-    expect($this->getPodmanQuadletProxyPublishPath())->toBe($path);
-});
-
-it('falls back to the project base path when no proxy publish path is configured', function () {
-    config(['podman.quadlet_proxy_path' => null]);
-
-    expect($this->getPodmanQuadletProxyPublishPath())->toBe(base_path());
-});
-
-it('lists the available services discovered in the services path', function () {
-    $path = $this->makeQuadletServicesPath(['pgsql', 'mariadb']);
+it('lists the available quadlet services discovered in the quadlets path', function () {
+    $path = $this->makeQuadletsPath(['pgsql', 'mariadb']);
     File::put("{$path}/README.md", 'not a service');
 
-    expect($this->getPodmanQuadletServices())->toBe([
+    expect($this->getPodmanQuadlets())->toBe([
         'mariadb' => 'mariadb',
         'pgsql' => 'pgsql',
     ]);
@@ -133,150 +25,50 @@ it('lists the available runtimes discovered in the vendor runtimes directory', f
     ]);
 });
 
-it('removes selinux volume flags from quadlet contents', function () {
-    $contents = "Volume=stub-pgsql:/var/lib/postgresql:rw,Z,U\nOther=value";
+it('resolves the configured runtime path', function () {
+    config(['podman.runtime_path' => 'runtimes']);
 
-    expect($this->removeSelinuxVolumeFlags($contents))
-        ->toBe("Volume=stub-pgsql:/var/lib/postgresql:rw\nOther=value");
+    expect($this->getPodmanRuntimePath())->toBe('runtimes');
 });
 
-it('keeps volume entries without selinux flags untouched', function () {
-    $contents = 'Volume=stub-pgsql:/var/lib/postgresql';
-
-    expect($this->removeSelinuxVolumeFlags($contents))->toBe($contents);
-});
-
-it('prepares a quadlet source file with the prefix replaced', function () {
-    $path = $this->makeQuadletServicesPath(['pgsql']);
-    config(['podman.quadlet_prefix' => 'acme']);
-
-    $source = $this->preparePodmanQuadletSource('pgsql');
-
-    expect(File::get($source))
-        ->toContain('acme-pgsql')
-        ->not->toContain('stub-pgsql');
-
-    expect($source)->toEndWith('.quadlets');
-
-    File::delete($source);
-    File::deleteDirectory($path);
-});
-
-it('replaces the app-path placeholder with the application base path', function () {
-    $path = $this->makeQuadletServicesPath();
-    File::put("{$path}/app.quadlets", "SetWorkingDirectory={{base-path}}\nEnvironmentFile={{base-path}}/env\n");
-
-    $source = $this->preparePodmanQuadletSource('app');
-
-    expect(File::get($source))->toBe('SetWorkingDirectory='.base_path()."\nEnvironmentFile=".base_path()."/env\n");
-
-    File::delete($source);
-    File::deleteDirectory($path);
-});
-
-it('replaces the container-path placeholder with the configured container path', function () {
-    $path = $this->makeQuadletServicesPath();
-    $containerPath = sys_get_temp_dir().'/podman-containers-'.uniqid();
-    File::ensureDirectoryExists($containerPath);
-    config(['podman.quadlet_container_path' => $containerPath]);
-    File::put("{$path}/app.quadlets", "File={{container-path}}/Containerfile\n");
-
-    $source = $this->preparePodmanQuadletSource('app');
-
-    expect(File::get($source))->toBe("File={$containerPath}/Containerfile\n");
-
-    File::delete($source);
-    File::deleteDirectory($path);
-    File::deleteDirectory($containerPath);
-});
-
-it('replaces the proxy and proxy-path placeholders', function () {
-    $path = $this->makeQuadletServicesPath();
-    $proxyPath = sys_get_temp_dir().'/podman-proxy-'.uniqid();
-    File::ensureDirectoryExists($proxyPath);
-    config(['podman.quadlet_proxy_prefix' => 'edge', 'podman.quadlet_proxy_path' => $proxyPath]);
-    File::put("{$path}/app.quadlets", "Network={{proxy}}.network\nVolume={{proxy-path}}:/etc/caddy:rw,Z,U\n");
-
-    $source = $this->preparePodmanQuadletSource('app');
-
-    expect(File::get($source))->toBe("Network=edge.network\nVolume={$proxyPath}:/etc/caddy:rw,Z,U\n");
-
-    File::delete($source);
-    File::deleteDirectory($path);
-    File::deleteDirectory($proxyPath);
-});
-
-it('defaults the site address to "laravel.test"', function () {
-    expect($this->getPodmanQuadletSiteAddress())->toBe('laravel.test');
-});
-
-it('uses the configured site address when set', function () {
-    config(['podman.quadlet_site_address' => 'example.test']);
-
-    expect($this->getPodmanQuadletSiteAddress())->toBe('example.test');
-});
-
-it('replaces the site-address placeholder', function () {
-    $path = $this->makeQuadletServicesPath();
-    config(['podman.quadlet_site_address' => 'example.test']);
-    File::put("{$path}/app.quadlets", "{{site-address}} {\n\treverse_proxy systemd-{{application}}:8000\n}\n");
-
-    $source = $this->preparePodmanQuadletSource('app');
-
-    expect(File::get($source))->toBe("example.test {\n\treverse_proxy systemd-laravel:8000\n}\n");
-
-    File::delete($source);
-    File::deleteDirectory($path);
-});
-
-it('publishes a directory recursively while substituting placeholders in every file', function () {
-    config(['podman.quadlet_prefix' => 'acme']);
-
-    $source = sys_get_temp_dir().'/podman-publish-source-'.uniqid();
-    $target = sys_get_temp_dir().'/podman-publish-target-'.uniqid();
-    File::ensureDirectoryExists("{$source}/sites");
-    File::put("{$source}/Caddyfile", "import sites/*\n");
-    File::put("{$source}/sites/app.Caddyfile", "reverse_proxy systemd-{{application}}:8000\n");
-
-    $this->publishPodmanQuadletDirectory($source, $target);
-
-    expect(File::get("{$target}/Caddyfile"))->toBe("import sites/*\n")
-        ->and(File::get("{$target}/sites/app.Caddyfile"))->toBe("reverse_proxy systemd-acme:8000\n");
-
-    File::deleteDirectory($source);
-    File::deleteDirectory($target);
-});
-
-it('replaces the app-env, app-uid and app-gid placeholders', function () {
-    $path = $this->makeQuadletServicesPath();
-    config(['app.env' => 'testing']);
-    File::put("{$path}/app.quadlets", "Environment=APP_ENV={{app-env}}\nEnvironment=UID={{app-uid}}\nEnvironment=GID={{app-gid}}\n");
-
-    $source = $this->preparePodmanQuadletSource('app');
-
-    expect(File::get($source))->toBe(
-        "Environment=APP_ENV=testing\nEnvironment=UID={$this->getPodmanQuadletUid()}\nEnvironment=GID={$this->getPodmanQuadletGid()}\n",
+it('discovers the secrets required by a service, grouping shared secrets by target', function () {
+    $path = $this->makeQuadletsPath(['pgsql']);
+    File::put(
+        "{$path}/pgsql.quadlets",
+        "Secret={{application}}-pgsql-db,type=env,target=POSTGRES_DB\n".
+        "Secret={{application}}-pgsql-password,type=env,target=POSTGRES_PASSWORD\n".
+        "Secret={{application}}-pgsql-password,type=env,target=PGPASSWORD\n",
     );
 
-    File::delete($source);
+    expect($this->getPodmanQuadletSecrets('pgsql'))->toBe([
+        'laravel-pgsql-db' => ['type' => 'env', 'targets' => ['POSTGRES_DB']],
+        'laravel-pgsql-password' => ['type' => 'env', 'targets' => ['POSTGRES_PASSWORD', 'PGPASSWORD']],
+    ]);
+
     File::deleteDirectory($path);
 });
 
-it('strips selinux volume flags while preparing the quadlet source when disabled', function () {
-    $path = $this->makeQuadletServicesPath();
-    File::put("{$path}/pgsql.quadlets", "Volume={{application}}-pgsql:/var/lib/postgresql:rw,Z,U\n");
-    config(['podman.selinux_volume_mapping' => false]);
+it('defaults a secret to the mount type when type is not specified', function () {
+    $path = $this->makeQuadletsPath(['app']);
+    File::put("{$path}/app.quadlets", "Secret={{application}}-env,target=/config/app.env,mode=0400\n");
 
-    $source = $this->preparePodmanQuadletSource('pgsql');
+    expect($this->getPodmanQuadletSecrets('app'))->toBe([
+        'laravel-env' => ['type' => 'mount', 'targets' => ['/config/app.env']],
+    ]);
 
-    expect(File::get($source))->toBe("Volume=laravel-pgsql:/var/lib/postgresql:rw\n");
+    File::deleteDirectory($path);
+});
 
-    File::delete($source);
+it('returns no secrets for a service that does not define any', function () {
+    $path = $this->makeQuadletsPath(['pgsql']);
+
+    expect($this->getPodmanQuadletSecrets('pgsql'))->toBe([]);
+
     File::deleteDirectory($path);
 });
 
 it('builds the install quadlet process command', function () {
-    $path = $this->makeQuadletServicesPath(['pgsql']);
+    $path = $this->makeQuadletsPath(['pgsql']);
 
     $process = $this->installPodmanQuadlet(service: 'pgsql', application: 'my-app', replace: true);
 
@@ -289,7 +81,7 @@ it('builds the install quadlet process command', function () {
 });
 
 it('omits reload-systemd flag by default when installing', function () {
-    $path = $this->makeQuadletServicesPath(['pgsql']);
+    $path = $this->makeQuadletsPath(['pgsql']);
 
     $process = $this->installPodmanQuadlet(service: 'pgsql');
 
@@ -299,7 +91,7 @@ it('omits reload-systemd flag by default when installing', function () {
 });
 
 it('appends reload-systemd=false when reloading systemd is disabled', function () {
-    $path = $this->makeQuadletServicesPath(['pgsql']);
+    $path = $this->makeQuadletsPath(['pgsql']);
     config(['podman.reload_systemd' => false]);
 
     $process = $this->installPodmanQuadlet(service: 'pgsql');
@@ -356,40 +148,4 @@ it('omits the replace flag by default when setting a secret', function () {
     $process = $this->setPodmanSecret(secret: 'laravel-pgsql-db', value: 'myapp');
 
     expect($process->getCommandLine())->not->toContain('--replace');
-});
-
-it('discovers the secrets required by a service, grouping shared secrets by target', function () {
-    $path = $this->makeQuadletServicesPath(['pgsql']);
-    File::put(
-        "{$path}/pgsql.quadlets",
-        "Secret={{application}}-pgsql-db,type=env,target=POSTGRES_DB\n".
-        "Secret={{application}}-pgsql-password,type=env,target=POSTGRES_PASSWORD\n".
-        "Secret={{application}}-pgsql-password,type=env,target=PGPASSWORD\n",
-    );
-
-    expect($this->getPodmanQuadletSecrets('pgsql'))->toBe([
-        'laravel-pgsql-db' => ['type' => 'env', 'targets' => ['POSTGRES_DB']],
-        'laravel-pgsql-password' => ['type' => 'env', 'targets' => ['POSTGRES_PASSWORD', 'PGPASSWORD']],
-    ]);
-
-    File::deleteDirectory($path);
-});
-
-it('defaults a secret to the mount type when type is not specified', function () {
-    $path = $this->makeQuadletServicesPath(['app']);
-    File::put("{$path}/app.quadlets", "Secret={{application}}-env,target=/config/app.env,mode=0400\n");
-
-    expect($this->getPodmanQuadletSecrets('app'))->toBe([
-        'laravel-env' => ['type' => 'mount', 'targets' => ['/config/app.env']],
-    ]);
-
-    File::deleteDirectory($path);
-});
-
-it('returns no secrets for a service that does not define any', function () {
-    $path = $this->makeQuadletServicesPath(['pgsql']);
-
-    expect($this->getPodmanQuadletSecrets('pgsql'))->toBe([]);
-
-    File::deleteDirectory($path);
 });

@@ -5,7 +5,7 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\File;
 
 beforeEach(function () {
-    $this->quadletsPath = $this->makeQuadletServicesPath(['pgsql']);
+    $this->quadletsPath = $this->makeQuadletsPath(['pgsql']);
 });
 
 afterEach(function () {

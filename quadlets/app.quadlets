@@ -5,7 +5,7 @@ Target={{app-env}}
 Environment=APP_ENV={{app-env}}
 Environment=UID={{app-uid}}
 Environment=GID={{app-gid}}
-File={{runtime-path}}/frankenphp-octane/Containerfile
+File=runtimes/frankenphp-octane/Containerfile
 SetWorkingDirectory={{base-path}}
 ---
 # FileName={{application}}

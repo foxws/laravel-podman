@@ -1,0 +1,50 @@
+# FileName={{application}}
+[Build]
+ImageTag=localhost/{{application}}:latest
+Target={{app-env}}
+Environment=APP_ENV={{app-env}}
+Environment=UID={{app-uid}}
+Environment=GID={{app-gid}}
+File={{runtimes-path}}/frankenphp-octane/Containerfile
+SetWorkingDirectory={{runtimes-path}}/frankenphp-octane
+---
+# FileName={{application}}
+[Unit]
+Description=Laravel Octane container
+
+[Container]
+Image={{application}}.build
+AutoUpdate=local
+AddCapability=CAP_NET_BIND_SERVICE
+UserNS=keep-id
+ShmSize=128m
+Secret={{application}}-env,target=/config/app.env,mode=0400
+Volume={{application}}-config:/config:rw,z,U
+Volume={{application}}-data:/data:rw,z,U
+Volume={{application}}-cache:/cache:rw,z,U
+Network={{application}}.network
+PublishPort=80:80
+PublishPort=443:443
+PublishPort=443:443/udp
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=300
+TimeoutStopSec=30
+---
+# FileName={{application}}-config
+[Volume]
+Label={{application}}-config
+---
+# FileName={{application}}-data
+[Volume]
+Label={{application}}-data
+---
+# FileName={{application}}-cache
+[Volume]
+Label={{application}}-cache
+---
+# FileName={{application}}
+[Network]
+Label={{application}}

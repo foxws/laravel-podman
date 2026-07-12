@@ -1,9 +1,9 @@
 name: Fix PHP code style issues
 
 on:
-  push:
+  pull_request:
     paths:
-      - '**.php'
+      - "**.php"
 
 permissions:
   contents: write

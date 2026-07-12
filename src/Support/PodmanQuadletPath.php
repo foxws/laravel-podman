@@ -44,12 +44,12 @@ class PodmanQuadletPath
 
     public function runtimePath(): string
     {
-        return Config::get('podman.runtime_path');
+        return $this->absolutePath(Config::get('podman.runtime_path'));
     }
 
     public function configPath(): string
     {
-        return Config::get('podman.config_path');
+        return $this->absolutePath(Config::get('podman.config_path'));
     }
 
     public function domain(): string
@@ -92,5 +92,10 @@ class PodmanQuadletPath
     public function shouldUseSelinuxVolumeMapping(): bool
     {
         return Config::boolean('podman.selinux_volume_mapping');
+    }
+
+    protected function absolutePath(string $path): string
+    {
+        return Str::startsWith($path, '/') ? $path : base_path($path);
     }
 }

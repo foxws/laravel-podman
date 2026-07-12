@@ -84,7 +84,6 @@ COPY runtimes/frankenphp-octane/php-production.ini /usr/local/etc/php/conf.d/xx-
 
 # Entrypoint
 COPY --chmod=755 runtimes/frankenphp-octane/entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY --chmod=755 runtimes/frankenphp-octane/start-container.sh /usr/local/bin/start-container.sh
 
 # Clean up unnecessary files and caches to reduce image size
 RUN apt-get autoremove -y \

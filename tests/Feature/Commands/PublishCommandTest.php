@@ -17,19 +17,18 @@ it('publishes the selected runtime to the runtimes directory, creating it if nee
 
     $this->artisan('podman:publish')
         ->expectsQuestion('Select a runtime to publish', 'frankenphp-octane')
-        ->expectsOutputToContain('Runtime frankenphp-octane published to runtimes')
+        ->expectsOutputToContain("Runtime frankenphp-octane published to {$this->runtimesPath}")
         ->assertExitCode(0);
 
     expect(File::exists("{$this->runtimesPath}/Containerfile"))->toBeTrue()
         ->and(File::exists("{$this->runtimesPath}/entrypoint.sh"))->toBeTrue()
-        ->and(File::exists("{$this->runtimesPath}/start-container.sh"))->toBeTrue()
         ->and(File::exists("{$this->runtimesPath}/php-production.ini"))->toBeTrue()
         ->and(File::exists("{$this->runtimesPath}/php-development.ini"))->toBeTrue();
 });
 
 it('accepts the runtime name as an argument, skipping the prompt', function () {
     $this->artisan('podman:publish', ['runtime' => 'frankenphp-octane'])
-        ->expectsOutputToContain('Runtime frankenphp-octane published to runtimes')
+        ->expectsOutputToContain("Runtime frankenphp-octane published to {$this->runtimesPath}")
         ->assertExitCode(0);
 
     expect(File::exists("{$this->runtimesPath}/Containerfile"))->toBeTrue();

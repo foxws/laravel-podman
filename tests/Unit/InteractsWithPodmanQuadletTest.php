@@ -25,10 +25,10 @@ it('lists the available runtimes discovered in the vendor runtimes directory', f
     ]);
 });
 
-it('resolves the configured runtime path', function () {
+it('resolves the configured runtime path against the base path', function () {
     config(['podman.runtime_path' => 'runtimes']);
 
-    expect($this->getPodmanRuntimePath())->toBe('runtimes');
+    expect($this->getPodmanRuntimePath())->toBe(base_path('runtimes'));
 });
 
 it('discovers the secrets required by a service, grouping shared secrets by target', function () {

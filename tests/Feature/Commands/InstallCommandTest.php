@@ -5,18 +5,18 @@ declare(strict_types=1);
 use Illuminate\Support\Facades\File;
 
 beforeEach(function () {
-    $this->quadletsPath = $this->makeQuadletsPath(['pgsql']);
+    $this->quadletsPath = $this->makeQuadletsPath(['pgsql', 'valkey']);
 });
 
 afterEach(function () {
     File::deleteDirectory($this->quadletsPath);
 });
 
-it('prompts for the service when no argument is given', function () {
+it('prompts for the services when no argument is given', function () {
     $this->useFakePodmanBinary(0);
 
     $this->artisan('podman:install')
-        ->expectsQuestion('Select a service to install', 'pgsql')
+        ->expectsQuestion('Select the services to install', ['pgsql'])
         ->expectsOutputToContain('Service pgsql installed successfully.')
         ->assertExitCode(0);
 });
@@ -29,11 +29,42 @@ it('accepts the service as an argument, skipping the prompt', function () {
         ->assertExitCode(0);
 });
 
+it('accepts multiple services as arguments, installing each of them', function () {
+    $this->useFakePodmanBinary(0);
+
+    $this->artisan('podman:install', ['service' => ['pgsql', 'valkey']])
+        ->expectsOutputToContain('Service pgsql installed successfully.')
+        ->expectsOutputToContain('Service valkey installed successfully.')
+        ->assertExitCode(0);
+});
+
+it('accepts multiple services selected from the prompt, installing each of them', function () {
+    $this->useFakePodmanBinary(0);
+
+    $this->artisan('podman:install')
+        ->expectsQuestion('Select the services to install', ['pgsql', 'valkey'])
+        ->expectsOutputToContain('Service pgsql installed successfully.')
+        ->expectsOutputToContain('Service valkey installed successfully.')
+        ->assertExitCode(0);
+});
+
 it('reports an error when the install process fails', function () {
     $this->useFakePodmanBinary(1);
 
     $this->artisan('podman:install')
-        ->expectsQuestion('Select a service to install', 'pgsql')
+        ->expectsQuestion('Select the services to install', ['pgsql'])
+        ->assertExitCode(1);
+});
+
+it('continues installing the remaining services when one fails, and reports a summary', function () {
+    File::put("{$this->quadletsPath}/pgsql.quadlets", "Secret=laravel-pgsql-db,target=/config/missing.env,mode=0400\n");
+
+    $this->useFakePodmanBinary(0);
+
+    $this->artisan('podman:install', ['service' => ['pgsql', 'valkey'], '--secrets' => true])
+        ->expectsQuestion('Enter the file path for laravel-pgsql-db (/config/missing.env)', '/nonexistent/.env')
+        ->expectsOutputToContain('Service valkey installed successfully.')
+        ->expectsOutputToContain('Failed to install: pgsql')
         ->assertExitCode(1);
 });
 
@@ -41,7 +72,7 @@ it('accepts the replace option', function () {
     $this->useFakePodmanBinary(0);
 
     $this->artisan('podman:install', ['--replace' => true])
-        ->expectsQuestion('Select a service to install', 'pgsql')
+        ->expectsQuestion('Select the services to install', ['pgsql'])
         ->assertExitCode(0);
 });
 

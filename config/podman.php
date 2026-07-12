@@ -52,6 +52,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Quadlet Proxy Path and Prefix
+    |--------------------------------------------------------------------------
+    |
+    | These values determine the path and prefix used for Podman quadlet proxy files.
+    | The default values are 'storage/app/containers' and 'proxy', which can be
+    | overruled when needed.
+    |
+    */
+
+    'quadlet_proxy_path' => env('PODMAN_QUADLET_PROXY_PATH', 'storage/app/containers'),
+
+    'quadlet_proxy_prefix' => env('PODMAN_QUADLET_PROXY_PREFIX', 'proxy'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Quadlet UID and GID
     |--------------------------------------------------------------------------
     |

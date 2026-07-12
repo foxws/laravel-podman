@@ -33,107 +33,95 @@ function display_help {
     echo "Laravel Podman"
     echo
     echo "${YELLOW}Usage:${NC}" >&2
-    echo "  lpod COMMAND [options] [arguments]"
+    echo "  lpod SERVICE COMMAND [options] [arguments]"
     echo
-    echo "Unknown commands are passed to the podman binary."
+    echo "SERVICE is the name of a Podman Quadlet service (e.g. the application"
+    echo "service, or a sibling service such as 'pgsql'). Unknown commands are"
+    echo "passed through to the podman binary."
     echo
-    echo "${YELLOW}Podman Commands:${NC}"
-    echo "  ${GREEN}lpod up${NC}        Start the application"
-    echo "  ${GREEN}lpod up -d${NC}     Start the application in the background"
-    echo "  ${GREEN}lpod stop${NC}      Stop the application"
-    echo "  ${GREEN}lpod restart${NC}   Restart the application"
-    echo "  ${GREEN}lpod ps${NC}        Display the status of all containers"
+    echo "${YELLOW}Lifecycle Commands:${NC}"
+    echo "  ${GREEN}lpod my-app up${NC}        Start the 'my-app' service"
+    echo "  ${GREEN}lpod my-app down${NC}      Stop the 'my-app' service"
+    echo "  ${GREEN}lpod my-app restart${NC}   Restart the 'my-app' service"
+    echo "  ${GREEN}lpod my-app status${NC}    Show the status of the 'my-app' service"
     echo
     echo "${YELLOW}Artisan Commands:${NC}"
-    echo "  ${GREEN}lpod artisan ...${NC}          Run an Artisan command"
-    echo "  ${GREEN}lpod artisan queue:work${NC}"
+    echo "  ${GREEN}lpod my-app artisan ...${NC}          Run an Artisan command"
+    echo "  ${GREEN}lpod my-app artisan queue:work${NC}"
     echo
     echo "${YELLOW}PHP Commands:${NC}"
-    echo "  ${GREEN}lpod php ...${NC}   Run a snippet of PHP code"
-    echo "  ${GREEN}lpod php -v${NC}"
+    echo "  ${GREEN}lpod my-app php ...${NC}   Run a snippet of PHP code"
+    echo "  ${GREEN}lpod my-app php -v${NC}"
     echo
     echo "${YELLOW}Composer Commands:${NC}"
-    echo "  ${GREEN}lpod composer ...${NC}                       Run a Composer command"
-    echo "  ${GREEN}lpod composer require laravel/sanctum${NC}"
+    echo "  ${GREEN}lpod my-app composer ...${NC}                       Run a Composer command"
+    echo "  ${GREEN}lpod my-app composer require laravel/sanctum${NC}"
     echo
     echo "${YELLOW}Node Commands:${NC}"
-    echo "  ${GREEN}lpod node ...${NC}         Run a Node command"
-    echo "  ${GREEN}lpod node --version${NC}"
+    echo "  ${GREEN}lpod my-app node ...${NC}         Run a Node command"
+    echo "  ${GREEN}lpod my-app node --version${NC}"
     echo
     echo "${YELLOW}NPM Commands:${NC}"
-    echo "  ${GREEN}lpod npm ...${NC}        Run a npm command"
-    echo "  ${GREEN}lpod npx${NC}            Run a npx command"
-    echo "  ${GREEN}lpod npm run prod${NC}"
+    echo "  ${GREEN}lpod my-app npm ...${NC}        Run a npm command"
+    echo "  ${GREEN}lpod my-app npx${NC}            Run a npx command"
+    echo "  ${GREEN}lpod my-app npm run prod${NC}"
     echo
     echo "${YELLOW}PNPM Commands:${NC}"
-    echo "  ${GREEN}lpod pnpm ...${NC}        Run a pnpm command"
-    echo "  ${GREEN}lpod pnpx${NC}            Run a pnpx command"
-    echo "  ${GREEN}lpod pnpm run prod${NC}"
+    echo "  ${GREEN}lpod my-app pnpm ...${NC}        Run a pnpm command"
+    echo "  ${GREEN}lpod my-app pnpx${NC}            Run a pnpx command"
+    echo "  ${GREEN}lpod my-app pnpm run prod${NC}"
     echo
     echo "${YELLOW}Yarn Commands:${NC}"
-    echo "  ${GREEN}lpod yarn ...${NC}        Run a Yarn command"
-    echo "  ${GREEN}lpod yarn run prod${NC}"
+    echo "  ${GREEN}lpod my-app yarn ...${NC}        Run a Yarn command"
+    echo "  ${GREEN}lpod my-app yarn run prod${NC}"
     echo
     echo "${YELLOW}Bun Commands:${NC}"
-    echo "  ${GREEN}lpod bun ...${NC}        Run a bun command"
-    echo "  ${GREEN}lpod bunx${NC}           Run a bunx command"
-    echo "  ${GREEN}lpod bun run prod${NC}"
-    echo
-    echo "${YELLOW}Database Commands:${NC}"
-    echo "  ${GREEN}lpod mysql${NC}     Start a MySQL CLI session within the 'mysql' container"
-    echo "  ${GREEN}lpod mariadb${NC}   Start a MySQL CLI session within the 'mariadb' container"
-    echo "  ${GREEN}lpod psql${NC}      Start a PostgreSQL CLI session within the 'pgsql' container"
-    echo "  ${GREEN}lpod mongodb${NC}   Start a Mongo Shell session within the 'mongodb' container"
-    echo "  ${GREEN}lpod redis${NC}     Start a Redis CLI session within the 'redis' container"
-    echo "  ${GREEN}lpod valkey${NC}    Start a Valkey CLI session within the 'valkey' container"
+    echo "  ${GREEN}lpod my-app bun ...${NC}        Run a bun command"
+    echo "  ${GREEN}lpod my-app bunx${NC}           Run a bunx command"
+    echo "  ${GREEN}lpod my-app bun run prod${NC}"
     echo
     echo "${YELLOW}Debugging:${NC}"
-    echo "  ${GREEN}lpod debug ...${NC}          Run an Artisan command in debug mode"
-    echo "  ${GREEN}lpod debug queue:work${NC}"
+    echo "  ${GREEN}lpod my-app debug ...${NC}          Run an Artisan command in debug mode"
+    echo "  ${GREEN}lpod my-app debug queue:work${NC}"
     echo
     echo "${YELLOW}Running Tests:${NC}"
-    echo "  ${GREEN}lpod test${NC}          Run the PHPUnit tests via the Artisan test command"
-    echo "  ${GREEN}lpod phpunit ...${NC}   Run PHPUnit"
-    echo "  ${GREEN}lpod pest ...${NC}      Run Pest"
-    echo "  ${GREEN}lpod pint ...${NC}      Run Pint"
-    echo "  ${GREEN}lpod dusk${NC}          Run the Dusk tests (Requires the laravel/dusk package)"
-    echo "  ${GREEN}lpod dusk:fails${NC}    Re-run previously failed Dusk tests (Requires the laravel/dusk package)"
+    echo "  ${GREEN}lpod my-app test${NC}          Run the PHPUnit tests via the Artisan test command"
+    echo "  ${GREEN}lpod my-app phpunit ...${NC}   Run PHPUnit"
+    echo "  ${GREEN}lpod my-app pest ...${NC}      Run Pest"
+    echo "  ${GREEN}lpod my-app pint ...${NC}      Run Pint"
+    echo "  ${GREEN}lpod my-app dusk${NC}          Run the Dusk tests (Requires the laravel/dusk package)"
+    echo "  ${GREEN}lpod my-app dusk:fails${NC}    Re-run previously failed Dusk tests (Requires the laravel/dusk package)"
     echo
     echo "${YELLOW}Container CLI:${NC}"
-    echo "  ${GREEN}lpod shell${NC}        Start a shell session within the application container"
-    echo "  ${GREEN}lpod bash${NC}         Alias for 'lpod shell'"
-    echo "  ${GREEN}lpod root-shell${NC}   Start a root shell session within the application container"
-    echo "  ${GREEN}lpod root-bash${NC}    Alias for 'lpod root-shell'"
-    echo "  ${GREEN}lpod tinker${NC}       Start a new Laravel Tinker session"
-    echo
-    echo "${YELLOW}Quadlet Containers:${NC}"
-    echo "  ${GREEN}lpod --container queue${NC}          Shell into the 'systemd-queue' Quadlet container"
-    echo "  ${GREEN}lpod --container queue ps aux${NC}   Run a command inside the 'systemd-queue' container"
-    echo "  ${GREEN}lpod --container=queue${NC}          Same as above, using the '=' form"
-    echo "  ${GREEN}lpod --container queue --no-prefix${NC}   Target the container 'queue' without the 'systemd-' prefix"
-    echo
-    echo "${YELLOW}Sharing:${NC}"
-    echo "  ${GREEN}lpod share${NC}   Share the application publicly via a temporary URL"
-    echo "  ${GREEN}lpod open${NC}    Open the site in your browser"
+    echo "  ${GREEN}lpod my-app shell${NC}        Start a shell session within the service container"
+    echo "  ${GREEN}lpod my-app bash${NC}         Alias for 'lpod my-app shell'"
+    echo "  ${GREEN}lpod my-app root-shell${NC}   Start a root shell session within the service container"
+    echo "  ${GREEN}lpod my-app root-bash${NC}    Alias for 'lpod my-app root-shell'"
+    echo "  ${GREEN}lpod my-app tinker${NC}       Start a new Laravel Tinker session"
     echo
     echo "${YELLOW}Binaries:${NC}"
-    echo "  ${GREEN}lpod bin ...${NC}   Run Composer binary scripts from the vendor/bin directory"
-    echo "  ${GREEN}lpod run ...${NC}   Run a command within the application container"
+    echo "  ${GREEN}lpod my-app bin ...${NC}   Run Composer binary scripts from the vendor/bin directory"
+    echo "  ${GREEN}lpod my-app run ...${NC}   Run a command within the service container"
     echo
-    echo "${YELLOW}Customization:${NC}"
-    echo "  ${GREEN}lpod artisan lpod:publish${NC}   Publish the Podman configuration files"
-    echo "  ${GREEN}lpod build --no-cache${NC}       Rebuild all of the Podman containers"
+    echo "${YELLOW}Other:${NC}"
+    echo "  ${GREEN}lpod my-app open${NC}                     Open the application URL in your browser"
+    echo "  ${GREEN}lpod my-app artisan podman:publish${NC}   Publish the Podman container runtime files"
 
     exit 1
 }
 
-# Proxy the "help" command...
-if [ $# -gt 0 ]; then
-    if [ "$1" == "help" ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "--help" ]; then
-        display_help
-    fi
-else
+# Show help when no service, or an explicit help flag, is given...
+if [ $# -eq 0 ] || [ "$1" == "help" ] || [ "$1" == "-h" ] || [ "$1" == "-help" ] || [ "$1" == "--help" ]; then
     display_help
+fi
+
+SERVICE="$1"
+shift
+
+if [ $# -eq 0 ]; then
+    echo "${BOLD}Missing command.${NC} Usage: lpod ${SERVICE} COMMAND [options] [arguments]" >&2
+
+    exit 1
 fi
 
 # Source the ".env" file so Laravel's environment variables are available...
@@ -146,29 +134,8 @@ fi
 
 # Define environment variables...
 export APP_PORT=${APP_PORT:-80}
-export APP_SERVICE=${APP_SERVICE:-"app"}
-export APP_USER=${APP_USER:-"lpod"}
-export DB_PORT=${DB_PORT:-3306}
-export WWWUSER=${WWWUSER:-$UID}
-export WWWGROUP=${WWWGROUP:-$(id -g)}
-
-export LPOD_FILES=${LPOD_FILES:-""}
-export LPOD_SHARE_DASHBOARD=${LPOD_SHARE_DASHBOARD:-4040}
-export LPOD_SHARE_SERVER_HOST=${LPOD_SHARE_SERVER_HOST:-"laravel-lpod.site"}
-export LPOD_SHARE_SERVER_PORT=${LPOD_SHARE_SERVER_PORT:-8080}
-export LPOD_SHARE_SUBDOMAIN=${LPOD_SHARE_SUBDOMAIN:-""}
-export LPOD_SHARE_DOMAIN=${LPOD_SHARE_DOMAIN:-"$LPOD_SHARE_SERVER_HOST"}
-export LPOD_SHARE_SERVER=${LPOD_SHARE_SERVER:-""}
+export APP_USER=${APP_USER:-"docker"}
 export LPOD_DOCKER_BINARY=${LPOD_DOCKER_BINARY:-"podman"}
-
-# Function that outputs Podman is not running...
-function lpod_is_not_running {
-    echo "${BOLD}Podman is not running.${NC}" >&2
-    echo "" >&2
-    echo "${BOLD}You may Podman using the following commands:${NC} './vendor/bin/lpod up' or './vendor/bin/lpod up -d'" >&2
-
-    exit 1
-}
 
 # AI agent environment variables to forward into containers...
 AGENT_ENV_VARS=(
@@ -204,521 +171,224 @@ function forward_agent_env() {
     done
 }
 
-# Proxy the "--container" flag to "podman exec" against a Quadlet-managed container...
-CONTAINER=""
-CONTAINER_PREFIX="systemd-"
-
-while [ $# -gt 0 ]; do
-    case "$1" in
-        --container=*)
-            CONTAINER="${1#*=}"
-            shift 1
-            ;;
-        --container)
-            CONTAINER="$2"
-            shift 2
-            ;;
-        --no-prefix)
-            CONTAINER_PREFIX=""
-            shift 1
-            ;;
-        *)
-            break
-            ;;
-    esac
-done
-
-if [ -n "$CONTAINER" ]; then
-    [ $# -eq 0 ] && set -- bash
-
-    ARGS=(exec)
-
-    if test -t 0 && test -t 1; then
-        ARGS+=(-it)
-    else
-        ARGS+=(-i)
-    fi
-
-    forward_agent_env
-    ARGS+=("${CONTAINER_PREFIX}${CONTAINER}")
-
-    exec "${LPOD_DOCKER_BINARY}" "${ARGS[@]}" "$@"
-fi
-
-# Define Docker Compose command prefix...
-if ${LPOD_DOCKER_BINARY} compose &> /dev/null; then
-    COMPOSE_CMD=(${LPOD_DOCKER_BINARY} compose)
+# Use the system-wide systemd manager when running as root, otherwise the
+# per-user manager backing rootless Quadlet services...
+if [ "$(id -u)" -eq 0 ]; then
+    SYSTEMCTL_CMD=(systemctl)
 else
-    COMPOSE_CMD=(${LPOD_DOCKER_BINARY}-compose)
+    SYSTEMCTL_CMD=(systemctl --user)
 fi
 
-if [ -n "$LPOD_FILES" ]; then
-    # Convert LPOD_FILES to an array...
-    IFS=':' read -ra LPOD_FILES <<< "$LPOD_FILES"
+# Quadlet installs a Podman container named "systemd-<unit>" for every
+# "<unit>.service" it manages, to avoid clashing with unmanaged containers...
+CONTAINER="systemd-${SERVICE}"
 
-    for FILE in "${LPOD_FILES[@]}"; do
-        if [ -f "$FILE" ]; then
-            COMPOSE_CMD+=(-f "$FILE")
-        else
-            echo "${BOLD}Unable to find Docker Compose file: '${FILE}'${NC}" >&2
-
-            exit 1
-        fi
-    done
+# Determine whether to allocate a pseudo-tty for "podman exec"...
+if test -t 0 && test -t 1; then
+    TTY_ARGS=(-it)
+else
+    TTY_ARGS=(-i)
 fi
 
-EXEC="yes"
-
-if [ -z "$LPOD_SKIP_CHECKS" ]; then
-    # Ensure that Docker is running...
-    if ! ${LPOD_DOCKER_BINARY} info > /dev/null 2>&1; then
-        echo "${BOLD}Docker or Podman is not running.${NC}" >&2
-
-        exit 1
-    fi
-
-    # Determine if Podman is currently up...
-    if "${COMPOSE_CMD[@]}" ps "$APP_SERVICE" 2>&1 | grep 'Exit\|exited'; then
-        echo "${BOLD}Shutting down old Podman processes...${NC}" >&2
-
-        "${COMPOSE_CMD[@]}" down > /dev/null 2>&1
-
-        EXEC="no"
-    elif [ -z "$("${COMPOSE_CMD[@]}" ps -q)" ]; then
-        EXEC="no"
-    fi
-fi
+COMMAND="$1"
+shift
 
 ARGS=()
 
-# Proxy PHP commands to the "php" binary on the application container...
-if [ "$1" == "php" ]; then
-    shift 1
+case "$COMMAND" in
+    # Start, stop, restart, and inspect the Quadlet-managed systemd service...
+    up)
+        exec "${SYSTEMCTL_CMD[@]}" start "${SERVICE}.service"
+        ;;
 
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    down)
+        exec "${SYSTEMCTL_CMD[@]}" stop "${SERVICE}.service"
+        ;;
+
+    restart)
+        exec "${SYSTEMCTL_CMD[@]}" restart "${SERVICE}.service"
+        ;;
+
+    status)
+        exec "${SYSTEMCTL_CMD[@]}" status "${SERVICE}.service"
+        ;;
+
+    # Proxy PHP commands to the "php" binary on the service container...
+    php)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" "php")
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" php)
+        ;;
 
-# Proxy vendor binary commands on the application container...
-elif [ "$1" == "bin" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        CMD=$1
-        shift 1
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy vendor binary commands on the service container...
+    bin)
+        CMD="$1"
+        shift
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" ./vendor/bin/"$CMD")
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" "./vendor/bin/${CMD}")
+        ;;
 
-# Proxy commands on the application container...
-elif [ "$1" == "run" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        CMD=$1
-        shift 1
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy arbitrary commands on the service container...
+    run)
+        CMD="$1"
+        shift
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" "$CMD")
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" "$CMD")
+        ;;
 
-# Proxy podman commands to the podman binary on the application container...
-elif [ "$1" == "podman" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy Composer commands to the "composer" binary on the service container...
+    composer)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" "${COMPOSE_CMD[@]}")
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" composer)
+        ;;
 
-# Proxy Composer commands to the "composer" binary on the application container...
-elif [ "$1" == "composer" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy Artisan commands to the "artisan" binary on the service container...
+    artisan|art|a)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" "composer")
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" php artisan)
+        ;;
 
-# Proxy Artisan commands to the "artisan" binary on the application container...
-elif [ "$1" == "artisan" ] || [ "$1" == "art" ] || [ "$1" == "a" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy the "debug" command to "php artisan" on the service container with xdebug enabled...
+    debug)
+        ARGS+=(exec -u "$APP_USER" -e XDEBUG_TRIGGER=1 "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" php artisan)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" php artisan)
+        ;;
 
-# Proxy the "debug" command to the "php artisan" binary on the application container with xdebug enabled...
-elif [ "$1" == "debug" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER" -e XDEBUG_TRIGGER=1)
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy the "test" command to the "php artisan test" Artisan command...
+    test)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" php artisan)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" php artisan test)
+        ;;
 
-# Proxy the "test" command to the "php artisan test" Artisan command...
-elif [ "$1" == "test" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy the "phpunit" command to "php vendor/bin/phpunit"...
+    phpunit)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" php artisan test)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" php vendor/bin/phpunit)
+        ;;
 
-# Proxy the "phpunit" command to "php vendor/bin/phpunit"...
-elif [ "$1" == "phpunit" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy the "pest" command to "php vendor/bin/pest"...
+    pest)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" php vendor/bin/phpunit)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" php vendor/bin/pest)
+        ;;
 
-# Proxy the "pest" command to "php vendor/bin/pest"...
-elif [ "$1" == "pest" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy the "pint" command to "php vendor/bin/pint"...
+    pint)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" php vendor/bin/pest)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" php vendor/bin/pint)
+        ;;
 
-# Proxy the "pint" command to "php vendor/bin/pint"...
-elif [ "$1" == "pint" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy the "dusk" command to the "php artisan dusk" Artisan command...
+    dusk)
+        ARGS+=(exec -u "$APP_USER" -e "APP_URL=http://${CONTAINER}" -e "DUSK_DRIVER_URL=http://selenium:4444/wd/hub" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" php vendor/bin/pint)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" php artisan dusk)
+        ;;
 
-# Proxy the "dusk" command to the "php artisan dusk" Artisan command...
-elif [ "$1" == "dusk" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy the "dusk:fails" command to the "php artisan dusk:fails" Artisan command...
+    dusk:fails)
+        ARGS+=(exec -u "$APP_USER" -e "APP_URL=http://${CONTAINER}" -e "DUSK_DRIVER_URL=http://selenium:4444/wd/hub" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=(-e "APP_URL=http://${APP_SERVICE}")
-        ARGS+=(-e "DUSK_DRIVER_URL=http://selenium:4444/wd/hub")
-        ARGS+=("$APP_SERVICE" php artisan dusk)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" php artisan dusk:fails)
+        ;;
 
-# Proxy the "dusk:fails" command to the "php artisan dusk:fails" Artisan command...
-elif [ "$1" == "dusk:fails" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Initiate a Laravel Tinker session within the service container...
+    tinker)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=(-e "APP_URL=http://${APP_SERVICE}")
-        ARGS+=(-e "DUSK_DRIVER_URL=http://selenium:4444/wd/hub")
-        ARGS+=("$APP_SERVICE" php artisan dusk:fails)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" php artisan tinker)
+        ;;
 
-# Initiate a Laravel Tinker session within the application container...
-elif [ "$1" == "tinker" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy Node commands to the "node" binary on the service container...
+    node)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" php artisan tinker)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" node)
+        ;;
 
-# Proxy Node commands to the "node" binary on the application container...
-elif [ "$1" == "node" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy NPM commands to the "npm" binary on the service container...
+    npm)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" node)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" npm)
+        ;;
 
-# Proxy NPM commands to the "npm" binary on the application container...
-elif [ "$1" == "npm" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy NPX commands to the "npx" binary on the service container...
+    npx)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" npm)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" npx)
+        ;;
 
-# Proxy NPX commands to the "npx" binary on the application container...
-elif [ "$1" == "npx" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy PNPM commands to the "pnpm" binary on the service container...
+    pnpm)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" npx)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" pnpm)
+        ;;
 
-# Proxy PNPM commands to the "pnpm" binary on the application container...
-elif [ "$1" == "pnpm" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy PNPX commands to the "pnpx" binary on the service container...
+    pnpx)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" pnpm)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" pnpx)
+        ;;
 
-# Proxy PNPX commands to the "pnpx" binary on the application container...
-elif [ "$1" == "pnpx" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy Yarn commands to the "yarn" binary on the service container...
+    yarn)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" pnpx)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" yarn)
+        ;;
 
-# Proxy Yarn commands to the "yarn" binary on the application container...
-elif [ "$1" == "yarn" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy Bun commands to the "bun" binary on the service container...
+    bun)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" yarn)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" bun)
+        ;;
 
-# Proxy Bun commands to the "bun" binary on the application container...
-elif [ "$1" == "bun" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Proxy Bun X commands to the "bunx" binary on the service container...
+    bunx)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" bun)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" bunx)
+        ;;
 
-# Proxy Bun X commands to the "bunx" binary on the application container...
-elif [ "$1" == "bunx" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Initiate a Bash shell within the service container...
+    shell|bash)
+        ARGS+=(exec -u "$APP_USER" "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" bunx)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" bash)
+        ;;
 
-# Initiate a MySQL CLI terminal session within the "mysql" container...
-elif [ "$1" == "mysql" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec)
-        [ ! -t 0 ] && ARGS+=(-T)
-        ARGS+=(mysql bash -c)
-        ARGS+=("MYSQL_PWD=\${MYSQL_PASSWORD} mysql -u \${MYSQL_USER} \${MYSQL_DATABASE} \${MYSQL_EXTRA_OPTIONS}")
-    else
-        lpod_is_not_running
-    fi
-
-# Initiate a MySQL CLI terminal session within the "mariadb" container...
-elif [ "$1" == "mariadb" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec)
-        [ ! -t 0 ] && ARGS+=(-T)
-        ARGS+=(mariadb bash -c)
-        ARGS+=("MYSQL_PWD=\${MYSQL_PASSWORD} mariadb -u \${MYSQL_USER} \${MYSQL_DATABASE}")
-    else
-        lpod_is_not_running
-    fi
-
-# Initiate a PostgreSQL CLI terminal session within the "pgsql" container...
-elif [ "$1" == "psql" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec)
-        [ ! -t 0 ] && ARGS+=(-T)
-        ARGS+=(pgsql bash -c)
-        ARGS+=("PGPASSWORD=\${PGPASSWORD} psql -U \${POSTGRES_USER} \${POSTGRES_DB}")
-    else
-        lpod_is_not_running
-    fi
-
-# Initiate a Bash shell within the application container...
-elif [ "$1" == "shell" ] || [ "$1" == "bash" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u "$APP_USER")
-        [ ! -t 0 ] && ARGS+=(-T)
+    # Initiate a root user Bash shell within the service container...
+    root-shell|root-bash)
+        ARGS+=(exec -u root "${TTY_ARGS[@]}")
         forward_agent_env
-        ARGS+=("$APP_SERVICE" bash)
-    else
-        lpod_is_not_running
-    fi
+        ARGS+=("$CONTAINER" bash)
+        ;;
 
-# Initiate a root user Bash shell within the application container...
-elif [ "$1" == "root-shell" ] || [ "$1" == "root-bash" ]; then
-    shift 1
+    # Open the application URL in the browser...
+    open)
+        if command -v open &>/dev/null; then
+            OPEN="open"
+        elif command -v xdg-open &>/dev/null; then
+            OPEN="xdg-open"
+        else
+            echo "Neither open nor xdg-open is available. Exiting." >&2
 
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec -u root)
-        [ ! -t 0 ] && ARGS+=(-T)
-        forward_agent_env
-        ARGS+=("$APP_SERVICE" bash)
-    else
-        lpod_is_not_running
-    fi
-
-# Initiate a MongoDB Shell within the "mongodb" container...
-elif [ "$1" == "mongodb" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec)
-        [ ! -t 0 ] && ARGS+=(-T)
-        ARGS+=(mongodb mongosh --port "${FORWARD_MONGODB_PORT:-27017}" --username "$MONGODB_USERNAME" --password "$MONGODB_PASSWORD" --authenticationDatabase admin)
-    else
-        lpod_is_not_running
-    fi
-
-# Initiate a Redis CLI terminal session within the "redis" container...
-elif [ "$1" == "redis" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec)
-        [ ! -t 0 ] && ARGS+=(-T)
-        ARGS+=(redis redis-cli)
-    else
-        lpod_is_not_running
-    fi
-
-# Initiate a Valkey CLI terminal session within the "valkey" container...
-elif [ "$1" == "valkey" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ARGS+=(exec)
-        [ ! -t 0 ] && ARGS+=(-T)
-        ARGS+=(valkey valkey-cli)
-    else
-        lpod_is_not_running
-    fi
-
-# Share the site...
-elif [ "$1" == "share" ]; then
-    shift 1
-
-    if [ "$EXEC" == "yes" ]; then
-        ${LPOD_DOCKER_BINARY} run --init --rm --add-host=host.docker.internal:host-gateway -p "$LPOD_SHARE_DASHBOARD":4040 -t beyondcodegmbh/expose-server:latest share http://host.docker.internal:"$APP_PORT" \
-            --server-host="$LPOD_SHARE_SERVER_HOST" \
-            --server-port="$LPOD_SHARE_SERVER_PORT" \
-            --auth="$LPOD_SHARE_TOKEN" \
-            --server="$LPOD_SHARE_SERVER" \
-            --subdomain="$LPOD_SHARE_SUBDOMAIN" \
-            --domain="$LPOD_SHARE_DOMAIN" \
-            "$@"
-
-        exit
-    else
-        lpod_is_not_running
-    fi
-
-# Open the site...
-elif [ "$1" == "open" ]; then
-    shift 1
-
-    if command -v open &>/dev/null; then
-        OPEN="open"
-    elif command -v xdg-open &>/dev/null; then
-        OPEN="xdg-open"
-    else
-        echo "Neither open nor xdg-open is available. Exiting."
-        exit 1
-    fi
-
-    if [ "$EXEC" == "yes" ]; then
+            exit 1
+        fi
 
         if [[ -n "$APP_PORT" && "$APP_PORT" != "80" ]]; then
             FULL_URL="${APP_URL}:${APP_PORT}"
@@ -726,13 +396,13 @@ elif [ "$1" == "open" ]; then
             FULL_URL="$APP_URL"
         fi
 
-        $OPEN "$FULL_URL"
+        exec "$OPEN" "$FULL_URL"
+        ;;
 
-        exit
-    else
-        lpod_is_not_running
-    fi
-fi
+    # Unknown commands are passed through to the podman binary...
+    *)
+        exec "${LPOD_DOCKER_BINARY}" "$COMMAND" "$@"
+        ;;
+esac
 
-# Run Docker Compose with the defined arguments...
-"${COMPOSE_CMD[@]}" "${ARGS[@]}" "$@"
+exec "${LPOD_DOCKER_BINARY}" "${ARGS[@]}" "$@"

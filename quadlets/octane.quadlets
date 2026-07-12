@@ -1,6 +1,6 @@
-# FileName={{application}}
+# FileName={{application}}-octane
 [Build]
-ImageTag=localhost/{{application}}:latest
+ImageTag=localhost/{{application}}-octane:latest
 Target={{app-env}}
 Environment=APP_ENV={{app-env}}
 Environment=UID={{app-uid}}
@@ -8,7 +8,7 @@ Environment=GID={{app-gid}}
 File={{container-path}}/Containerfile
 SetWorkingDirectory={{container-path}}
 ---
-# FileName={{application}}
+# FileName={{application}}-octane
 [Unit]
 Description=Laravel Octane container
 
@@ -20,7 +20,7 @@ ShmSize=128m
 Secret={{application}}-env,target=/config/app.env,mode=0400
 Volume={{application}}-cache:/cache:rw,z,U
 Network={{application}}.network
-Network=proxy.network
+Network={{proxy}}.network
 ExposeHostPort=8000
 ExposeHostPort=5173
 
@@ -29,16 +29,3 @@ Restart=always
 RestartSec=5
 TimeoutStartSec=300
 TimeoutStopSec=30
----
-# FileName={{application}}-cache-storage
-[Volume]
-Label={{application}}-cache
----
-# FileName={{application}}
-[Network]
-Label={{application}}
----
-# FileName=proxy
-[Network]
-Label=proxy
-IPv6=true

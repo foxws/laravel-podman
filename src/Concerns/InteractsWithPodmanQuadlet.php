@@ -178,12 +178,14 @@ trait InteractsWithPodmanQuadlet
         $source = "{$this->getPodmanQuadletServicesPath()}/{$service}.quadlets";
 
         $contents = strtr(File::get($source), [
-            '{{application}}' => $this->getPodmanQuadletPrefix(),
-            '{{base-path}}' => base_path(),
-            '{{container-path}}' => $this->getPodmanQuadletContainerPath(),
             '{{app-env}}' => Config::string('app.env'),
             '{{app-uid}}' => (string) $this->getPodmanQuadletUid(),
             '{{app-gid}}' => (string) $this->getPodmanQuadletGid(),
+            '{{application}}' => $this->getPodmanQuadletPrefix(),
+            '{{base-path}}' => base_path(),
+            '{{container-path}}' => $this->getPodmanQuadletContainerPath(),
+            '{{proxy}}' => $this->getPodmanQuadletProxyPrefix(),
+            '{{proxy-path}}' => $this->getPodmanQuadletProxyPath(),
         ]);
 
         if (! $this->shouldUseSelinuxVolumeMapping()) {
@@ -252,6 +254,22 @@ trait InteractsWithPodmanQuadlet
         }
 
         return base_path();
+    }
+
+    protected function getPodmanQuadletProxyPath(): string
+    {
+        $path = Config::get('podman.quadlet_proxy_path');
+
+        if ($path && File::isDirectory($path)) {
+            return $path;
+        }
+
+        return base_path();
+    }
+
+    protected function getPodmanQuadletProxyPrefix(): string
+    {
+        return Str::kebab(Config::string('podman.quadlet_proxy_prefix'));
     }
 
     protected function getPodmanQuadletServices(): array

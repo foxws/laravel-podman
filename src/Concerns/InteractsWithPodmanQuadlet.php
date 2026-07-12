@@ -25,7 +25,7 @@ trait InteractsWithPodmanQuadlet
         ?bool $replace = null,
     ): Process {
         $source = "{$this->getPodmanQuadletsPath()}/{$service}.quadlets";
-        $target = $this->getPodmanQuadletTemporaryPath();
+        $target = $this->getPodmanTemporaryPath();
 
         $command = ['podman', 'quadlet', 'install'];
 
@@ -135,10 +135,10 @@ trait InteractsWithPodmanQuadlet
         return $process;
     }
 
-    protected function publishPodmanQuadletRuntime(string $runtime, ?bool $force = null): bool
+    protected function publishPodmanRuntime(string $runtime, ?bool $force = null): bool
     {
-        $source = "{$this->getPodmanQuadletVendorPath()}/runtimes/{$runtime}";
-        $target = "{$this->getPodmanQuadletRuntimesPath()}/{$runtime}";
+        $source = "{$this->getPodmanRuntimesPath()}/runtimes/{$runtime}";
+        $target = base_path('runtimes');
 
         if (File::exists($target) && ! $force) {
             error("The runtime {$runtime} already exists at {$target}. Use --force to overwrite.");
@@ -204,9 +204,8 @@ trait InteractsWithPodmanQuadlet
             '{{app-gid}}' => (string) $this->getPodmanQuadletGid(),
             '{{application}}' => $this->getPodmanQuadletPrefix(),
             '{{base-path}}' => base_path(),
-            '{{runtimes-path}}' => $this->getPodmanQuadletRuntimesPath(),
-            '{{proxy}}' => $this->getPodmanQuadletProxyPrefix(),
-            '{{proxy-path}}' => $this->getPodmanQuadletProxyPath(),
+            '{{config-path}}' => $this->getPodmanConfigPath(),
+            '{{runtime-path}}' => $this->getPodmanRuntimePath(),
         ];
     }
 
@@ -261,28 +260,12 @@ trait InteractsWithPodmanQuadlet
         );
     }
 
-    protected function getPodmanQuadletVendorPath(): string
+    protected function getPodmanVendorPath(): string
     {
         return Str::rtrim(
             InstalledVersions::getInstallPath('foxws/laravel-podman'),
             '/',
         );
-    }
-
-    protected function getPodmanQuadletPath(): string
-    {
-        $path = $this->getPodmanQuadletsPath();
-
-        if ($path && File::isDirectory($path)) {
-            return $path;
-        }
-
-        return "{$this->getPodmanQuadletVendorPath()}/quadlets";
-    }
-
-    protected function getPodmanQuadletProxyPrefix(): string
-    {
-        return Str::kebab(Config::string('podman.proxy_prefix'));
     }
 
     protected function getPodmanQuadletDomain(): string
@@ -303,7 +286,7 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletRuntimes(): array
     {
-        return Collection::make(File::directories("{$this->getPodmanQuadletVendorPath()}/runtimes"))
+        return Collection::make(File::directories($this->getPodmanRuntimesPath()))
             ->map(fn (string $path): string => basename($path))
             ->sort()
             ->values()
@@ -373,20 +356,37 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletsPath(): string
     {
-        return Config::get('podman.quadlet_path');
+        $path = Config::get('podman.quadlets_path');
+
+        if ($path && File::isDirectory($path)) {
+            return $path;
+        }
+
+        return "{$this->getPodmanVendorPath()}/quadlets";
     }
 
-    protected function getPodmanQuadletRuntimesPath(): string
+    protected function getPodmanRuntimesPath(): string
     {
-        return Config::get('podman.runtimes_path');
+        $path = Config::get('podman.runtimes_path');
+
+        if ($path && File::isDirectory($path)) {
+            return $path;
+        }
+
+        return "{$this->getPodmanVendorPath()}/runtimes";
     }
 
-    protected function getPodmanQuadletProxyPath(): string
+    protected function getPodmanRuntimePath(): string
     {
-        return Config::get('podman.proxy_path');
+        return Config::get('podman.runtime_path');
     }
 
-    protected function getPodmanQuadletTemporaryPath(): string
+    protected function getPodmanConfigPath(): string
+    {
+        return Config::get('podman.config_path');
+    }
+
+    protected function getPodmanTemporaryPath(): string
     {
         return Config::get('podman.temporary_path');
     }

@@ -30,7 +30,7 @@ class InstallCommand extends Command
     {
         $service = $this->argument('service') ?? select(
             label: 'Select a service to install',
-            options: $this->getPodmanQuadletServices(),
+            options: $this->getPodmanQuadlets(),
             required: true,
         );
 

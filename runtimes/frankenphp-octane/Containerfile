@@ -15,7 +15,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="${PATH}:${PNPM_HOME}"
 ENV FRANKEN_CLI="frankenphp php-cli /app/artisan"
 ENV PHP_CLI="php -d variables_order=EGPCS /app/artisan"
-ENV APP_COMMAND="${FRANKEN_CLI} octane:frankenphp --host=0.0.0.0 --port=8000"
+ENV APP_COMMAND="${FRANKEN_CLI} octane:frankenphp --host=0.0.0.0 --port=443 --admin-port=2019 --https"
 ENV APP_USER="docker"
 
 # Set timezone
@@ -55,10 +55,6 @@ RUN mkdir -p /etc/apt/keyrings \
 RUN groupadd --force -g ${GID} docker \
     && useradd -u ${UID} -g docker -d /home/docker -s /bin/bash -m docker
 
-# Create necessary directories
-RUN mkdir -p ${PNPM_HOME} /config /data \
-    && chown -R docker:docker ${PNPM_HOME} /config /data
-
 # PHP Configuration
 RUN cp ${PHP_INI_DIR}/php.ini-production ${PHP_INI_DIR}/php.ini
 
@@ -79,6 +75,8 @@ RUN setcap -r /usr/local/bin/frankenphp
 # Node.js Configuration
 RUN npm install -g npm@latest corepack@latest svgo@latest \
     && corepack enable && corepack prepare pnpm@latest --activate \
+    && mkdir -p ${PNPM_HOME}/store \
+    && chown -R docker:docker ${PNPM_HOME} \
     && pnpm config set store-dir ${PNPM_HOME}/store
 
 # Custom PHP configuration

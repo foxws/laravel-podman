@@ -3,6 +3,8 @@ set -euo pipefail
 
 APP_COMMAND=${APP_COMMAND:-'/usr/bin/bash'}
 APP_ENV=${APP_ENV:-'production'}
+APP_PORT=${APP_PORT:-80}
+VITE_PORT=${VITE_PORT:-5173}
 
 log() {
     local type="$1"

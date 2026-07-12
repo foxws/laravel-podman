@@ -15,17 +15,28 @@ Description=Laravel Octane container
 [Container]
 Image={{application}}.build
 AutoUpdate=local
+AddCapability=CAP_NET_BIND_SERVICE
 UserNS=keep-id
 ShmSize=128m
 Secret={{application}}-env,target=/config/app.env,mode=0400
+Volume={{application}}-config:/config:rw,z,U
+Volume={{application}}-data:/data:rw,z,U
 Volume={{application}}-cache:/cache:rw,z,U
 Network={{application}}.network
-Network={{proxy}}.network
-ExposeHostPort=8000
-ExposeHostPort=5173
+PublishPort=80:80
+PublishPort=443:443
+PublishPort=443:443/udp
 
 [Service]
 Restart=always
 RestartSec=5
 TimeoutStartSec=300
 TimeoutStopSec=30
+---
+# FileName={{application}}-cache
+[Volume]
+Label={{application}}-cache
+---
+# FileName={{application}}
+[Network]
+Label={{application}}

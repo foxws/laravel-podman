@@ -1,7 +1,0 @@
-# FileName={{application}}-cache
-[Volume]
-Label={{application}}-cache
----
-# FileName={{application}}
-[Network]
-Label={{application}}

@@ -3,18 +3,6 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Podman Service Path
-    |--------------------------------------------------------------------------
-    |
-    | This value is the path where Podman quadlet quadlet files are placed.
-    | The default value is the vendor quadlet path, which can be overruled when needed.
-    |
-    */
-
-    'quadlet_path' => env('PODMAN_QUADLET_PATH', 'quadlets'),
-
-    /*
-    |--------------------------------------------------------------------------
     | Service Prefix
     |--------------------------------------------------------------------------
     |
@@ -36,9 +24,9 @@ return [
     |
     */
 
-    'quadlet_uid' => env('PODMAN_QUADLET_UID', null),
+    'quadlet_uid' => env('PODMAN_QUADLET_UID'),
 
-    'quadlet_gid' => env('PODMAN_QUADLET_GID', null),
+    'quadlet_gid' => env('PODMAN_QUADLET_GID'),
 
     /*
     |--------------------------------------------------------------------------
@@ -50,22 +38,19 @@ return [
     |
     */
 
-    'runtimes_path' => env('PODMAN_RUNTIMES_PATH', 'runtimes'),
+    'runtime_path' => env('PODMAN_RUNTIME_PATH', 'runtimes'),
 
     /*
     |--------------------------------------------------------------------------
-    | Proxy Path and Prefix
+    | Podman Config Path
     |--------------------------------------------------------------------------
     |
-    | These values determine the path and prefix used for Podman quadlet proxy files.
-    | The default values are 'runtimes/proxy' and 'proxy', which can be
-    | overruled when needed.
+    | This value is the path where Podman configuration files are placed.
+    | The default value is 'runtimes/config', which can be overruled when needed.
     |
     */
 
-    'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),
-
-    'proxy_path' => env('PODMAN_PROXY_PATH', 'runtimes/proxy'),
+    'config_path' => env('PODMAN_CONFIG_PATH', 'runtimes/config'),
 
     /*
     |--------------------------------------------------------------------------

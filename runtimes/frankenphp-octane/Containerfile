@@ -123,7 +123,7 @@ RUN composer dump-autoload --optimize \
 EXPOSE 6001 8000 13714
 
 # Development Stage
-FROM base AS development
+FROM base AS local
 
 WORKDIR /app
 

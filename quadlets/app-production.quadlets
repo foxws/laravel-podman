@@ -1,7 +1,7 @@
 # FileName={{application}}
 [Build]
 ImageTag=localhost/{{application}}:latest
-Target=production
+Target={{app-env}}
 Environment=APP_ENV={{app-env}}
 Environment=UID={{app-uid}}
 Environment=GID={{app-gid}}

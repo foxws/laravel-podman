@@ -140,7 +140,13 @@ trait InteractsWithPodmanQuadlet
         $source = "{$this->getPodmanQuadletVendorPath()}/runtimes/{$runtime}";
         $target = "{$this->getPodmanQuadletRuntimesPath()}/{$runtime}";
 
-        $this->publishPodmanQuadletDirectory($source, $target, $force);
+        if (File::exists($target) && ! $force) {
+            error("The runtime {$runtime} already exists at {$target}. Use --force to overwrite.");
+
+            return false;
+        }
+
+        $this->publishPodmanQuadletDirectory($source, $target);
 
         return true;
     }
@@ -284,9 +290,9 @@ trait InteractsWithPodmanQuadlet
         return Uri::of(Config::string('app.url'))->host();
     }
 
-    protected function getPodmanQuadletServices(): array
+    protected function getPodmanQuadlets(): array
     {
-        return Collection::make(File::files($this->getPodmanQuadletServicesPath()))
+        return Collection::make(File::files($this->getPodmanQuadletsPath()))
             ->filter(fn (SplFileInfo $file): bool => $file->getExtension() === 'quadlets')
             ->map(fn (SplFileInfo $file): string => $file->getBasename('.'.$file->getExtension()))
             ->sort()

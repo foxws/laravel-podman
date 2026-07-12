@@ -137,7 +137,7 @@ trait InteractsWithPodmanQuadlet
 
     protected function publishPodmanRuntime(string $runtime, ?bool $force = null): bool
     {
-        $source = "{$this->getPodmanRuntimesPath()}/runtimes/{$runtime}";
+        $source = "{$this->getPodmanRuntimesPath()}/{$runtime}";
         $target = base_path('runtimes');
 
         if (File::exists($target) && ! $force) {

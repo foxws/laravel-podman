@@ -31,11 +31,11 @@ class PublishCommand extends Command
             required: true,
         );
 
-        if (! $this->publishPodmanQuadletRuntime($runtime, force: $this->option('force'))) {
+        if (! $this->publishPodmanRuntime($runtime, force: $this->option('force'))) {
             return self::FAILURE;
         }
 
-        info("Runtime {$runtime} published to {$this->getPodmanQuadletRuntimesPath()}");
+        info("Runtime {$runtime} published to {$this->getPodmanRuntimePath()}");
 
         return self::SUCCESS;
     }

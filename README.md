@@ -261,6 +261,10 @@ Please review [our security policy](../../security/policy) on how to report secu
 - [francoism90](https://github.com/foxws)
 - [All Contributors](../../contributors)
 
+## Disclaimer
+
+AI, specifically [Claude](https://claude.com/product/claude-code), was used to help build this package. All AI-assisted output is reviewed by me, and I retain final say over everything that is implemented and released.
+
 ## License
 
 The MIT License (MIT). Please see [License File](LICENSE.md) for more information.

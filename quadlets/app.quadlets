@@ -19,7 +19,7 @@ AutoUpdate=local
 AddCapability=CAP_NET_BIND_SERVICE
 UserNS=keep-id
 ShmSize=128m
-Secret={{application}}-env,target=/app/.env,mode=0400
+Secret={{application}}-env,target=/app/.env,mode=0400,uid={{app-uid}},gid={{app-gid}}
 Volume={{application}}-config:/config:rw,z,U
 Volume={{application}}-data:/data:rw,z,U
 Volume={{application}}-cache:/cache:rw,z,U

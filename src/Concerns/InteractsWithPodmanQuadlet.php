@@ -366,8 +366,8 @@ trait InteractsWithPodmanQuadlet
     protected function getPodmanQuadletRuntimes(): array
     {
         return Collection::make(File::directories("{$this->getPodmanQuadletVendorPath()}/runtimes"))
+            ->filter(fn (string $path): bool => File::exists("{$path}/Containerfile"))
             ->map(fn (string $path): string => basename($path))
-            ->reject(fn (string $runtime): bool => $runtime === 'proxy')
             ->sort()
             ->values()
             ->mapWithKeys(fn (string $runtime): array => [$runtime => $runtime])

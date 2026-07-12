@@ -3,7 +3,7 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Podman Quadlet Service Path
+    | Podman Service Path
     |--------------------------------------------------------------------------
     |
     | This value is the path where Podman quadlet service files are placed.
@@ -11,36 +11,11 @@ return [
     |
     */
 
-    'quadlet_services_path' => env('PODMAN_QUADLET_SERVICE_PATH', 'storage/app/quadlets'),
+    'service_path' => env('PODMAN_SERVICE_PATH', 'services'),
 
     /*
     |--------------------------------------------------------------------------
-    | Podman Quadlet Container Path
-    |--------------------------------------------------------------------------
-    |
-    | This value is the path where Podman quadlet container files are placed.
-    | The default value is the vendor container path, which can be overruled when needed.
-    |
-    */
-
-    'quadlet_container_path' => env('PODMAN_QUADLET_CONTAINER_PATH', 'storage/app/containers'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Temporary Path
-    |--------------------------------------------------------------------------
-    |
-    | This value is the path where temporary Podman quadlet files are written
-    | to before being installed. The default value is the system's temporary
-    | directory, which can be overruled when needed.
-    |
-    */
-
-    'temporary_path' => env('PODMAN_TEMPORARY_PATH', sys_get_temp_dir()),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Quadlet Prefix
+    | Service Prefix
     |--------------------------------------------------------------------------
     |
     | This value is the prefix used for Podman quadlet files. The default value
@@ -48,38 +23,11 @@ return [
     |
     */
 
-    'quadlet_prefix' => env('PODMAN_QUADLET_PREFIX', env('APP_NAME', 'laravel')),
+    'service_prefix' => env('PODMAN_SERVICE_PREFIX', env('APP_NAME', 'laravel')),
 
     /*
     |--------------------------------------------------------------------------
-    | Quadlet Site Address
-    |--------------------------------------------------------------------------
-    |
-    | This value is the site address used for the proxy configuration. The
-    | default value is 'laravel.test', which can be overruled when needed.
-    |
-    */
-
-    'quadlet_site_address' => env('PODMAN_QUADLET_SITE_ADDRESS', 'laravel.test'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Quadlet Proxy Path and Prefix
-    |--------------------------------------------------------------------------
-    |
-    | These values determine the path and prefix used for Podman quadlet proxy files.
-    | The default values are 'runtimes/proxy' and 'proxy', which can be
-    | overruled when needed.
-    |
-    */
-
-    'quadlet_proxy_path' => env('PODMAN_QUADLET_PROXY_PATH', 'runtimes/proxy'),
-
-    'quadlet_proxy_prefix' => env('PODMAN_QUADLET_PROXY_PREFIX', 'proxy'),
-
-    /*
-    |--------------------------------------------------------------------------
-    | Quadlet UID and GID
+    | Service UID and GID
     |--------------------------------------------------------------------------
     |
     | These values determine the UID and GID used for Podman quadlet files.
@@ -88,9 +36,48 @@ return [
     |
     */
 
-    'quadlet_uid' => env('PODMAN_QUADLET_UID', null),
+    'service_uid' => env('PODMAN_SERVICE_UID', null),
 
-    'quadlet_gid' => env('PODMAN_QUADLET_GID', null),
+    'service_gid' => env('PODMAN_SERVICE_GID', null),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Podman Runtimes Path
+    |--------------------------------------------------------------------------
+    |
+    | This value is the path where Podman runtimes are placed. The default value
+    | is 'runtimes', which can be overruled when needed.
+    |
+    */
+
+    'runtimes_path' => env('PODMAN_RUNTIMES_PATH', 'runtimes'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Site Address
+    |--------------------------------------------------------------------------
+    |
+    | This value is the site address used for the proxy configuration. The
+    | default value is 'laravel.test', which can be overruled when needed.
+    |
+    */
+
+    'site_address' => env('PODMAN_SITE_ADDRESS', 'laravel.test'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Proxy Path and Prefix
+    |--------------------------------------------------------------------------
+    |
+    | These values determine the path and prefix used for Podman quadlet proxy files.
+    | The default values are 'runtimes/proxy' and 'proxy', which can be
+    | overruled when needed.
+    |
+    */
+
+    'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),
+
+    'proxy_config_path' => env('PODMAN_PROXY_CONFIG_PATH', 'runtimes/proxy'),
 
     /*
     |--------------------------------------------------------------------------
@@ -116,4 +103,17 @@ return [
     */
 
     'reload_systemd' => env('PODMAN_RELOAD_SYSTEMD', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Temporary Path
+    |--------------------------------------------------------------------------
+    |
+    | This value is the path where temporary Podman quadlet files are written
+    | to before being installed. The default value is the system's temporary
+    | directory, which can be overruled when needed.
+    |
+    */
+
+    'temporary_path' => env('PODMAN_TEMPORARY_PATH', sys_get_temp_dir()),
 ];

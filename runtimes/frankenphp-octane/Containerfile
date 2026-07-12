@@ -82,10 +82,10 @@ RUN npm install -g npm@latest corepack@latest svgo@latest \
     && pnpm config set store-dir ${PNPM_HOME}/store
 
 # Custom PHP configuration
-COPY containers/runtimes/php-production.ini /usr/local/etc/php/conf.d/xx-php-user.ini
+COPY runtimes/frankenphp-octane/php-production.ini /usr/local/etc/php/conf.d/xx-php-user.ini
 
 # Entrypoint
-COPY --chmod=755 containers/runtimes/entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY --chmod=755 runtimes/frankenphp-octane/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # Clean up unnecessary files and caches to reduce image size
 RUN apt-get autoremove -y \
@@ -134,7 +134,7 @@ ENV OCTANE="${OCTANE} --watch"
 RUN cp ${PHP_INI_DIR}/php.ini-development ${PHP_INI_DIR}/php.ini
 
 # Custom PHP configuration for development
-COPY containers/runtimes/php-development.ini /usr/local/etc/php/conf.d/xx-php-user.ini
+COPY runtimes/frankenphp-octane/php-development.ini /usr/local/etc/php/conf.d/xx-php-user.ini
 
 # Set proper ownership
 RUN chown -R docker:docker /app /pnpm

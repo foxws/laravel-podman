@@ -33,6 +33,14 @@ RestartSec=5
 TimeoutStartSec=300
 TimeoutStopSec=30
 ---
+# FileName={{application}}-config
+[Volume]
+Label={{application}}-config
+---
+# FileName={{application}}-data
+[Volume]
+Label={{application}}-data
+---
 # FileName={{application}}-cache
 [Volume]
 Label={{application}}-cache

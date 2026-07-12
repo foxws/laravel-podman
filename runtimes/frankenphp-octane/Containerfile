@@ -126,7 +126,7 @@ FROM base AS local
 WORKDIR /app
 
 # Set watch on development
-ENV OCTANE="${OCTANE} --watch"
+ENV APP_COMMAND="${APP_COMMAND} --watch"
 
 # PHP Configuration
 RUN cp ${PHP_INI_DIR}/php.ini-development ${PHP_INI_DIR}/php.ini

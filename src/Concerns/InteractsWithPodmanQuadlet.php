@@ -7,7 +7,6 @@ namespace Foxws\Podman\Concerns;
 use Foxws\Podman\Support\PodmanQuadletFile;
 use Foxws\Podman\Support\PodmanQuadletPath;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
@@ -274,12 +273,7 @@ trait InteractsWithPodmanQuadlet
 
     protected function getPodmanQuadletDefaultServices(): array
     {
-        return Collection::make(Config::array('podman.services', []))
-            ->filter(fn (array $service): bool => (bool) ($service['default'] ?? false))
-            ->keys()
-            ->sort()
-            ->values()
-            ->toArray();
+        return $this->podmanQuadletPath()->defaultServices();
     }
 
     protected function getPodmanQuadletRuntimes(): array

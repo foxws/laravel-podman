@@ -25,22 +25,10 @@ it('lists the available runtimes discovered in the vendor runtimes directory', f
     ]);
 });
 
-it('returns only the services marked as default from configuration, sorted', function () {
-    config(['podman.services' => [
-        'valkey' => ['default' => true, 'requires' => []],
-        'app' => ['default' => true, 'requires' => []],
-        'mailpit' => ['default' => false, 'requires' => []],
-    ]]);
+it('returns the configured list of default services', function () {
+    config(['podman.services' => 'valkey,app']);
 
-    expect($this->getPodmanQuadletDefaultServices())->toBe(['app', 'valkey']);
-});
-
-it('returns no default services when none are configured', function () {
-    config(['podman.services' => [
-        'mailpit' => ['default' => false, 'requires' => []],
-    ]]);
-
-    expect($this->getPodmanQuadletDefaultServices())->toBe([]);
+    expect($this->getPodmanQuadletDefaultServices())->toBe(['valkey', 'app']);
 });
 
 it('resolves the configured runtime path against the base path', function () {

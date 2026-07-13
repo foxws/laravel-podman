@@ -1,9 +1,9 @@
 # FileName={{application}}-horizon
 [Unit]
 Description=Laravel Horizon container
-After={{application}}.container
+Requires={{application}}-valkey.container
+After={{application}}.container {{application}}-valkey.container
 BindsTo={{application}}.container
-{{requirements}}
 
 [Container]
 Image={{application}}.build

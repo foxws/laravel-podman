@@ -8,11 +8,7 @@ beforeEach(function () {
     $this->quadletsPath = $this->makeQuadletsPath(['pgsql', 'valkey', 'mailpit']);
     $this->runtimesPath = base_path('runtimes');
 
-    config(['podman.services' => [
-        'pgsql' => ['default' => true, 'requires' => []],
-        'valkey' => ['default' => true, 'requires' => []],
-        'mailpit' => ['default' => false, 'requires' => []],
-    ]]);
+    config(['podman.services' => 'pgsql,valkey']);
 });
 
 afterEach(function () {
@@ -51,7 +47,7 @@ it('accepts the runtime option, skipping the prompt', function () {
 });
 
 it('reports an error and stops when no default services are configured and none are given', function () {
-    config(['podman.services' => []]);
+    config(['podman.services' => '']);
     $this->useFakePodmanBinary(0);
 
     $this->artisan('podman:setup')

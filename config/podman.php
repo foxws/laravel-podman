@@ -82,63 +82,20 @@ return [
     | Services
     |--------------------------------------------------------------------------
     |
-    | This value describes the services available to install. The 'default'
-    | flag marks the services installed by the "podman:setup" command when
-    | no explicit service is given. The 'requires' list names sibling
-    | services that must be running first; these are wired into the
-    | generated Quadlet files as Requires=/After= directives.
+    | This value lists the services installed by the "podman:setup" command
+    | when no explicit service is given. Any service not listed here can
+    | still be installed manually with "podman:install". Accepts either a
+    | comma-separated string (handy for the PODMAN_DEFAULT_SERVICES env
+    | variable) or a plain array of service names.
     |
     */
 
-    'services' => [
-        'pgsql' => [
-            'default' => true,
-            'requires' => [],
-        ],
-
-        'valkey' => [
-            'default' => true,
-            'requires' => [],
-        ],
-
-        'app' => [
-            'default' => true,
-            'requires' => ['pgsql', 'valkey'],
-        ],
-
-        'horizon' => [
-            'default' => true,
-            'requires' => ['valkey'],
-        ],
-
-        'reverb' => [
-            'default' => true,
-            'requires' => [],
-        ],
-
-        'schedule' => [
-            'default' => true,
-            'requires' => [],
-        ],
-
-        'inertia-ssr' => [
-            'default' => false,
-            'requires' => [],
-        ],
-
-        'mailpit' => [
-            'default' => false,
-            'requires' => [],
-        ],
-
-        'rustfs' => [
-            'default' => false,
-            'requires' => [],
-        ],
-
-        'typesense' => [
-            'default' => false,
-            'requires' => [],
-        ],
-    ],
+    'services' => env('PODMAN_DEFAULT_SERVICES', [
+        'pgsql',
+        'valkey',
+        'app',
+        'horizon',
+        'reverb',
+        'schedule',
+    ]),
 ];

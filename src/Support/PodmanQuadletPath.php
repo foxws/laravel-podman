@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Podman\Support;
 
 use Composer\InstalledVersions;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -82,6 +83,22 @@ class PodmanQuadletPath
         }
 
         return function_exists('posix_getgid') ? posix_getgid() : 1000;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function defaultServices(): array
+    {
+        $services = Config::get('podman.services', []);
+
+        if (is_string($services)) {
+            $services = explode(',', $services);
+        }
+
+        $services = Arr::map($services, fn (mixed $service): string => trim((string) $service));
+
+        return array_values(Arr::where($services, fn (string $service): bool => $service !== ''));
     }
 
     public function shouldReloadSystemd(): bool

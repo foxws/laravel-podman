@@ -118,3 +118,33 @@ it('disables selinux volume mapping when configured', function () {
 
     expect($this->path->shouldUseSelinuxVolumeMapping())->toBeFalse();
 });
+
+it('splits the configured comma-separated services into an array', function () {
+    config(['podman.services' => 'pgsql,valkey,app']);
+
+    expect($this->path->defaultServices())->toBe(['pgsql', 'valkey', 'app']);
+});
+
+it('accepts the configured services as a plain array', function () {
+    config(['podman.services' => ['pgsql', 'valkey', 'app']]);
+
+    expect($this->path->defaultServices())->toBe(['pgsql', 'valkey', 'app']);
+});
+
+it('trims whitespace and drops empty entries from an array of configured services', function () {
+    config(['podman.services' => [' pgsql ', '', ' valkey ']]);
+
+    expect($this->path->defaultServices())->toBe(['pgsql', 'valkey']);
+});
+
+it('trims whitespace and drops empty entries from the configured services', function () {
+    config(['podman.services' => ' pgsql ,, valkey ']);
+
+    expect($this->path->defaultServices())->toBe(['pgsql', 'valkey']);
+});
+
+it('returns no default services when none are configured', function () {
+    config(['podman.services' => '']);
+
+    expect($this->path->defaultServices())->toBe([]);
+});

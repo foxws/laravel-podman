@@ -12,7 +12,8 @@ SetWorkingDirectory={{base-path}}
 # FileName={{application}}
 [Unit]
 Description=Laravel Octane container
-{{requirements}}
+Requires={{application}}-pgsql.container {{application}}-valkey.container
+After={{application}}-pgsql.container {{application}}-valkey.container
 
 [Container]
 Image={{application}}.build

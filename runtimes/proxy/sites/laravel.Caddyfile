@@ -19,3 +19,7 @@ s3.{{app-host}} {
 fs.{{app-host}} {
 	reverse_proxy systemd-{{application}}-rustfs:9001
 }
+
+mail.{{app-host}} {
+    reverse_proxy systemd-{{application}}-mail:8025
+}

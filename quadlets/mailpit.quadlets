@@ -14,6 +14,7 @@ Volume={{application}}-mailpit:/data:rw,Z,U
 Network={{application}}.network
 Network={{proxy}}.network
 ExposeHostPort=1025
+ExposeHostPort=1110
 ExposeHostPort=8025
 
 [Service]

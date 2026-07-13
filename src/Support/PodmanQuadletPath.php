@@ -95,15 +95,15 @@ class PodmanQuadletPath
      */
     public function defaultServices(): array
     {
-        $services = Config::get('podman.services', []);
+        return $this->parseNameList(Config::get('podman.services', []));
+    }
 
-        if (is_string($services)) {
-            $services = explode(',', $services);
-        }
-
-        $services = Arr::map($services, fn (mixed $service): string => trim((string) $service));
-
-        return array_values(Arr::where($services, fn (string $service): bool => $service !== ''));
+    /**
+     * @return array<int, string>
+     */
+    public function defaultRuntimes(): array
+    {
+        return $this->parseNameList(Config::get('podman.runtimes', []));
     }
 
     public function shouldReloadSystemd(): bool
@@ -119,5 +119,22 @@ class PodmanQuadletPath
     protected function absolutePath(string $path): string
     {
         return Str::startsWith($path, '/') ? $path : base_path($path);
+    }
+
+    /**
+     * Normalize a config value that may be either a comma-separated string
+     * or a plain array into a list of trimmed, non-empty names.
+     *
+     * @return array<int, string>
+     */
+    protected function parseNameList(mixed $value): array
+    {
+        if (is_string($value)) {
+            $value = explode(',', $value);
+        }
+
+        $value = Arr::map($value, fn (mixed $item): string => trim((string) $item));
+
+        return array_values(Arr::where($value, fn (string $item): bool => $item !== ''));
     }
 }

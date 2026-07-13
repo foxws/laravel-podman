@@ -148,3 +148,27 @@ it('returns no default services when none are configured', function () {
 
     expect($this->path->defaultServices())->toBe([]);
 });
+
+it('splits the configured comma-separated runtimes into an array', function () {
+    config(['podman.runtimes' => 'frankenphp-octane,proxy']);
+
+    expect($this->path->defaultRuntimes())->toBe(['frankenphp-octane', 'proxy']);
+});
+
+it('accepts the configured runtimes as a plain array', function () {
+    config(['podman.runtimes' => ['frankenphp-octane', 'proxy']]);
+
+    expect($this->path->defaultRuntimes())->toBe(['frankenphp-octane', 'proxy']);
+});
+
+it('trims whitespace and drops empty entries from the configured runtimes', function () {
+    config(['podman.runtimes' => ' frankenphp-octane ,, proxy ']);
+
+    expect($this->path->defaultRuntimes())->toBe(['frankenphp-octane', 'proxy']);
+});
+
+it('returns no default runtimes when none are configured', function () {
+    config(['podman.runtimes' => '']);
+
+    expect($this->path->defaultRuntimes())->toBe([]);
+});

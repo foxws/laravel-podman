@@ -218,6 +218,29 @@ trait InteractsWithPodmanQuadlet
         return true;
     }
 
+    /**
+     * Publish one or more runtimes. Returns the names of the runtimes that failed.
+     *
+     * @param  array<int, string>  $runtimes
+     * @return array<int, string>
+     */
+    protected function publishPodmanRuntimes(array $runtimes, ?bool $force = null): array
+    {
+        $failed = [];
+
+        foreach ($runtimes as $runtime) {
+            if (! $this->publishPodmanRuntime($runtime, force: $force)) {
+                $failed[] = $runtime;
+
+                continue;
+            }
+
+            info("Runtime {$runtime} published to {$this->getPodmanRuntimePath()}");
+        }
+
+        return $failed;
+    }
+
     protected function promptForPodmanQuadletSecrets(string $service, ?bool $replace = null): bool
     {
         foreach ($this->getPodmanQuadletSecrets($service) as $secret => $definition) {
@@ -284,6 +307,11 @@ trait InteractsWithPodmanQuadlet
             ->values()
             ->mapWithKeys(fn (string $runtime): array => [$runtime => $runtime])
             ->toArray();
+    }
+
+    protected function getPodmanQuadletDefaultRuntimes(): array
+    {
+        return $this->podmanQuadletPath()->defaultRuntimes();
     }
 
     protected function getPodmanQuadletSecrets(string $service): array

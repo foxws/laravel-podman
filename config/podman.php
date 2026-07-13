@@ -114,4 +114,21 @@ return [
         'reverb',
         'schedule',
     ]),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Runtimes
+    |--------------------------------------------------------------------------
+    |
+    | This value lists the runtimes published by the "podman:setup" command
+    | when no explicit runtime is given. Accepts either a comma-separated
+    | string (handy for the PODMAN_DEFAULT_RUNTIMES env variable) or a
+    | plain array of runtime names.
+    |
+    */
+
+    'runtimes' => env('PODMAN_DEFAULT_RUNTIMES', [
+        'frankenphp-octane',
+        'proxy',
+    ]),
 ];

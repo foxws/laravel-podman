@@ -11,7 +11,7 @@ use Symfony\Component\Console\Attribute\AsCommand;
 
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
-use function Laravel\Prompts\select;
+use function Laravel\Prompts\multiselect;
 
 #[AsCommand(name: 'podman:setup')]
 class SetupCommand extends Command
@@ -20,30 +20,30 @@ class SetupCommand extends Command
 
     public $signature = 'podman:setup
         {--service=* : Override the default set of services to install}
-        {--runtime= : The name of the runtime to publish}
+        {--runtime=* : Override the default set of runtimes to publish}
         {--application= : The name of the application, installed in its own subdirectory (requires Podman 6+)}
-        {--replace : Replace a service if it already exists}
-        {--secrets : Also prompt for and set the secrets required by each service}
+        {--no-replace : Do not replace a service if it already exists}
+        {--no-secrets : Do not prompt for and set the secrets required by each service}
         {--force : Overwrite existing published runtime files}
     ';
 
-    public $description = 'Publish the runtime and install the default set of services for the application to run with Podman';
+    public $description = 'Publish the default set of runtimes and install the default set of services for the application to run with Podman';
 
     public function handle(): int
     {
-        $runtimes = $this->getPodmanQuadletRuntimes();
+        $runtimes = Arr::wrap($this->option('runtime')) ?: ($this->getPodmanQuadletDefaultRuntimes() ?: multiselect(
+            label: 'Select the runtimes to publish',
+            options: $this->getPodmanQuadletRuntimes(),
+            required: true,
+        ));
 
-        $runtime = $this->option('runtime') ?? (
-            count($runtimes) === 1
-                ? Arr::first($runtimes)
-                : select(label: 'Select a runtime to publish', options: $runtimes, required: true)
-        );
+        $failedRuntimes = $this->publishPodmanRuntimes($runtimes, force: $this->option('force'));
 
-        if (! $this->publishPodmanRuntime($runtime, force: $this->option('force'))) {
+        if ($failedRuntimes !== []) {
+            error('Failed to publish: '.implode(', ', $failedRuntimes));
+
             return self::FAILURE;
         }
-
-        info("Runtime {$runtime} published to {$this->getPodmanRuntimePath()}");
 
         $services = Arr::wrap($this->option('service')) ?: $this->getPodmanQuadletDefaultServices();
 
@@ -53,15 +53,15 @@ class SetupCommand extends Command
             return self::FAILURE;
         }
 
-        $failed = $this->installPodmanQuadlets(
+        $failedServices = $this->installPodmanQuadlets(
             services: $services,
             application: $this->option('application'),
-            replace: $this->option('replace'),
-            secrets: $this->option('secrets'),
+            replace: ! $this->option('no-replace'),
+            secrets: ! $this->option('no-secrets'),
         );
 
-        if ($failed !== []) {
-            error('Failed to install: '.implode(', ', $failed));
+        if ($failedServices !== []) {
+            error('Failed to install: '.implode(', ', $failedServices));
 
             return self::FAILURE;
         }

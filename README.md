@@ -51,10 +51,55 @@ return [
 
 `quadlet_prefix` is used to namespace the services installed for your application (for example `laravel-pgsql`), and defaults to your `APP_NAME`. `quadlet_uid`/`quadlet_gid` default to the UID/GID of the user running the Artisan command. You can also override where the package looks for Quadlet and runtime files by adding `quadlets_path` and `runtimes_path` to the config file; both default to the ones bundled with the package.
 
+## Quick Start
+
+The fastest way to get an application running is `podman:setup`. It publishes the default runtimes and installs the default services in one go, so you don't need to call `podman:publish`/`podman:install` per service:
+
+```bash
+composer require foxws/laravel-podman
+
+php artisan podman:setup
+```
+
+By default it also prompts for and sets any secrets the installed services need (e.g. your application's `.env` file, database credentials) and replaces services that already exist, so re-running it is safe. Pass `--no-secrets` and/or `--no-replace` to opt out:
+
+```bash
+php artisan podman:setup --no-secrets --no-replace
+```
+
+The runtimes and services it publishes/installs by default come from the `runtimes` and `services` config keys (`frankenphp-octane`/`proxy` and `proxy`/`app`/`pgsql`/`valkey`/`horizon`/`reverb`/`schedule` out of the box) — edit those, set `PODMAN_DEFAULT_RUNTIMES`/`PODMAN_DEFAULT_SERVICES`, or override per run:
+
+```bash
+php artisan podman:setup --runtime=frankenphp-octane --service=app --service=pgsql --service=valkey
+```
+
+Once installed, use the `lpod` CLI (see [below](#the-lpod-utility)) to start everything:
+
+```bash
+vendor/bin/lpod my-app up
+vendor/bin/lpod my-app open   # Opens the application URL in your browser
+```
+
 ## Usage
 
 The package discovers its Quadlet service definitions (`*.quadlets` files) and its container runtimes (folders containing a `Containerfile`) on disk, and exposes them through the commands below. Every command that needs a service or runtime name will prompt you to select one interactively when it's omitted.
 
+### Setup Application
+
+Publishes the default runtimes and installs the default set of services in one go — the quickest way to get an application running (see [Quick Start](#quick-start)).
+
+```bash
+php artisan podman:setup
+
+# Override the default runtimes and/or services
+php artisan podman:setup --runtime=frankenphp-octane --service=app --service=pgsql
+
+# Skip secret prompts, and don't replace services that already exist
+php artisan podman:setup --no-secrets --no-replace
+
+# Install into a named application subdirectory (requires Podman 6+)
+php artisan podman:setup --application=my-app
+```
 
 ### Publish Container Runtime
 
@@ -122,6 +167,8 @@ php artisan podman:print pgsql
 
 ### Remove Services
 
+> **Note:** A service's `.volume` Quadlets (e.g. `pgsql`'s database volume, `rustfs`'s storage volumes) are removed along with it, deleting the underlying Podman volume and everything stored in it. Back this up first if you need to keep it — see [Backing up volumes](#backing-up-volumes) below.
+
 Removes an installed Quadlet service.
 
 ```bash
@@ -133,7 +180,7 @@ php artisan podman:remove pgsql --force --ignore
 
 ### Uninstall Application
 
-> **WARNING**: This command is destructive and will remove all of the services installed for the application, including any data stored in volumes. Use with caution.
+> **WARNING**: This command is destructive and will remove all of the services installed for the application, including any data stored in volumes (databases, uploaded files, search indexes, etc). This cannot be undone — back up anything you need to keep first, see [Backing up volumes](#backing-up-volumes) below.
 
 Removes an application and all of its installed services in one go.
 
@@ -142,6 +189,20 @@ php artisan podman:uninstall my-app
 
 php artisan podman:uninstall my-app --force
 ```
+
+### Backing up volumes
+
+`podman:remove` and `podman:uninstall` delete the Podman volumes owned by the services they remove, along with their data — there's no undo. Before running either against a service holding data you care about (`pgsql`, `valkey`, `rustfs`, `typesense`, `mailpit`), back it up:
+
+```bash
+# Generic: archive any named volume to a tarball
+podman volume export laravel-pgsql -o pgsql-backup.tar
+
+# Database-specific dumps are usually more portable than a raw volume export
+lpod my-app run pg_dump -U postgres -d laravel > backup.sql
+```
+
+Restore with `podman volume import laravel-pgsql pgsql-backup.tar` (before reinstalling the service) or by replaying the database-specific dump, depending on which approach you used to back up.
 
 ## The `lpod` utility
 

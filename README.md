@@ -64,8 +64,6 @@ return [
 The fastest way to get an application running is `podman:setup`. It publishes the default runtimes and installs the default services in one go, so you don't need to call `podman:publish`/`podman:install` per service:
 
 ```bash
-composer require foxws/laravel-podman
-
 php artisan podman:setup
 ```
 

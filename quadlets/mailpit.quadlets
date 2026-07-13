@@ -1,6 +1,7 @@
 # FileName={{application}}-mailpit
 [Unit]
 Description=Mailpit container
+PartOf={{application}}.container
 
 [Container]
 Image=docker.io/axllent/mailpit:latest

@@ -36,6 +36,7 @@ The bundled `sites/laravel.Caddyfile` routes your app's domain (derived from `AP
 | `ws.`     | Reverb (WebSockets)    |
 | `s3.`     | RustFS (S3 API)        |
 | `fs.`     | RustFS console         |
+| `mail.`   | Mailpit (dev mail catcher) |
 
 Add or edit `*.Caddyfile` files under `sites/` for additional domains or services.
 
@@ -52,8 +53,8 @@ vendor/bin/lpod proxy restart   # after editing the Caddyfile
 For local development, point your app's domain and subdomains at `127.0.0.1` in `/etc/hosts` (adjust `app.test` to your actual `APP_URL` host):
 
 ```text
-127.0.0.1 app.test vite.app.test ws.app.test s3.app.test fs.app.test
-::1       app.test vite.app.test ws.app.test s3.app.test fs.app.test
+127.0.0.1 app.test vite.app.test ws.app.test s3.app.test fs.app.test mail.app.test
+::1       app.test vite.app.test ws.app.test s3.app.test fs.app.test mail.app.test
 ```
 
 For a homelab/multi-device setup, a local DNS resolver (e.g. [AdGuard Home](https://adguard.com/en/adguard-home/overview.html)) with a wildcard rewrite for `*.app.test` → your server IP avoids editing hosts files per device.

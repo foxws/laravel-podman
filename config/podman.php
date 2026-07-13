@@ -17,16 +17,16 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Quadlets Path
+    | Quadlets Template Path
     |--------------------------------------------------------------------------
     |
-    | This value is the path where Podman quadlet files are located.
-    | The default value is null, which means the vendor default path will be used.
+    | This value is the path where Podman quadlet and runtime templates are located.
+    | If the path does not exist, it will fallback to the vendor provided templates.
     */
 
-    'quadlets_path' => env('PODMAN_QUADLETS_PATH'),
+    'quadlets_path' => env('PODMAN_QUADLETS_PATH', 'containers/quadlets'),
 
-    'runtimes_path' => env('PODMAN_RUNTIMES_PATH'),
+    'runtimes_path' => env('PODMAN_RUNTIMES_PATH', 'containers/runtimes'),
 
     /*
     |--------------------------------------------------------------------------

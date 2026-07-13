@@ -28,7 +28,7 @@ composer require foxws/laravel-podman
 You can publish the config file with:
 
 ```bash
-php artisan vendor:publish --tag="laravel-podman-config"
+php artisan vendor:publish --tag="podman-config"
 ```
 
 This is the contents of the published config file:

@@ -27,6 +27,7 @@ class PodmanQuadletFile
             '{{app-uid}}' => (string) $this->path->uid(),
             '{{app-gid}}' => (string) $this->path->gid(),
             '{{application}}' => $this->path->prefix(),
+            '{{proxy}}' => $this->path->proxy(),
             '{{base-path}}' => base_path(),
             '{{config-path}}' => $this->path->configPath(),
             '{{runtime-path}}' => $this->path->runtimePath(),

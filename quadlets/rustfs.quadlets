@@ -18,8 +18,9 @@ Secret={{application}}-rustfs-secret-key,type=env,target=RUSTFS_SECRET_KEY
 Volume={{application}}-rustfs-data:/data:rw,Z,U
 Volume={{application}}-rustfs-logs:/data:rw,Z,U
 Network={{application}}.network
-PublishPort=9000:9000
-PublishPort=9001:9001
+Network={{proxy}}.network
+ExposeHostPort=9000
+ExposeHostPort=9001
 
 [Service]
 Restart=always

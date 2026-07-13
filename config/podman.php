@@ -3,15 +3,30 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Service Prefix
+    | Services Prefix
     |--------------------------------------------------------------------------
     |
     | This value is the prefix used for Podman quadlet files. The default value
-    | is 'laravel', which can be overruled when needed.
+    | is the application name, which can be overruled when needed.
     |
     */
 
     'quadlet_prefix' => env('PODMAN_QUADLET_PREFIX', env('APP_NAME', 'laravel')),
+
+    'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Quadlets Path
+    |--------------------------------------------------------------------------
+    |
+    | This value is the path where Podman quadlet files are located.
+    | The default value is null, which means the vendor default path will be used.
+    */
+
+    'quadlets_path' => env('PODMAN_QUADLETS_PATH'),
+
+    'runtimes_path' => env('PODMAN_RUNTIMES_PATH'),
 
     /*
     |--------------------------------------------------------------------------
@@ -46,11 +61,11 @@ return [
     |--------------------------------------------------------------------------
     |
     | This value is the path where Podman configuration files are placed.
-    | The default value is 'runtimes/config', which can be overruled when needed.
+    | The default value is 'runtimes', which can be overruled when needed.
     |
     */
 
-    'config_path' => env('PODMAN_CONFIG_PATH', 'runtimes/config'),
+    'config_path' => env('PODMAN_CONFIG_PATH', 'runtimes'),
 
     /*
     |--------------------------------------------------------------------------
@@ -91,9 +106,10 @@ return [
     */
 
     'services' => env('PODMAN_DEFAULT_SERVICES', [
+        'proxy',
+        'app',
         'pgsql',
         'valkey',
-        'app',
         'horizon',
         'reverb',
         'schedule',

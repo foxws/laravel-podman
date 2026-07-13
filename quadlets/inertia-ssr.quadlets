@@ -13,6 +13,7 @@ ShmSize=128m
 Secret={{application}}-env,target=/config/app.env,mode=0400,uid={{app-uid}},gid={{app-gid}}
 Volume={{application}}-cache:/cache:rw,z
 Network={{application}}.network
+ExposeHostPort=13714
 
 [Service]
 Restart=always

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Podman\Support;
 
 use Composer\InstalledVersions;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -62,6 +63,11 @@ class PodmanQuadletPath
         return Str::kebab(Config::string('podman.quadlet_prefix'));
     }
 
+    public function proxy(): string
+    {
+        return Str::kebab(Config::string('podman.proxy_prefix'));
+    }
+
     public function uid(): int
     {
         $uid = Config::get('podman.quadlet_uid');
@@ -84,6 +90,22 @@ class PodmanQuadletPath
         return function_exists('posix_getgid') ? posix_getgid() : 1000;
     }
 
+    /**
+     * @return array<int, string>
+     */
+    public function defaultServices(): array
+    {
+        return $this->parseNameList(Config::get('podman.services', []));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function defaultRuntimes(): array
+    {
+        return $this->parseNameList(Config::get('podman.runtimes', []));
+    }
+
     public function shouldReloadSystemd(): bool
     {
         return Config::boolean('podman.reload_systemd');
@@ -97,5 +119,22 @@ class PodmanQuadletPath
     protected function absolutePath(string $path): string
     {
         return Str::startsWith($path, '/') ? $path : base_path($path);
+    }
+
+    /**
+     * Normalize a config value that may be either a comma-separated string
+     * or a plain array into a list of trimmed, non-empty names.
+     *
+     * @return array<int, string>
+     */
+    protected function parseNameList(mixed $value): array
+    {
+        if (is_string($value)) {
+            $value = explode(',', $value);
+        }
+
+        $value = Arr::map($value, fn (mixed $item): string => trim((string) $item));
+
+        return array_values(Arr::where($value, fn (string $item): bool => $item !== ''));
     }
 }

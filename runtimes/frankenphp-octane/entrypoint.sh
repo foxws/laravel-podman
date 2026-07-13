@@ -11,19 +11,18 @@ log() {
 }
 
 # Set up SQLite database
-if [ ! -f "database/database.sqlite" ]; then
+if [ ! -f "/app/database/database.sqlite" ]; then
     log "INFO" "Creating SQLite database..."
-    touch database/database.sqlite
+    touch /app/database/database.sqlite
 fi
 
 # Set up environment configuration
-if [ ! -f "/config/app.env" ]; then
-    log "ERROR" "Missing /config/app.env. Provide a Laravel env file mounted at: /config/app.env"
+if [ ! -f "/app/.env" ]; then
+    log "ERROR" "Missing /app/.env. Provide a Laravel env file mounted at: /app/.env"
     exit 1
 fi
 
-log "INFO" "Loading runtime environment configuration from /config/app.env..."
-cp /config/app.env /app/.env
+log "INFO" "Loading runtime environment configuration from /app/.env..."
 
 # Ensure APP_KEY is provided in runtime configuration
 if ! grep -q '^APP_KEY=.' /app/.env && [ -z "${APP_KEY:-}" ]; then

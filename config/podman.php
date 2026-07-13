@@ -3,15 +3,30 @@
 return [
     /*
     |--------------------------------------------------------------------------
-    | Service Prefix
+    | Services Prefix
     |--------------------------------------------------------------------------
     |
     | This value is the prefix used for Podman quadlet files. The default value
-    | is 'laravel', which can be overruled when needed.
+    | is the application name, which can be overruled when needed.
     |
     */
 
     'quadlet_prefix' => env('PODMAN_QUADLET_PREFIX', env('APP_NAME', 'laravel')),
+
+    'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Quadlets Template Path
+    |--------------------------------------------------------------------------
+    |
+    | This value is the path where Podman quadlet and runtime templates are located.
+    | If the path does not exist, it will fallback to the vendor provided templates.
+    */
+
+    'quadlets_path' => env('PODMAN_QUADLETS_PATH', 'containers/quadlets'),
+
+    'runtimes_path' => env('PODMAN_RUNTIMES_PATH', 'containers/runtimes'),
 
     /*
     |--------------------------------------------------------------------------
@@ -46,11 +61,11 @@ return [
     |--------------------------------------------------------------------------
     |
     | This value is the path where Podman configuration files are placed.
-    | The default value is 'runtimes/config', which can be overruled when needed.
+    | The default value is 'runtimes', which can be overruled when needed.
     |
     */
 
-    'config_path' => env('PODMAN_CONFIG_PATH', 'runtimes/config'),
+    'config_path' => env('PODMAN_CONFIG_PATH', 'runtimes'),
 
     /*
     |--------------------------------------------------------------------------
@@ -76,4 +91,44 @@ return [
     */
 
     'reload_systemd' => env('PODMAN_RELOAD_SYSTEMD', true),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Services
+    |--------------------------------------------------------------------------
+    |
+    | This value lists the services installed by the "podman:setup" command
+    | when no explicit service is given. Any service not listed here can
+    | still be installed manually with "podman:install". Accepts either a
+    | comma-separated string (handy for the PODMAN_DEFAULT_SERVICES env
+    | variable) or a plain array of service names.
+    |
+    */
+
+    'services' => env('PODMAN_DEFAULT_SERVICES', [
+        'proxy',
+        'app',
+        'pgsql',
+        'valkey',
+        'horizon',
+        'reverb',
+        'schedule',
+    ]),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Runtimes
+    |--------------------------------------------------------------------------
+    |
+    | This value lists the runtimes published by the "podman:setup" command
+    | when no explicit runtime is given. Accepts either a comma-separated
+    | string (handy for the PODMAN_DEFAULT_RUNTIMES env variable) or a
+    | plain array of runtime names.
+    |
+    */
+
+    'runtimes' => env('PODMAN_DEFAULT_RUNTIMES', [
+        'frankenphp-octane',
+        'proxy',
+    ]),
 ];

@@ -6,7 +6,7 @@ ARG NODE_VERSION=24
 ARG POSTGRES_VERSION=18
 ARG PHP_EXTENSIONS=""
 
-WORKDIR /app
+WORKDIR /tmp
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
@@ -15,7 +15,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="${PATH}:${PNPM_HOME}"
 ENV FRANKEN_CLI="frankenphp php-cli /app/artisan"
 ENV PHP_CLI="php -d variables_order=EGPCS /app/artisan"
-ENV APP_COMMAND="${FRANKEN_CLI} octane:frankenphp --host=0.0.0.0 --port=443 --admin-port=2019 --https"
+ENV APP_COMMAND="${FRANKEN_CLI} octane:frankenphp --host=0.0.0.0 --port=8000 --admin-port=2019"
 ENV APP_USER="docker"
 
 # Set timezone
@@ -23,8 +23,7 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezo
 
 # Main dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg curl ca-certificates zip unzip \
-    git sqlite3 libcap2-bin nano \
+    gnupg curl ca-certificates libcap2-bin unzip git sqlite3 nano \
     libavif-bin jpegoptim optipng pngquant gifsicle \
     && apt-get -y autoremove \
     && apt-get clean \
@@ -55,6 +54,10 @@ RUN mkdir -p /etc/apt/keyrings \
 RUN groupadd --force -g ${GID} docker \
     && useradd -u ${UID} -g docker -d /home/docker -s /bin/bash -m docker
 
+# Create directories and set ownership
+RUN mkdir -p /app /config \
+    && chown -R docker:docker /app /config
+
 # PHP Configuration
 RUN cp ${PHP_INI_DIR}/php.ini-production ${PHP_INI_DIR}/php.ini
 
@@ -69,15 +72,15 @@ RUN if [ -n "$PHP_EXTENSIONS" ]; then \
     install-php-extensions $PHP_EXTENSIONS; \
 fi
 
-# Strip file capabilities from frankenphp
-RUN setcap -r /usr/local/bin/frankenphp
-
 # Node.js Configuration
 RUN npm install -g npm@latest corepack@latest svgo@latest \
     && corepack enable && corepack prepare pnpm@latest --activate \
     && mkdir -p ${PNPM_HOME}/store \
     && chown -R docker:docker ${PNPM_HOME} \
     && pnpm config set store-dir ${PNPM_HOME}/store
+
+# Strip file capabilities from frankenphp
+RUN setcap -r /usr/local/bin/frankenphp
 
 # Custom PHP configuration
 COPY runtimes/frankenphp-octane/php-production.ini /usr/local/etc/php/conf.d/xx-php-user.ini
@@ -117,6 +120,9 @@ RUN --mount=type=cache,target=/pnpm/store,uid=${UID},gid=${GID} \
 # Complete composer setup and build assets
 RUN composer dump-autoload --optimize \
     && pnpm build && pnpm build:ssr && pnpm prune --prod
+
+# Remove .env file for production
+RUN rm -f .env
 
 EXPOSE 6001 8000 13714
 

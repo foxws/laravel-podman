@@ -6,10 +6,12 @@ namespace Foxws\Podman\Commands;
 
 use Foxws\Podman\Concerns\InteractsWithPodmanQuadlet;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Symfony\Component\Console\Attribute\AsCommand;
 
+use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
-use function Laravel\Prompts\select;
+use function Laravel\Prompts\multiselect;
 
 #[AsCommand(name: 'podman:secret')]
 class SecretCommand extends Command
@@ -17,7 +19,7 @@ class SecretCommand extends Command
     use InteractsWithPodmanQuadlet;
 
     public $signature = 'podman:secret
-        {service? : The name of the service to configure}
+        {service?* : The name(s) of the service to configure}
         {--replace : Replace the secret if it already exists}
     ';
 
@@ -25,23 +27,35 @@ class SecretCommand extends Command
 
     public function handle(): int
     {
-        $service = $this->argument('service') ?? select(
-            label: 'Select a service to configure',
+        $services = Arr::wrap($this->argument('service')) ?: multiselect(
+            label: 'Select the services to configure',
             options: $this->getPodmanQuadlets(),
             required: true,
         );
 
-        if ($this->getPodmanQuadletSecrets($service) === []) {
-            info("Service {$service} does not use any secrets.");
+        $failed = [];
 
-            return self::SUCCESS;
+        foreach ($services as $service) {
+            if ($this->getPodmanQuadletSecrets($service) === []) {
+                info("Service {$service} does not use any secrets.");
+
+                continue;
+            }
+
+            if (! $this->promptForPodmanQuadletSecrets($service, replace: $this->option('replace'))) {
+                $failed[] = $service;
+
+                continue;
+            }
+
+            info("Secrets for service {$service} have been set.");
         }
 
-        if (! $this->promptForPodmanQuadletSecrets($service, replace: $this->option('replace'))) {
+        if ($failed !== []) {
+            error('Failed to set secrets for: '.implode(', ', $failed));
+
             return self::FAILURE;
         }
-
-        info("Secrets for service {$service} have been set.");
 
         return self::SUCCESS;
     }

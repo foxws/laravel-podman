@@ -26,6 +26,7 @@ class PodmanServiceProvider extends PackageServiceProvider
                 Commands\PublishCommand::class,
                 Commands\RemoveCommand::class,
                 Commands\SecretCommand::class,
+                Commands\SetupCommand::class,
                 Commands\UninstallCommand::class,
             );
     }

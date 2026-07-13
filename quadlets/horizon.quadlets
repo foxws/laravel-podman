@@ -1,7 +1,8 @@
 # FileName={{application}}-horizon
 [Unit]
 Description=Laravel Horizon container
-After={{application}}.container
+Requires={{application}}-valkey.container
+After={{application}}.container {{application}}-valkey.container
 BindsTo={{application}}.container
 
 [Container]
@@ -10,7 +11,7 @@ AutoUpdate=local
 Environment=APP_COMMAND="php -d variables_order=EGPCS /app/artisan horizon"
 UserNS=keep-id
 ShmSize=128m
-Secret={{application}}-env,target=/config/app.env,mode=0400
+Secret={{application}}-env,target=/config/app.env,mode=0400,uid={{app-uid}},gid={{app-gid}}
 Volume={{application}}-cache:/cache:rw,z
 Network={{application}}.network
 

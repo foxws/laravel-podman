@@ -22,7 +22,20 @@ it('lists the available quadlet services discovered in the quadlets path', funct
 it('lists the available runtimes discovered in the vendor runtimes directory', function () {
     expect($this->getPodmanQuadletRuntimes())->toBe([
         'frankenphp-octane' => 'frankenphp-octane',
+        'proxy' => 'proxy',
     ]);
+});
+
+it('returns the configured list of default services', function () {
+    config(['podman.services' => 'valkey,app']);
+
+    expect($this->getPodmanQuadletDefaultServices())->toBe(['valkey', 'app']);
+});
+
+it('returns the configured list of default runtimes', function () {
+    config(['podman.runtimes' => 'proxy,frankenphp-octane']);
+
+    expect($this->getPodmanQuadletDefaultRuntimes())->toBe(['proxy', 'frankenphp-octane']);
 });
 
 it('resolves the configured runtime path against the base path', function () {
@@ -125,6 +138,48 @@ it('deletes the temporary directory once it is no longer referenced', function (
     expect(File::isDirectory($location))->toBeFalse();
 
     File::deleteDirectory($path);
+});
+
+it('installs multiple services, returning no failures on success', function () {
+    $path = $this->makeQuadletsPath(['pgsql', 'valkey']);
+    $this->useFakePodmanBinary(0);
+
+    expect($this->installPodmanQuadlets(['pgsql', 'valkey']))->toBe([]);
+
+    File::deleteDirectory($path);
+});
+
+it('reports the services that failed to install while continuing with the rest', function () {
+    $path = $this->makeQuadletsPath(['pgsql', 'valkey']);
+    $this->useFakePodmanBinary(1);
+
+    expect($this->installPodmanQuadlets(['pgsql', 'valkey']))->toBe(['pgsql', 'valkey']);
+
+    File::deleteDirectory($path);
+});
+
+it('publishes multiple runtimes, returning no failures on success', function () {
+    $target = base_path('runtimes');
+
+    expect($this->publishPodmanRuntimes(['frankenphp-octane', 'proxy']))->toBe([]);
+
+    expect(File::exists("{$target}/frankenphp-octane/Containerfile"))->toBeTrue()
+        ->and(File::exists("{$target}/proxy/Caddyfile"))->toBeTrue();
+
+    File::deleteDirectory($target);
+});
+
+it('reports the runtimes that failed to publish while continuing with the rest', function () {
+    $target = base_path('runtimes');
+    File::ensureDirectoryExists("{$target}/frankenphp-octane");
+    File::put("{$target}/frankenphp-octane/Containerfile", 'existing');
+
+    expect($this->publishPodmanRuntimes(['frankenphp-octane', 'proxy']))->toBe(['frankenphp-octane']);
+
+    expect(File::get("{$target}/frankenphp-octane/Containerfile"))->toBe('existing')
+        ->and(File::exists("{$target}/proxy/Caddyfile"))->toBeTrue();
+
+    File::deleteDirectory($target);
 });
 
 it('builds the remove quadlet process command', function () {

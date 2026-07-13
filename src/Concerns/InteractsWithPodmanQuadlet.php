@@ -14,6 +14,7 @@ use SplFileInfo;
 use Symfony\Component\Process\Process;
 
 use function Laravel\Prompts\error;
+use function Laravel\Prompts\info;
 use function Laravel\Prompts\password;
 use function Laravel\Prompts\text;
 
@@ -67,6 +68,50 @@ trait InteractsWithPodmanQuadlet
         $command[] = $this->podmanQuadletFile()->prepareSource($source, $target);
 
         return new Process($command);
+    }
+
+    /**
+     * Install one or more services, prompting for and setting their secrets
+     * first when requested. Returns the names of the services that failed.
+     *
+     * @param  array<int, string>  $services
+     * @return array<int, string>
+     */
+    protected function installPodmanQuadlets(
+        array $services,
+        ?string $application = null,
+        ?bool $replace = null,
+        ?bool $secrets = null,
+    ): array {
+        $failed = [];
+
+        foreach ($services as $service) {
+            if ($secrets && ! $this->promptForPodmanQuadletSecrets($service, replace: $replace)) {
+                $failed[] = $service;
+
+                continue;
+            }
+
+            $process = $this->installPodmanQuadlet(
+                service: $service,
+                application: $application,
+                replace: $replace,
+            );
+
+            $process->run();
+
+            if (! $process->isSuccessful()) {
+                error($process->getErrorOutput());
+
+                $failed[] = $service;
+
+                continue;
+            }
+
+            info("Service {$service} installed successfully.");
+        }
+
+        return $failed;
     }
 
     protected function removePodmanQuadlet(
@@ -160,7 +205,7 @@ trait InteractsWithPodmanQuadlet
     protected function publishPodmanRuntime(string $runtime, ?bool $force = null): bool
     {
         $source = "{$this->podmanQuadletPath()->runtimesPath()}/{$runtime}";
-        $target = base_path('runtimes');
+        $target = base_path('runtimes')."/{$runtime}";
 
         if (File::exists($target) && ! $force) {
             error("The runtime {$runtime} already exists at {$target}. Use --force to overwrite.");
@@ -171,6 +216,29 @@ trait InteractsWithPodmanQuadlet
         $this->podmanQuadletFile()->publishDirectory($source, $target);
 
         return true;
+    }
+
+    /**
+     * Publish one or more runtimes. Returns the names of the runtimes that failed.
+     *
+     * @param  array<int, string>  $runtimes
+     * @return array<int, string>
+     */
+    protected function publishPodmanRuntimes(array $runtimes, ?bool $force = null): array
+    {
+        $failed = [];
+
+        foreach ($runtimes as $runtime) {
+            if (! $this->publishPodmanRuntime($runtime, force: $force)) {
+                $failed[] = $runtime;
+
+                continue;
+            }
+
+            info("Runtime {$runtime} published to {$this->getPodmanRuntimePath()}");
+        }
+
+        return $failed;
     }
 
     protected function promptForPodmanQuadletSecrets(string $service, ?bool $replace = null): bool
@@ -226,6 +294,11 @@ trait InteractsWithPodmanQuadlet
             ->toArray();
     }
 
+    protected function getPodmanQuadletDefaultServices(): array
+    {
+        return $this->podmanQuadletPath()->defaultServices();
+    }
+
     protected function getPodmanQuadletRuntimes(): array
     {
         return Collection::make(File::directories($this->podmanQuadletPath()->runtimesPath()))
@@ -234,6 +307,11 @@ trait InteractsWithPodmanQuadlet
             ->values()
             ->mapWithKeys(fn (string $runtime): array => [$runtime => $runtime])
             ->toArray();
+    }
+
+    protected function getPodmanQuadletDefaultRuntimes(): array
+    {
+        return $this->podmanQuadletPath()->defaultRuntimes();
     }
 
     protected function getPodmanQuadletSecrets(string $service): array

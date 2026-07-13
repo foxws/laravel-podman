@@ -6,26 +6,28 @@ Environment=APP_ENV={{app-env}}
 Environment=UID={{app-uid}}
 Environment=GID={{app-gid}}
 File={{runtime-path}}/frankenphp-octane/Containerfile
-SetWorkingDirectory={{runtime-path}}/frankenphp-octane
+IgnoreFile={{runtime-path}}/frankenphp-octane/dockerignore
+SetWorkingDirectory={{base-path}}
 ---
 # FileName={{application}}
 [Unit]
 Description=Laravel Octane container
+Requires={{application}}-pgsql.container {{application}}-valkey.container
+After={{application}}-pgsql.container {{application}}-valkey.container
 
 [Container]
 Image={{application}}.build
 AutoUpdate=local
-AddCapability=CAP_NET_BIND_SERVICE
 UserNS=keep-id
 ShmSize=128m
-Secret={{application}}-env,target=/config/app.env,mode=0400
+Secret={{application}}-env,target=/app/.env,mode=0400,uid={{app-uid}},gid={{app-gid}}
 Volume={{application}}-config:/config:rw,z,U
 Volume={{application}}-data:/data:rw,z,U
 Volume={{application}}-cache:/cache:rw,z,U
 Network={{application}}.network
-PublishPort=80:80
-PublishPort=443:443
-PublishPort=443:443/udp
+Network={{proxy}}.network
+ExposeHostPort=8000
+ExposeHostPort=5173
 
 [Service]
 Restart=always

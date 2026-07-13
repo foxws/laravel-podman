@@ -9,6 +9,8 @@ Laravel Podman brings [Podman Quadlet](https://docs.podman.io/en/latest/markdown
 
 A Sail-inspired `lpod` CLI script is also included for day-to-day interaction with the running containers (starting/stopping services, opening a shell, running Artisan/Composer/Node commands, and more).
 
+See the [`docs/`](docs) folder for more: [Proxy](docs/proxy.md), [lpod tips & tricks](docs/lpod.md), [Customizing](docs/customizing.md).
+
 ## Requirements
 
 - Linux with systemd (rootless or system-wide); macOS and Windows, including WSL, are not supported
@@ -39,6 +41,10 @@ return [
 
     'quadlet_gid' => env('PODMAN_QUADLET_GID'),
 
+    'quadlets_path' => env('PODMAN_QUADLETS_PATH', 'containers/quadlets'),
+
+    'runtimes_path' => env('PODMAN_RUNTIMES_PATH', 'containers/runtimes'),
+
     'runtime_path' => env('PODMAN_RUNTIME_PATH', 'runtimes'),
 
     'config_path' => env('PODMAN_CONFIG_PATH', 'runtimes/config'),
@@ -49,7 +55,9 @@ return [
 ];
 ```
 
-`quadlet_prefix` is used to namespace the services installed for your application (for example `laravel-pgsql`), and defaults to your `APP_NAME`. `quadlet_uid`/`quadlet_gid` default to the UID/GID of the user running the Artisan command. You can also override where the package looks for Quadlet and runtime files by adding `quadlets_path` and `runtimes_path` to the config file; both default to the ones bundled with the package.
+`quadlet_prefix` is used to namespace the services installed for your application (for example `laravel-pgsql`), and defaults to your `APP_NAME`. `quadlet_uid`/`quadlet_gid` default to the UID/GID of the user running the Artisan command.
+
+**Custom templates.** `quadlets_path`/`runtimes_path` control where the package looks for `*.quadlets` files and runtime folders (each containing a `Containerfile`), and default to `containers/quadlets`/`containers/runtimes` in your project. If either directory exists, the package uses it exclusively instead of the vendor-provided one — so to customize an existing service (e.g. tweak `pgsql.quadlets`) or add your own, copy the full set of files you need into that directory, not just the ones you're changing. Leave a directory absent (the default until you create it) to keep using the one bundled with the package.
 
 ## Quick Start
 
@@ -79,6 +87,20 @@ Once installed, use the `lpod` CLI (see [below](#the-lpod-utility)) to start eve
 vendor/bin/lpod my-app up
 vendor/bin/lpod my-app open   # Opens the application URL in your browser
 ```
+
+The bundled `proxy` runtime terminates HTTPS with a locally-trusted certificate. For your browser/OS to trust it too, export and install Caddy's CA certificate:
+
+```bash
+podman cp systemd-proxy:/data/caddy/pki/authorities/local/root.crt ~/proxy.crt
+
+# macOS
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ~/proxy.crt
+
+# Linux (Arch/Debian/Ubuntu)
+sudo cp ~/proxy.crt /usr/local/share/ca-certificates/caddy.crt && sudo update-ca-certificates
+```
+
+> **Note:** This is for local development only — production deployments should use real certificates (e.g. Let's Encrypt), which Caddy handles automatically once it has a public domain to serve.
 
 ## Usage
 

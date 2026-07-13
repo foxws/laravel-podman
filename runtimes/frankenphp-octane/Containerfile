@@ -15,7 +15,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="${PATH}:${PNPM_HOME}"
 ENV FRANKEN_CLI="frankenphp php-cli /app/artisan"
 ENV PHP_CLI="php -d variables_order=EGPCS /app/artisan"
-ENV APP_COMMAND="${FRANKEN_CLI} octane:frankenphp --host=0.0.0.0 --port=443 --admin-port=2019 --https"
+ENV APP_COMMAND="${FRANKEN_CLI} octane:frankenphp --host=0.0.0.0 --port=8000 --admin-port=2019"
 ENV APP_USER="docker"
 
 # Set timezone
@@ -23,7 +23,7 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezo
 
 # Main dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg curl ca-certificates zip unzip git sqlite3 nano \
+    gnupg curl ca-certificates libcap2-bin unzip git sqlite3 nano \
     libavif-bin jpegoptim optipng pngquant gifsicle \
     && apt-get -y autoremove \
     && apt-get clean \
@@ -78,6 +78,9 @@ RUN npm install -g npm@latest corepack@latest svgo@latest \
     && mkdir -p ${PNPM_HOME}/store \
     && chown -R docker:docker ${PNPM_HOME} \
     && pnpm config set store-dir ${PNPM_HOME}/store
+
+# Strip file capabilities from frankenphp
+RUN setcap -r /usr/local/bin/frankenphp
 
 # Custom PHP configuration
 COPY runtimes/frankenphp-octane/php-production.ini /usr/local/etc/php/conf.d/xx-php-user.ini

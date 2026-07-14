@@ -106,6 +106,27 @@ class PodmanQuadletPath
         return $this->parseNameList(Config::get('podman.runtimes', []));
     }
 
+    /**
+     * @return array<int, string>
+     */
+    public function s3Buckets(): array
+    {
+        return $this->parseNameList(Config::get('podman.s3_buckets', []));
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function s3CorsBuckets(): array
+    {
+        return $this->parseNameList(Config::get('podman.s3_cors_buckets', []));
+    }
+
+    public function s3CorsPolicyPath(): string
+    {
+        return "{$this->runtimePath()}/s3/cors.json";
+    }
+
     public function shouldReloadSystemd(): bool
     {
         return Config::boolean('podman.reload_systemd');

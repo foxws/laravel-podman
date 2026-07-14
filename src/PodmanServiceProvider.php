@@ -25,9 +25,18 @@ class PodmanServiceProvider extends PackageServiceProvider
                 Commands\PrintCommand::class,
                 Commands\PublishCommand::class,
                 Commands\RemoveCommand::class,
+                Commands\S3SetupCommand::class,
                 Commands\SecretCommand::class,
                 Commands\SetupCommand::class,
                 Commands\UninstallCommand::class,
             );
+    }
+
+    public function packageRegistered(): void
+    {
+        $this->app->bind(
+            Support\PodmanS3Manager::class,
+            fn (): Support\PodmanS3Manager => Support\PodmanS3Manager::fromConfig(),
+        );
     }
 }

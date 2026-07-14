@@ -23,6 +23,7 @@ it('lists the available runtimes discovered in the vendor runtimes directory', f
     expect($this->getPodmanQuadletRuntimes())->toBe([
         'frankenphp-octane' => 'frankenphp-octane',
         'proxy' => 'proxy',
+        's3' => 's3',
     ]);
 });
 

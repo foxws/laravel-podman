@@ -131,4 +131,30 @@ return [
         'frankenphp-octane',
         'proxy',
     ]),
+
+    /*
+    |--------------------------------------------------------------------------
+    | S3 Buckets
+    |--------------------------------------------------------------------------
+    |
+    | These values list the S3 buckets created by the "podman:s3-setup" command,
+    | and which of them should receive the CORS policy published with the "s3"
+    | runtime (see "podman:publish s3"). Accepts either a comma-separated string
+    | (handy for the PODMAN_S3_BUCKETS / PODMAN_S3_CORS_BUCKETS env variables)
+    | or a plain array of bucket names.
+    |
+    */
+
+    's3_buckets' => env('PODMAN_S3_BUCKETS', [
+        'local',
+        'conversions',
+        'segments',
+        'secrets',
+    ]),
+
+    's3_cors_buckets' => env('PODMAN_S3_CORS_BUCKETS', [
+        'conversions',
+        'segments',
+        'secrets',
+    ]),
 ];

@@ -172,3 +172,39 @@ it('returns no default runtimes when none are configured', function () {
 
     expect($this->path->defaultRuntimes())->toBe([]);
 });
+
+it('splits the configured comma-separated s3 buckets into an array', function () {
+    config(['podman.s3_buckets' => 'local,conversions,secrets']);
+
+    expect($this->path->s3Buckets())->toBe(['local', 'conversions', 'secrets']);
+});
+
+it('accepts the configured s3 buckets as a plain array', function () {
+    config(['podman.s3_buckets' => ['local', 'conversions', 'secrets']]);
+
+    expect($this->path->s3Buckets())->toBe(['local', 'conversions', 'secrets']);
+});
+
+it('returns no s3 buckets when none are configured', function () {
+    config(['podman.s3_buckets' => '']);
+
+    expect($this->path->s3Buckets())->toBe([]);
+});
+
+it('splits the configured comma-separated s3 cors buckets into an array', function () {
+    config(['podman.s3_cors_buckets' => 'conversions,secrets']);
+
+    expect($this->path->s3CorsBuckets())->toBe(['conversions', 'secrets']);
+});
+
+it('returns no s3 cors buckets when none are configured', function () {
+    config(['podman.s3_cors_buckets' => '']);
+
+    expect($this->path->s3CorsBuckets())->toBe([]);
+});
+
+it('resolves the s3 cors policy path against the runtime path', function () {
+    config(['podman.runtime_path' => 'runtimes']);
+
+    expect($this->path->s3CorsPolicyPath())->toBe(base_path('runtimes').'/s3/cors.json');
+});

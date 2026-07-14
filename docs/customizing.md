@@ -17,8 +17,10 @@ Everything the package does is driven by `config/podman.php` (publish it with `p
 | `reload_systemd`           | `PODMAN_RELOAD_SYSTEMD`        | `true`                                                   | Reload systemd after install/remove                                      |
 | `services`                  | `PODMAN_DEFAULT_SERVICES`      | see `config/podman.php`                                  | Services `podman:setup` installs when none are given                     |
 | `runtimes`                  | `PODMAN_DEFAULT_RUNTIMES`      | see `config/podman.php`                                  | Runtimes `podman:setup` publishes when none are given                    |
+| `s3_buckets`                | `PODMAN_S3_BUCKETS`            | see `config/podman.php`                                  | Buckets `podman:s3-setup` creates (see [S3 Buckets](s3.md))              |
+| `s3_cors_buckets`           | `PODMAN_S3_CORS_BUCKETS`       | see `config/podman.php`                                  | Which of `s3_buckets` get the CORS policy applied                        |
 
-`services`/`runtimes` accept either a comma-separated string (handy for the env variable form) or a plain PHP array in the config file.
+`services`/`runtimes`/`s3_buckets`/`s3_cors_buckets` accept either a comma-separated string (handy for the env variable form) or a plain PHP array in the config file.
 
 ## Custom templates
 
@@ -62,5 +64,6 @@ Running more than one application on the same host? Pass `--application=` to `po
 ## See also
 
 - [Proxy](proxy.md) — the bundled Caddy reverse proxy
+- [S3 Buckets](s3.md) — `podman:s3-setup` and CORS
 - [lpod tips & tricks](lpod.md) — the `lpod` CLI
 - [README](../README.md) — Quick Start and full command reference

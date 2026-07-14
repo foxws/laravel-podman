@@ -9,7 +9,7 @@ Laravel Podman brings [Podman Quadlet](https://docs.podman.io/en/latest/markdown
 
 A Sail-inspired `lpod` CLI script is also included for day-to-day interaction with the running containers (starting/stopping services, opening a shell, running Artisan/Composer/Node commands, and more).
 
-See the [`docs/`](docs) folder for more: [Proxy](docs/proxy.md), [lpod tips & tricks](docs/lpod.md), [Customizing](docs/customizing.md).
+See the [`docs/`](docs) folder for more: [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [lpod tips & tricks](docs/lpod.md), [Customizing](docs/customizing.md).
 
 ## Requirements
 
@@ -208,6 +208,14 @@ Removes an application and all of its installed services in one go.
 php artisan podman:uninstall my-app
 
 php artisan podman:uninstall my-app --force
+```
+
+### Setup S3 Buckets
+
+Creates the S3 buckets your app needs and applies a CORS policy to the ones that serve requests directly to a browser. Requires `aws/aws-sdk-php` (`composer require aws/aws-sdk-php`) — not installed by default, since most apps don't need S3. See [S3 Buckets](docs/s3.md) for the full guide.
+
+```bash
+php artisan podman:s3-setup
 ```
 
 ### Backing up volumes

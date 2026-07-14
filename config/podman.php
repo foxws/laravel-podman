@@ -151,7 +151,6 @@ return [
         'horizon',
         'reverb',
         'schedule',
-        'mailpit',
     ]),
 
     /*
@@ -186,14 +185,13 @@ return [
 
     's3_buckets' => env('PODMAN_S3_BUCKETS', [
         'local',
+        'assets',
+        'media',
         'conversions',
-        'segments',
-        'secrets',
     ]),
 
     's3_cors_buckets' => env('PODMAN_S3_CORS_BUCKETS', [
         'conversions',
-        'segments',
-        'secrets',
+        'assets',
     ]),
 ];

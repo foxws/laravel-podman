@@ -18,8 +18,8 @@ if ! command -v podman >/dev/null 2>&1; then
 fi
 
 # Define environment variables...
-PHP_IMAGE=${SETUP_PODMAN_PHP_IMAGE:-"php:8.5-cli"}
-PUBLISH_PATH=${SETUP_PODMAN_PUBLISH_PATH:-"storage/app/podman"}
+PHP_IMAGE=${PODMAN_SETUP_PHP_IMAGE:-"docker.io/dunglas/frankenphp:latest"}
+PUBLISH_PATH=${PODMAN_SETUP_PUBLISH_PATH:-"storage/app/podman"}
 
 # Reuse "--application" for the install step, so services end up namespaced
 # the same way they were rendered...

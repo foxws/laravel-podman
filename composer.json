@@ -48,7 +48,7 @@
     },
     "bin": [
         "bin/lpod",
-        "bin/setup-podman"
+        "bin/podman-setup"
     ],
     "autoload": {
         "psr-4": {

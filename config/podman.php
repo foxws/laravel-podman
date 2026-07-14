@@ -33,18 +33,12 @@ return [
     | Working Path
     |--------------------------------------------------------------------------
     |
-    | This value is used only for the "{{base-path}}"/"{{runtime-path}}"/
-    | "{{config-path}}" placeholders baked into rendered Quadlet content
-    | (e.g. a service's "SetWorkingDirectory="). It does NOT affect where
-    | Artisan itself reads or writes files — that's always relative to
-    | Laravel's own base_path(). The default value is null, meaning the
-    | rendered paths match base_path() too, which is correct when Artisan
-    | runs directly on the host. Override it when Artisan instead renders
-    | templates from somewhere whose filesystem view of the project isn't
-    | the host's (e.g. inside the disposable container used by "Setting up
-    | without PHP on the host") so the *rendered* paths still resolve
-    | correctly once installed on the host, without changing where the
-    | render step itself writes its output.
+    | The host path baked into the "{{base-path}}"/"{{runtime-path}}"/
+    | "{{config-path}}" placeholders. It does not affect where Artisan
+    | itself reads or writes files — that's always base_path(). Defaults
+    | to base_path(); override when rendering happens somewhere whose
+    | filesystem view of the project isn't the host's, e.g. inside the
+    | container used by "Setting up without PHP on the host".
     |
     */
 

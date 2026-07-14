@@ -29,7 +29,7 @@ auto-imports.d.ts
 boost.json
 bootstrap/cache/*.php
 components.d.ts
-!runtimes/**
+containers/*
 dist
 docs
 env.d.ts

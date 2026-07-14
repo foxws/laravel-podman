@@ -47,7 +47,8 @@
         "aws/aws-sdk-php": "Required to use the \"podman:s3-setup\" command (^3.322)."
     },
     "bin": [
-        "bin/lpod"
+        "bin/lpod",
+        "bin/setup-podman"
     ],
     "autoload": {
         "psr-4": {

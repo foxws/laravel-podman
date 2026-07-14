@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+UNAMEOUT="$(uname -s)"
+
+# Verify operating system is supported...
+if [ "$UNAMEOUT" != "Linux" ]; then
+    echo "Unsupported operating system [$(uname -s)]. Laravel Podman requires Linux with systemd; macOS and Windows, including WSL, are not supported." >&2
+
+    exit 1
+fi
+
+if ! command -v podman >/dev/null 2>&1; then
+    echo "The podman binary is required on the host to install the rendered Quadlet units." >&2
+
+    exit 1
+fi
+
+# Define environment variables...
+PHP_IMAGE=${SETUP_PODMAN_PHP_IMAGE:-"php:8.5-cli"}
+PUBLISH_PATH=${SETUP_PODMAN_PUBLISH_PATH:-"storage/app/podman"}
+
+# Reuse "--application" for the install step, so services end up namespaced
+# the same way they were rendered...
+APPLICATION=""
+
+for ARG in "$@"; do
+    case "$ARG" in
+        --application=*)
+            APPLICATION="${ARG#--application=}"
+            ;;
+    esac
+done
+
+# Render every requested service's ".quadlets" file into "$PUBLISH_PATH",
+# running as the host user so nothing ends up owned by root...
+echo "Rendering Quadlet units using the '${PHP_IMAGE}' image..."
+
+podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
+    -v "$PWD":/var/www/html:Z -w /var/www/html "$PHP_IMAGE" \
+    php artisan podman:setup --no-install "$@"
+
+shopt -s nullglob
+QUADLET_FILES=("${PUBLISH_PATH}"/*.quadlets)
+shopt -u nullglob
+
+if [ ${#QUADLET_FILES[@]} -eq 0 ]; then
+    echo "No rendered Quadlet units found in '${PUBLISH_PATH}'." >&2
+
+    exit 1
+fi
+
+# Install the rendered units using the host's own podman/systemd...
+INSTALL_ARGS=(quadlet install)
+
+if [ -n "$APPLICATION" ]; then
+    INSTALL_ARGS+=(--application "$APPLICATION")
+fi
+
+INSTALL_ARGS+=("${QUADLET_FILES[@]}" --replace)
+
+echo "Installing rendered Quadlet units from '${PUBLISH_PATH}'..."
+
+exec podman "${INSTALL_ARGS[@]}"

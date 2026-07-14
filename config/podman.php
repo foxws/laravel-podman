@@ -30,6 +30,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Base Path
+    |--------------------------------------------------------------------------
+    |
+    | This value is used for the "{{base-path}}" placeholder (e.g. a service's
+    | "SetWorkingDirectory=") and as the base for other relative paths above.
+    | The default value is null, which means Laravel's own base_path() is
+    | used.
+    |
+    */
+
+    'base_path' => env('PODMAN_BASE_PATH'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Service UID and GID
     |--------------------------------------------------------------------------
     |
@@ -129,6 +143,7 @@ return [
         'horizon',
         'reverb',
         'schedule',
+        'mailpit',
     ]),
 
     /*

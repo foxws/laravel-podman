@@ -25,6 +25,17 @@ it('uses the configured uid and gid when set', function () {
         ->and($this->path->gid())->toBe(2001);
 });
 
+it('resolves the base path to Laravel\'s base_path by default', function () {
+    expect($this->path->basePath())->toBe(base_path());
+});
+
+it('uses the configured base path when set', function () {
+    config(['podman.base_path' => '/var/www/html']);
+
+    expect($this->path->basePath())->toBe('/var/www/html')
+        ->and($this->path->runtimePath())->toBe('/var/www/html/runtimes');
+});
+
 it('defaults the quadlets path to the vendor quadlets directory', function () {
     expect($this->path->quadletsPath())->toBe("{$this->path->vendorPath()}/quadlets");
 });

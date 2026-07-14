@@ -38,6 +38,7 @@ done
 echo "Rendering Quadlet units using the '${PHP_IMAGE}' image..."
 
 podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
+    -e PODMAN_BASE_PATH="$PWD" \
     -v "$PWD":/var/www/html:Z -w /var/www/html "$PHP_IMAGE" \
     php artisan podman:setup --no-install "$@"
 

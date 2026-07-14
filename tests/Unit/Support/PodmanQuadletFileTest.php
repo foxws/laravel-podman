@@ -62,6 +62,20 @@ it('replaces the base-path, config-path and runtime-path placeholders', function
     File::delete($target);
 });
 
+it('uses the configured base path for the base-path placeholder', function () {
+    $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
+    $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';
+    config(['podman.base_path' => '/var/www/html']);
+    File::put($source, "SetWorkingDirectory={{base-path}}\n");
+
+    $this->file->prepareSource($source, $target);
+
+    expect(File::get($target))->toBe("SetWorkingDirectory=/var/www/html\n");
+
+    File::delete($source);
+    File::delete($target);
+});
+
 it('replaces the app-env, app-uid and app-gid placeholders', function () {
     $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
     $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';

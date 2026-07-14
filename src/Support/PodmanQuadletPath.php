@@ -43,6 +43,11 @@ class PodmanQuadletPath
         return "{$this->vendorPath()}/runtimes";
     }
 
+    public function basePath(): string
+    {
+        return Config::get('podman.base_path') ?: base_path();
+    }
+
     public function runtimePath(): string
     {
         return $this->absolutePath(Config::get('podman.runtime_path'));
@@ -144,7 +149,7 @@ class PodmanQuadletPath
 
     protected function absolutePath(string $path): string
     {
-        return Str::startsWith($path, '/') ? $path : base_path($path);
+        return Str::startsWith($path, '/') ? $path : Str::rtrim($this->basePath(), '/')."/{$path}";
     }
 
     /**

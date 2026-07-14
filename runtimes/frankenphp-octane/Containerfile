@@ -23,7 +23,7 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezo
 
 # Main dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg curl ca-certificates libcap2-bin unzip git sqlite3 nano \
+    gnupg curl ca-certificates libcap2-bin unzip \
     libavif-bin jpegoptim optipng pngquant gifsicle \
     && apt-get -y autoremove \
     && apt-get clean \
@@ -133,6 +133,14 @@ WORKDIR /app
 
 # Set watch on development
 ENV APP_COMMAND="${APP_COMMAND} --watch"
+
+# Development dependencies
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+    nano openssh-client git \
+    && apt-get -y autoremove \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # PHP Configuration
 RUN cp ${PHP_INI_DIR}/php.ini-development ${PHP_INI_DIR}/php.ini

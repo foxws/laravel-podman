@@ -22,7 +22,7 @@ class InstallCommand extends Command
         {--application= : The name of the application, installed in its own subdirectory (requires Podman 6+)}
         {--replace : Replace the service if it already exists}
         {--secrets : Also prompt for and set the secrets required by the service}
-        {--publish : Prepare the service(s) at the configured publish path instead of installing them, to run "podman quadlet install" on the host afterwards}
+        {--publish : Prepare the service(s) at the configured publish path instead of installing them}
     ';
 
     public $description = 'Install one or more services for the application to run with Podman';

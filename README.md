@@ -15,7 +15,6 @@ See the [`docs/`](docs) folder for more: [Proxy](docs/proxy.md), [S3 Buckets](do
 
 - Linux with systemd (rootless or system-wide); macOS and Windows, including WSL, are not supported
 - A recent version of Podman with the `quadlet` CLI plugin (`podman quadlet --help` should work); the `--application` option used by `podman:install` requires Podman 6+
-- PHP 8.4+ to run the Artisan commands below (`podman:setup` and friends). If PHP isn't available where you'd normally run them — e.g. a fresh host, or a container — see [Setting up without PHP on the host](#setting-up-without-php-on-the-host). Once your services are installed, day-to-day work goes through `lpod` (see [below](#the-lpod-utility)), which only talks to `podman`/`systemctl` and doesn't need PHP on the host at all.
 
 ## Installation
 
@@ -113,7 +112,7 @@ This makes it possible to run the PHP half of setup somewhere PHP is convenient 
 ```bash
 # Renders every default service's .quadlets file into storage/app/podman,
 # without needing podman inside the container:
-podman run --rm -v "$PWD":/var/www/html -w /var/www/html php:8.4-cli \
+podman run --rm -v "$PWD":/var/www/html -w /var/www/html php:8.5-cli \
     php artisan podman:setup --publish
 
 # On the host, install the prepared files (the exact command, including any

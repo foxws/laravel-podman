@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use Spatie\TemporaryDirectory\TemporaryDirectory;
 use SplFileInfo;
+use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process;
 
 use function Laravel\Prompts\error;
@@ -50,6 +51,23 @@ trait InteractsWithPodmanQuadlet
         $source = "{$path->quadletsPath()}/{$service}.quadlets";
         $target = $this->podmanQuadletTemporaryDirectory()->path("{$service}.quadlets");
 
+        $command = $this->podmanQuadletInstallCommand(
+            target: $this->podmanQuadletFile()->prepareSource($source, $target),
+            application: $application,
+            replace: $replace,
+        );
+
+        return new Process($command);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    protected function podmanQuadletInstallCommand(
+        string $target,
+        ?string $application = null,
+        ?bool $replace = null,
+    ): array {
         $command = ['podman', 'quadlet', 'install'];
 
         if ($application) {
@@ -61,18 +79,48 @@ trait InteractsWithPodmanQuadlet
             $command[] = '--replace';
         }
 
-        if (! $path->shouldReloadSystemd()) {
+        if (! $this->podmanQuadletPath()->shouldReloadSystemd()) {
             $command[] = '--reload-systemd=false';
         }
 
-        $command[] = $this->podmanQuadletFile()->prepareSource($source, $target);
+        $command[] = $target;
 
-        return new Process($command);
+        return $command;
+    }
+
+    /**
+     * Whether the "podman" binary can be found on the PATH. Used to fall
+     * back to "publishPodmanQuadlet()" when Artisan runs somewhere podman
+     * itself isn't available (e.g. inside a plain PHP container).
+     */
+    protected function podmanBinaryAvailable(): bool
+    {
+        return (new ExecutableFinder)->find('podman') !== null;
+    }
+
+    /**
+     * Render a service's ".quadlets" file and write it to the configured
+     * publish path instead of installing it, so it can be installed with
+     * "podman quadlet install" on the host afterwards.
+     */
+    protected function publishPodmanQuadlet(string $service): string
+    {
+        $path = $this->podmanQuadletPath();
+        $source = "{$path->quadletsPath()}/{$service}.quadlets";
+        $target = "{$path->publishPath()}/{$service}.quadlets";
+
+        return $this->podmanQuadletFile()->prepareSource($source, $target);
     }
 
     /**
      * Install one or more services, prompting for and setting their secrets
      * first when requested. Returns the names of the services that failed.
+     *
+     * Falls back to "publishPodmanQuadlet()" for every service, instead of
+     * installing it, when $publish is passed or the "podman" binary isn't
+     * available. Secrets are skipped in that case, since setting them also
+     * requires "podman" — set them separately with "podman:secret" once
+     * podman is available.
      *
      * @param  array<int, string>  $services
      * @return array<int, string>
@@ -82,10 +130,26 @@ trait InteractsWithPodmanQuadlet
         ?string $application = null,
         ?bool $replace = null,
         ?bool $secrets = null,
+        ?bool $publish = null,
     ): array {
         $failed = [];
+        $publish = $publish || ! $this->podmanBinaryAvailable();
 
         foreach ($services as $service) {
+            if ($publish) {
+                $target = $this->publishPodmanQuadlet($service);
+
+                $command = implode(' ', $this->podmanQuadletInstallCommand(
+                    target: $target,
+                    application: $application,
+                    replace: $replace,
+                ));
+
+                info("Service {$service} prepared at {$target}. Run \"{$command}\" on the host to finish installing it.");
+
+                continue;
+            }
+
             if ($secrets && ! $this->promptForPodmanQuadletSecrets($service, replace: $replace)) {
                 $failed[] = $service;
 

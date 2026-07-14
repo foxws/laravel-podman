@@ -87,6 +87,18 @@ it('keeps an absolute config path as-is', function () {
     expect($this->path->configPath())->toBe('/srv/runtimes/config');
 });
 
+it('resolves a relative publish path against the base path', function () {
+    config(['podman.publish_path' => 'storage/app/podman']);
+
+    expect($this->path->publishPath())->toBe(base_path('storage/app/podman'));
+});
+
+it('keeps an absolute publish path as-is', function () {
+    config(['podman.publish_path' => '/srv/podman']);
+
+    expect($this->path->publishPath())->toBe('/srv/podman');
+});
+
 it('resolves the domain from the app url', function () {
     config(['app.url' => 'https://example.test']);
 

@@ -124,3 +124,34 @@ it('continues installing the remaining services when one fails, and reports a su
         ->expectsOutputToContain('Failed to install: pgsql, valkey')
         ->assertExitCode(1);
 });
+
+it('publishes services to storage instead of installing them when the publish option is passed', function () {
+    $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
+    config(['podman.publish_path' => $publishPath]);
+
+    $this->useFakePodmanBinary(0);
+
+    $this->artisan('podman:setup', ['--publish' => true])
+        ->expectsOutputToContain("Service pgsql prepared at {$publishPath}/pgsql.quadlets")
+        ->expectsOutputToContain("Service valkey prepared at {$publishPath}/valkey.quadlets")
+        ->expectsOutputToContain('Setup complete. Installed: pgsql, valkey')
+        ->assertExitCode(0);
+
+    expect(File::exists("{$publishPath}/pgsql.quadlets"))->toBeTrue()
+        ->and(File::exists("{$publishPath}/valkey.quadlets"))->toBeTrue();
+
+    File::deleteDirectory($publishPath);
+});
+
+it('publishes services to storage automatically when the podman binary is unavailable', function () {
+    $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
+    config(['podman.publish_path' => $publishPath]);
+
+    $this->makePodmanBinaryUnavailable();
+
+    $this->artisan('podman:setup')
+        ->expectsOutputToContain("Service pgsql prepared at {$publishPath}/pgsql.quadlets")
+        ->assertExitCode(0);
+
+    File::deleteDirectory($publishPath);
+});

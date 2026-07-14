@@ -141,6 +141,61 @@ it('deletes the temporary directory once it is no longer referenced', function (
     File::deleteDirectory($path);
 });
 
+it('reports whether the podman binary is available', function () {
+    $this->useFakePodmanBinary(0);
+
+    expect($this->podmanBinaryAvailable())->toBeTrue();
+
+    $this->makePodmanBinaryUnavailable();
+
+    expect($this->podmanBinaryAvailable())->toBeFalse();
+});
+
+it('renders and writes a quadlet file to the configured publish path', function () {
+    $path = $this->makeQuadletsPath(['pgsql']);
+    $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
+    config(['podman.publish_path' => $publishPath]);
+
+    $target = $this->publishPodmanQuadlet('pgsql');
+
+    expect($target)->toBe("{$publishPath}/pgsql.quadlets")
+        ->and(File::exists($target))->toBeTrue();
+
+    File::deleteDirectory($path);
+    File::deleteDirectory($publishPath);
+});
+
+it('falls back to publishing services instead of installing them when podman is unavailable', function () {
+    $path = $this->makeQuadletsPath(['pgsql', 'valkey']);
+    $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
+    config(['podman.publish_path' => $publishPath]);
+
+    $this->makePodmanBinaryUnavailable();
+
+    expect($this->installPodmanQuadlets(['pgsql', 'valkey']))->toBe([]);
+
+    expect(File::exists("{$publishPath}/pgsql.quadlets"))->toBeTrue()
+        ->and(File::exists("{$publishPath}/valkey.quadlets"))->toBeTrue();
+
+    File::deleteDirectory($path);
+    File::deleteDirectory($publishPath);
+});
+
+it('publishes instead of installing when explicitly requested, even when podman is available', function () {
+    $path = $this->makeQuadletsPath(['pgsql']);
+    $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
+    config(['podman.publish_path' => $publishPath]);
+
+    $this->useFakePodmanBinary(0);
+
+    expect($this->installPodmanQuadlets(['pgsql'], publish: true))->toBe([]);
+
+    expect(File::exists("{$publishPath}/pgsql.quadlets"))->toBeTrue();
+
+    File::deleteDirectory($path);
+    File::deleteDirectory($publishPath);
+});
+
 it('installs multiple services, returning no failures on success', function () {
     $path = $this->makeQuadletsPath(['pgsql', 'valkey']);
     $this->useFakePodmanBinary(0);

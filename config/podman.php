@@ -69,6 +69,22 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Publish Path
+    |--------------------------------------------------------------------------
+    |
+    | This value is the path where "podman:setup"/"podman:install" write a
+    | rendered ".quadlets" file instead of installing it, either when passed
+    | --publish or automatically when the "podman" binary can't be found
+    | (e.g. running Artisan inside a plain PHP container). Run
+    | "podman quadlet install" against the written file on the host
+    | afterwards to finish installing the service.
+    |
+    */
+
+    'publish_path' => env('PODMAN_PUBLISH_PATH', 'storage/app/podman'),
+
+    /*
+    |--------------------------------------------------------------------------
     | SELinux Volume Mapping
     |--------------------------------------------------------------------------
     |

@@ -53,6 +53,11 @@ class PodmanQuadletPath
         return $this->absolutePath(Config::get('podman.config_path'));
     }
 
+    public function publishPath(): string
+    {
+        return $this->absolutePath(Config::get('podman.publish_path'));
+    }
+
     public function domain(): string
     {
         return Uri::of(Config::string('app.url'))->host();

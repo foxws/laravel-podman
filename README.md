@@ -15,7 +15,7 @@ See the [`docs/`](docs) folder for more: [Proxy](docs/proxy.md), [S3 Buckets](do
 
 - Linux with systemd (rootless or system-wide); macOS and Windows, including WSL, are not supported
 - A recent version of Podman with the `quadlet` CLI plugin (`podman quadlet --help` should work); the `--application` option used by `podman:install` requires Podman 6+
-- PHP 8.4+
+- PHP 8.4+ to run the Artisan commands below (`podman:setup` and friends). If PHP isn't available where you'd normally run them — e.g. a fresh host, or a container — see [Setting up without PHP on the host](#setting-up-without-php-on-the-host). Once your services are installed, day-to-day work goes through `lpod` (see [below](#the-lpod-utility)), which only talks to `podman`/`systemctl` and doesn't need PHP on the host at all.
 
 ## Installation
 
@@ -49,6 +49,8 @@ return [
 
     'config_path' => env('PODMAN_CONFIG_PATH', 'runtimes/config'),
 
+    'publish_path' => env('PODMAN_PUBLISH_PATH', 'storage/app/podman'),
+
     'selinux_volume_mapping' => env('PODMAN_SELINUX_VOLUME_MAPPING', true),
 
     'reload_systemd' => env('PODMAN_RELOAD_SYSTEMD', true),
@@ -66,6 +68,8 @@ The fastest way to get an application running is `podman:setup`. It publishes th
 ```bash
 php artisan podman:setup
 ```
+
+> **Note:** This step requires PHP, since it's an Artisan command, and normally requires the `podman` binary too, since it installs Quadlet units and Podman secrets directly on your system. It's a one-time cost — once your services are installed, everyday commands (starting services, running Artisan/Composer/Node commands, opening a shell, etc.) go through [`lpod`](#the-lpod-utility) instead, which runs entirely inside the containers and doesn't need PHP on the host. If you don't have PHP on the host at all, see [Setting up without PHP on the host](#setting-up-without-php-on-the-host).
 
 By default it also prompts for and sets any secrets the installed services need (e.g. your application's `.env` file, database credentials) and replaces services that already exist, so re-running it is safe. Pass `--no-secrets` and/or `--no-replace` to opt out:
 
@@ -100,6 +104,25 @@ sudo cp ~/proxy.crt /usr/local/share/ca-certificates/caddy.crt && sudo update-ca
 
 > **Note:** This is for local development only — production deployments should use real certificates (e.g. Let's Encrypt), which Caddy handles automatically once it has a public domain to serve.
 
+## Setting up without PHP on the host
+
+`podman:setup`/`podman:install` normally install services directly, which needs both PHP and the `podman` binary. If the `podman` binary can't be found — for example because you're running the command inside a disposable [`php`](https://hub.docker.com/_/php) container that doesn't have it — the command automatically falls back to *preparing* each service instead: it renders the service's `.quadlets` file (with the same `{{...}}` substitutions `podman:install` would apply) and writes it to the `publish_path` config key (`storage/app/podman` by default), then prints the `podman quadlet install` command to run on the host to finish installing it. Pass `--publish` to opt into this yourself, even when `podman` is available. Secrets are skipped in this mode, since setting them also requires `podman` — run `podman:secret` for the service once `podman` is available.
+
+This makes it possible to run the PHP half of setup somewhere PHP is convenient (a container, CI, a machine without PHP installed) and the Podman half on the host where Podman actually runs:
+
+```bash
+# Renders every default service's .quadlets file into storage/app/podman,
+# without needing podman inside the container:
+podman run --rm -v "$PWD":/var/www/html -w /var/www/html php:8.4-cli \
+    php artisan podman:setup --publish
+
+# On the host, install the prepared files (the exact command, including any
+# --application/--replace flags, is also printed by the command above):
+podman quadlet install storage/app/podman/*.quadlets --replace
+```
+
+> **Note:** The official `php` image only ships PHP itself. Depending on what your app's `composer.json` requires, you may need a variant with extra extensions installed (e.g. `docker-php-ext-install pdo mbstring`) — see the [image's documentation](https://hub.docker.com/_/php) for details.
+
 ## Usage
 
 The package discovers its Quadlet service definitions (`*.quadlets` files) and its container runtimes (folders containing a `Containerfile`) on disk, and exposes them through the commands below. Every command that needs a service or runtime name will prompt you to select one interactively when it's omitted.
@@ -119,6 +142,10 @@ php artisan podman:setup --no-secrets --no-replace
 
 # Install into a named application subdirectory (requires Podman 6+)
 php artisan podman:setup --application=my-app
+
+# Prepare services at the publish path instead of installing them (see
+# "Setting up without PHP on the host" above)
+php artisan podman:setup --publish
 ```
 
 ### Publish Container Runtime
@@ -152,6 +179,10 @@ php artisan podman:install pgsql --replace
 
 # Prompt for and set the secrets required by each service before installing
 php artisan podman:install pgsql --secrets
+
+# Prepare the service(s) at the publish path instead of installing them (see
+# "Setting up without PHP on the host" above)
+php artisan podman:install pgsql --publish
 ```
 
 ### Set Secrets

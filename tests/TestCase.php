@@ -70,6 +70,21 @@ class TestCase extends Orchestra
     }
 
     /**
+     * Clear the PATH so commands that shell out to "podman" can be exercised
+     * as if it isn't installed, regardless of whether the host machine
+     * running the tests actually has it.
+     */
+    protected function makePodmanBinaryUnavailable(): void
+    {
+        $path = sys_get_temp_dir().'/podman-unavailable-'.uniqid();
+
+        putenv("PATH={$path}");
+
+        $_SERVER['PATH'] = $path;
+        $_ENV['PATH'] = $path;
+    }
+
+    /**
      * Create a temporary directory of ".quadlets" service definitions and
      * point the package's "quadlets_path" config at it.
      *

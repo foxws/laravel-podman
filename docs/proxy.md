@@ -50,14 +50,14 @@ vendor/bin/lpod proxy restart   # after editing the Caddyfile
 
 ## DNS
 
-For local development, point your app's domain and subdomains at `127.0.0.1` in `/etc/hosts` (adjust `app.test` to your actual `APP_URL` host):
+For local development, point your app's domain and subdomains at `127.0.0.1` in `/etc/hosts` (adjust `laravel.test` to your actual `APP_URL` host):
 
 ```text
-127.0.0.1 app.test vite.app.test ws.app.test s3.app.test fs.app.test mail.app.test
-::1       app.test vite.app.test ws.app.test s3.app.test fs.app.test mail.app.test
+127.0.0.1 laravel.test vite.laravel.test ws.laravel.test s3.laravel.test fs.laravel.test mail.laravel.test
+::1       laravel.test vite.laravel.test ws.laravel.test s3.laravel.test fs.laravel.test mail.laravel.test
 ```
 
-For a homelab/multi-device setup, a local DNS resolver (e.g. [AdGuard Home](https://adguard.com/en/adguard-home/overview.html)) with a wildcard rewrite for `*.app.test` → your server IP avoids editing hosts files per device.
+For a homelab/multi-device setup, a local DNS resolver (e.g. [AdGuard Home](https://adguard.com/en/adguard-home/overview.html)) with a wildcard rewrite for `*.laravel.test` → your server IP avoids editing hosts files per device.
 
 ## Trusting the local certificate
 

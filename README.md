@@ -9,7 +9,7 @@ Laravel Podman brings [Podman Quadlet](https://docs.podman.io/en/latest/markdown
 
 A Sail-inspired `lpod` CLI script is also included for day-to-day interaction with the running containers (starting/stopping services, opening a shell, running Artisan/Composer/Node commands, and more).
 
-See the [`docs/`](docs) folder for more: [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [lpod tips & tricks](docs/lpod.md), [Customizing](docs/customizing.md).
+See the [`docs/`](docs) folder for more: [Command Reference](docs/commands.md), [Setting up without PHP on the host](docs/host-setup.md), [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [The `lpod` CLI](docs/lpod.md), [Customizing](docs/customizing.md).
 
 ## Requirements
 
@@ -68,7 +68,7 @@ The fastest way to get an application running is `podman:setup`. It publishes th
 php artisan podman:setup
 ```
 
-> **Note:** This step requires PHP, since it's an Artisan command, and normally requires the `podman` binary too, since it installs Quadlet units and Podman secrets directly on your system. It's a one-time cost — once your services are installed, everyday commands (starting services, running Artisan/Composer/Node commands, opening a shell, etc.) go through [`lpod`](#the-lpod-utility) instead, which runs entirely inside the containers and doesn't need PHP on the host. If you don't have PHP on the host at all, see [Setting up without PHP on the host](#setting-up-without-php-on-the-host).
+> **Note:** This step requires PHP, since it's an Artisan command, and normally requires the `podman` binary too, since it installs Quadlet units and Podman secrets directly on your system. It's a one-time cost — once your services are installed, everyday commands (starting services, running Artisan/Composer/Node commands, opening a shell, etc.) go through [`lpod`](#the-lpod-utility) instead, which runs entirely inside the containers and doesn't need PHP on the host. If you don't have PHP on the host at all, see [Setting up without PHP on the host](docs/host-setup.md).
 
 By default it also prompts for and sets any secrets the installed services need (e.g. your application's `.env` file, database credentials) and replaces services that already exist, so re-running it is safe. Pass `--no-secrets` and/or `--no-replace` to opt out:
 
@@ -89,301 +89,41 @@ vendor/bin/lpod my-app up
 vendor/bin/lpod my-app open   # Opens the application URL in your browser
 ```
 
-The bundled `proxy` runtime terminates HTTPS with a locally-trusted certificate. For your browser/OS to trust it too, export and install Caddy's CA certificate:
+The bundled `proxy` runtime terminates HTTPS with a locally-trusted certificate — trust it once so your browser/OS stop flagging it, see [Trusting the local certificate](docs/proxy.md#trusting-the-local-certificate).
 
-```bash
-podman cp systemd-proxy:/data/caddy/pki/authorities/local/root.crt ~/proxy.crt
-
-# macOS
-sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ~/proxy.crt
-
-# Linux (Arch/Debian/Ubuntu)
-sudo cp ~/proxy.crt /usr/local/share/ca-certificates/caddy.crt && sudo update-ca-certificates
-```
-
-> **Note:** This is for local development only — production deployments should use real certificates (e.g. Let's Encrypt), which Caddy handles automatically once it has a public domain to serve.
-
-## Setting up without PHP on the host
-
-Before installing a service, `podman:setup`/`podman:install` always render its `.quadlets` file (with the `{{...}}` substitutions described in [Customizing](docs/customizing.md)) and write it to the `publish_path` config key (`storage/app/podman` by default) — install or not, that rendered file is left behind for inspection. Actually installing it needs the `podman` binary; pass `--no-install` to skip that step yourself, or it's skipped automatically when `podman` can't be found (for example because you're running the command inside a disposable [`php`](https://hub.docker.com/_/php) container that doesn't have it), printing the `podman quadlet install` command to run on the host afterwards. Secrets are skipped in both cases, since setting them also requires `podman` — run `podman:secret` for the service once `podman` is available.
-
-This makes it possible to run the PHP half of setup somewhere PHP is convenient (a container, CI, a machine without PHP installed) and the Podman half on the host where Podman actually runs:
-
-```bash
-# Renders every default service's .quadlets file into storage/app/podman,
-# without needing podman inside the container:
-podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
-    -v "$PWD":/var/www/html:Z -w /var/www/html php:8.5-cli \
-    php artisan podman:setup --no-install
-
-# On the host, install the prepared files (the exact command, including any
-# --application/--replace flags, is also printed by the command above):
-podman quadlet install storage/app/podman/*.quadlets --replace
-```
-
-> **Note:** The official `php` image only ships PHP itself. Depending on what your app's `composer.json` requires, you may need a variant with extra extensions installed (e.g. `docker-php-ext-install pdo mbstring`) — see the [image's documentation](https://hub.docker.com/_/php) for details.
-
-> **Note:** `--userns=keep-id -u "$(id -u):$(id -g)"` runs the container as your host user instead of root, so the rendered `.quadlets` files (and anything else written under the bind mount) come out owned by you rather than root. Drop it if you're running rootful Podman or don't mind fixing ownership afterwards. On SELinux hosts, the bind mount also needs the `:Z` label (as above) or the container won't be permitted to read `artisan` at all — Podman will fail with `Could not open input file: artisan` without it.
-
-`vendor/bin/setup-podman` wraps both commands above into one — it runs the container (with the same `--userns=keep-id`/`-u`/`:Z` flags) and then installs the rendered units with the host's own `podman`:
-
-```bash
-vendor/bin/setup-podman
-
-# Options after "setup-podman" are forwarded to "podman:setup"
-vendor/bin/setup-podman --runtime=frankenphp-octane --service=app --application=my-app
-
-# Override the PHP image or publish path
-SETUP_PODMAN_PHP_IMAGE=php:8.5-cli-alpine vendor/bin/setup-podman
-```
-
+Setting up somewhere PHP isn't installed (a disposable container, CI)? See [Setting up without PHP on the host](docs/host-setup.md).
 
 ## Usage
 
-The package discovers its Quadlet service definitions (`*.quadlets` files) and its container runtimes (folders containing a `Containerfile`) on disk, and exposes them through the commands below. Every command that needs a service or runtime name will prompt you to select one interactively when it's omitted.
+The package discovers its Quadlet service definitions (`*.quadlets` files) and its container runtimes (folders containing a `Containerfile`) on disk, and exposes them through Artisan commands. Every command that needs a service or runtime name will prompt you to select one interactively when it's omitted. Full flag reference and examples: [Command Reference](docs/commands.md).
 
-### Setup Application
+| Command | Description |
+| --- | --- |
+| `podman:setup` | Publish default runtimes and install default services in one go (see [Quick Start](#quick-start)) |
+| `podman:publish RUNTIME` | Publish a container runtime so it can be customized before building |
+| `podman:install SERVICE...` | Install one or more Quadlet services |
+| `podman:secret SERVICE` | Prompt for and set a service's Podman secrets |
+| `podman:list` | List installed Quadlets |
+| `podman:print SERVICE` | Print the generated systemd unit for a service |
+| `podman:remove SERVICE` | Remove an installed service |
+| `podman:uninstall APPLICATION` | Remove an application and all of its services |
+| `podman:s3-setup` | Create S3 buckets and a CORS policy (requires `aws/aws-sdk-php`, see [S3 Buckets](docs/s3.md)) |
 
-Publishes the default runtimes and installs the default set of services in one go — the quickest way to get an application running (see [Quick Start](#quick-start)).
-
-```bash
-php artisan podman:setup
-
-# Override the default runtimes and/or services
-php artisan podman:setup --runtime=frankenphp-octane --service=app --service=pgsql
-
-# Skip secret prompts, and don't replace services that already exist
-php artisan podman:setup --no-secrets --no-replace
-
-# Install into a named application subdirectory (requires Podman 6+)
-php artisan podman:setup --application=my-app
-
-# Prepare services at the publish path without installing them (see
-# "Setting up without PHP on the host" above)
-php artisan podman:setup --no-install
-```
-
-### Publish Container Runtime
-
-Publishes a container runtime (e.g. the bundled `frankenphp-octane` runtime) so it can be customized before you build your application image.
-
-> **Note:** This is a requirement for `podman:install` to work, since the runtime must be present on disk before Podman can build the image.
-
-```bash
-php artisan podman:publish frankenphp-octane
-
-# Overwrite files that were already published
-php artisan podman:publish frankenphp-octane --force
-```
-
-### Install Services
-
-Installs one or more Quadlet services so systemd can manage them. Omitting the service name(s) prompts you to select one or more services from a checklist. If installing multiple services in one run, a failure on one service doesn't stop the rest — failures are collected and reported in a summary at the end, and the command exits non-zero if any service failed.
-
-```bash
-php artisan podman:install pgsql
-
-# Install multiple services in one go
-php artisan podman:install pgsql valkey
-
-# Install into a named application subdirectory (requires Podman 6+)
-php artisan podman:install pgsql --application=my-app
-
-# Replace the service(s) if they already exist
-php artisan podman:install pgsql --replace
-
-# Prompt for and set the secrets required by each service before installing
-php artisan podman:install pgsql --secrets
-
-# Prepare the service(s) at the publish path without installing them (see
-# "Setting up without PHP on the host" above)
-php artisan podman:install pgsql --no-install
-```
-
-### Set Secrets
-
-Prompts for and sets the Podman secrets used by a service, without installing it.
-
-```bash
-php artisan podman:secret pgsql
-
-# Replace secrets that already exist
-php artisan podman:secret pgsql --replace
-```
-
-Secrets are read from the `Secret=` directives in a service's `.quadlets` file. `type=env` secrets prompt for a value directly, while `type=mount` secrets prompt for a file path (defaulting to your project's `.env`) whose contents are stored as the secret.
-
-### List Services
-
-Lists the Quadlets configured for the current user.
-
-```bash
-php artisan podman:list
-
-php artisan podman:list --filter=status=running --format=json --noheading
-```
-
-### `podman:print`
-
-Prints the generated systemd unit for a service, as Podman would install it.
-
-```bash
-php artisan podman:print pgsql
-```
-
-### Remove Services
-
-> **Note:** A service's `.volume` Quadlets (e.g. `pgsql`'s database volume, `rustfs`'s storage volumes) are removed along with it, deleting the underlying Podman volume and everything stored in it. Back this up first if you need to keep it — see [Backing up volumes](#backing-up-volumes) below.
-
-Removes an installed Quadlet service.
-
-```bash
-php artisan podman:remove pgsql
-
-# Force removal of a running service, ignoring missing services
-php artisan podman:remove pgsql --force --ignore
-```
-
-### Uninstall Application
-
-> **WARNING**: This command is destructive and will remove all of the services installed for the application, including any data stored in volumes (databases, uploaded files, search indexes, etc). This cannot be undone — back up anything you need to keep first, see [Backing up volumes](#backing-up-volumes) below.
-
-Removes an application and all of its installed services in one go.
-
-```bash
-php artisan podman:uninstall my-app
-
-php artisan podman:uninstall my-app --force
-```
-
-### Setup S3 Buckets
-
-Creates the S3 buckets your app needs and applies a CORS policy to the ones that serve requests directly to a browser. Requires `aws/aws-sdk-php` (`composer require aws/aws-sdk-php`) — not installed by default, since most apps don't need S3. See [S3 Buckets](docs/s3.md) for the full guide.
-
-```bash
-php artisan podman:s3-setup
-```
-
-### Backing up volumes
-
-`podman:remove` and `podman:uninstall` delete the Podman volumes owned by the services they remove, along with their data — there's no undo. Before running either against a service holding data you care about (`pgsql`, `valkey`, `rustfs`, `typesense`, `mailpit`), back it up:
-
-```bash
-# Generic: archive any named volume to a tarball
-podman volume export laravel-pgsql -o pgsql-backup.tar
-
-# Database-specific dumps are usually more portable than a raw volume export
-lpod my-app run pg_dump -U postgres -d laravel > backup.sql
-```
-
-Restore with `podman volume import laravel-pgsql pgsql-backup.tar` (before reinstalling the service) or by replaying the database-specific dump, depending on which approach you used to back up.
+> **Warning:** `podman:remove`/`podman:uninstall` delete the Podman volumes owned by the services they remove (databases, uploaded files, search indexes), with no undo. Back up first — see [Backing up volumes](docs/commands.md#backing-up-volumes).
 
 ## The `lpod` utility
 
-The package ships a `lpod` CLI script, installed as a Composer binary at `vendor/bin/lpod`. It's a thin wrapper around `podman exec` and `systemctl` for the Quadlet services you installed with `podman:install`, similar in spirit to Laravel Sail's `sail` script. Any command it doesn't recognize is passed straight through to the `podman` binary.
+The package ships a `lpod` CLI script, installed as a Composer binary at `vendor/bin/lpod`. It's a thin wrapper around `podman exec` and `systemctl` for the Quadlet services you installed with `podman:install`, similar in spirit to Laravel Sail's `sail` script.
 
 ```bash
 vendor/bin/lpod SERVICE COMMAND [options] [arguments]
+
+vendor/bin/lpod my-app up
+vendor/bin/lpod my-app artisan queue:work
+vendor/bin/lpod my-app shell
 ```
 
-`SERVICE` is the name of a Quadlet service (e.g. your application's service, or a sibling service such as `pgsql`).
-
-### Shortening the `vendor/bin/lpod` call
-
-Typing `vendor/bin/lpod` for every command gets old fast, so pick one of the following.
-
-**Add a shell alias.** This resolves `lpod` relative to your current directory, so it keeps working correctly no matter which project you're in.
-
-Bash or Zsh, in `~/.bashrc` / `~/.zshrc`:
-
-```bash
-alias lpod='[ -f vendor/bin/lpod ] && bash vendor/bin/lpod || bash "$(git rev-parse --show-toplevel)/vendor/bin/lpod"'
-```
-
-Fish, in `~/.config/fish/config.fish`:
-
-```fish
-function lpod
-    if test -f vendor/bin/lpod
-        bash vendor/bin/lpod $argv
-    else
-        bash (git rev-parse --show-toplevel)/vendor/bin/lpod $argv
-    end
-end
-```
-
-**Or install it onto your `PATH`.** This is simplest if you're only working with a single Podman-managed application on the machine, since the symlink always points at the `vendor/bin/lpod` of the project you created it from:
-
-```bash
-ln -s "$(pwd)/vendor/bin/lpod" ~/.local/bin/lpod
-
-# or, to make it available to every user on the machine
-sudo ln -s "$(pwd)/vendor/bin/lpod" /usr/local/bin/lpod
-```
-
-Make sure the target directory (`~/.local/bin` or `/usr/local/bin`) is on your `PATH`. Once installed either way, the examples below can be run as `lpod ...` instead of `vendor/bin/lpod ...`.
-
-**Lifecycle**
-
-```bash
-lpod my-app up        # Start the "my-app" service
-lpod my-app down       # Stop the "my-app" service
-lpod my-app restart    # Restart the "my-app" service
-lpod my-app status     # Show the status of the "my-app" service
-```
-
-**Artisan, PHP, and Composer**
-
-```bash
-lpod my-app artisan queue:work
-lpod my-app art queue:work     # Alias for "artisan"
-lpod my-app a queue:work       # Alias for "artisan"
-lpod my-app php -v
-lpod my-app composer require laravel/sanctum
-lpod my-app debug queue:work   # Artisan command with Xdebug enabled
-lpod my-app tinker
-```
-
-**Node, npm, pnpm, Yarn, and Bun**
-
-```bash
-lpod my-app node --version
-lpod my-app npm run prod
-lpod my-app npx ...
-lpod my-app pnpm run prod
-lpod my-app pnpx ...
-lpod my-app yarn run prod
-lpod my-app bun run prod
-lpod my-app bunx ...
-```
-
-**Testing**
-
-```bash
-lpod my-app test               # php artisan test
-lpod my-app phpunit ...
-lpod my-app pest ...
-lpod my-app pint ...
-lpod my-app dusk                # Requires laravel/dusk
-lpod my-app dusk:fails
-```
-
-**Container CLI and binaries**
-
-```bash
-lpod my-app shell        # Alias: bash
-lpod my-app root-shell   # Alias: root-bash
-lpod my-app bin phpstan  # Run vendor/bin/phpstan
-lpod my-app run whoami   # Run an arbitrary command in the container
-```
-
-**Other**
-
-```bash
-lpod my-app open                     # Open the application URL in your browser
-lpod my-app artisan podman:publish   # Publish the Podman container runtime files
-lpod --help                          # Print the full list of commands
-```
+See [The `lpod` CLI](docs/lpod.md) for the full command reference, shortening the call with an alias/`PATH` entry, and tips & tricks.
 
 ## Testing
 

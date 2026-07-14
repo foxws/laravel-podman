@@ -13,7 +13,7 @@ Everything the package does is driven by `config/podman.php` (publish it with `p
 | `quadlet_uid`/`quadlet_gid` | `PODMAN_QUADLET_UID`/`_GID`    | current user's UID/GID                                   | UID/GID baked into generated Quadlet files                              |
 | `runtime_path`             | `PODMAN_RUNTIME_PATH`          | `runtimes`                                               | Where `podman:publish` writes published runtime files                   |
 | `config_path`              | `PODMAN_CONFIG_PATH`           | `runtimes`                                               | Where service configs (e.g. the proxy's Caddy config) are mounted from   |
-| `publish_path`             | `PODMAN_PUBLISH_PATH`          | `storage/app/podman`                                     | Where `podman:setup`/`podman:install` write every rendered `.quadlets` file, install or not — see [Setting up without PHP on the host](../README.md#setting-up-without-php-on-the-host) |
+| `publish_path`             | `PODMAN_PUBLISH_PATH`          | `storage/app/podman`                                     | Where `podman:setup`/`podman:install` write every rendered `.quadlets` file, install or not — see [Setting up without PHP on the host](host-setup.md) |
 | `selinux_volume_mapping`   | `PODMAN_SELINUX_VOLUME_MAPPING`| `true`                                                   | Keep `Z`/`z`/`U` volume flags; disable on non-SELinux hosts               |
 | `reload_systemd`           | `PODMAN_RELOAD_SYSTEMD`        | `true`                                                   | Reload systemd after install/remove                                      |
 | `services`                  | `PODMAN_DEFAULT_SERVICES`      | see `config/podman.php`                                  | Services `podman:setup` installs when none are given                     |
@@ -60,11 +60,13 @@ php artisan podman:install pgsql --replace
 
 ## Multi-application hosts
 
-Running more than one application on the same host? Pass `--application=` to `podman:install`/`podman:setup` (requires Podman 6+) to install each app's services into their own subdirectory, avoiding name clashes — see the [README](../README.md#usage) for details.
+Running more than one application on the same host? Pass `--application=` to `podman:install`/`podman:setup` (requires Podman 6+) to install each app's services into their own subdirectory, avoiding name clashes — see the [Command Reference](commands.md) for details.
 
 ## See also
 
+- [Command Reference](commands.md) — every Artisan command, with flags and examples
+- [Setting up without PHP on the host](host-setup.md)
 - [Proxy](proxy.md) — the bundled Caddy reverse proxy
 - [S3 Buckets](s3.md) — `podman:s3-setup` and CORS
-- [lpod tips & tricks](lpod.md) — the `lpod` CLI
-- [README](../README.md) — Quick Start and full command reference
+- [`lpod` CLI](lpod.md) — command reference, shortening the call, and tips & tricks
+- [README](../README.md) — Quick Start

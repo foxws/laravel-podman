@@ -115,30 +115,17 @@ it('appends reload-systemd=false when reloading systemd is disabled', function (
     File::deleteDirectory($path);
 });
 
-it('materializes the install source inside a dedicated temporary directory', function () {
+it('materializes the install source at the configured publish path', function () {
     $path = $this->makeQuadletsPath(['pgsql']);
+    $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
+    config(['podman.publish_path' => $publishPath]);
 
     $this->installPodmanQuadlet(service: 'pgsql');
-    $temporaryDirectory = $this->podmanQuadletTemporaryDirectory();
 
-    expect(File::exists($temporaryDirectory->path('pgsql.quadlets')))->toBeTrue()
-        ->and($temporaryDirectory->path())->not->toBe($path);
+    expect(File::exists("{$publishPath}/pgsql.quadlets"))->toBeTrue();
 
     File::deleteDirectory($path);
-});
-
-it('deletes the temporary directory once it is no longer referenced', function () {
-    $path = $this->makeQuadletsPath(['pgsql']);
-
-    $this->installPodmanQuadlet(service: 'pgsql');
-    $location = $this->podmanQuadletTemporaryDirectory()->path();
-
-    $this->podmanQuadletTemporaryDirectory = null;
-    gc_collect_cycles();
-
-    expect(File::isDirectory($location))->toBeFalse();
-
-    File::deleteDirectory($path);
+    File::deleteDirectory($publishPath);
 });
 
 it('reports whether the podman binary is available', function () {
@@ -181,14 +168,14 @@ it('falls back to publishing services instead of installing them when podman is 
     File::deleteDirectory($publishPath);
 });
 
-it('publishes instead of installing when explicitly requested, even when podman is available', function () {
+it('skips installing when explicitly disabled, even when podman is available', function () {
     $path = $this->makeQuadletsPath(['pgsql']);
     $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
     config(['podman.publish_path' => $publishPath]);
 
     $this->useFakePodmanBinary(0);
 
-    expect($this->installPodmanQuadlets(['pgsql'], publish: true))->toBe([]);
+    expect($this->installPodmanQuadlets(['pgsql'], install: false))->toBe([]);
 
     expect(File::exists("{$publishPath}/pgsql.quadlets"))->toBeTrue();
 

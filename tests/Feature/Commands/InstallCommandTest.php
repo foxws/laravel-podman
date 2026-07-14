@@ -114,13 +114,13 @@ it('reports an error when setting a secret fails before installing', function ()
         ->assertExitCode(1);
 });
 
-it('publishes services to storage instead of installing them when the publish option is passed', function () {
+it('prepares services at the publish path instead of installing them when the no-install option is passed', function () {
     $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
     config(['podman.publish_path' => $publishPath]);
 
     $this->useFakePodmanBinary(0);
 
-    $this->artisan('podman:install', ['service' => 'pgsql', '--publish' => true])
+    $this->artisan('podman:install', ['service' => 'pgsql', '--no-install' => true])
         ->expectsOutputToContain("Service pgsql prepared at {$publishPath}/pgsql.quadlets")
         ->assertExitCode(0);
 
@@ -129,7 +129,7 @@ it('publishes services to storage instead of installing them when the publish op
     File::deleteDirectory($publishPath);
 });
 
-it('publishes services to storage and skips secrets when the podman binary is unavailable', function () {
+it('prepares services at the publish path and skips secrets when the podman binary is unavailable', function () {
     File::put("{$this->quadletsPath}/pgsql.quadlets", "Secret=laravel-pgsql-db,type=env,target=POSTGRES_DB\n");
     $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
     config(['podman.publish_path' => $publishPath]);

@@ -105,7 +105,7 @@ sudo cp ~/proxy.crt /usr/local/share/ca-certificates/caddy.crt && sudo update-ca
 
 ## Setting up without PHP on the host
 
-`podman:setup`/`podman:install` normally install services directly, which needs both PHP and the `podman` binary. If the `podman` binary can't be found — for example because you're running the command inside a disposable [`php`](https://hub.docker.com/_/php) container that doesn't have it — the command automatically falls back to *preparing* each service instead: it renders the service's `.quadlets` file (with the same `{{...}}` substitutions `podman:install` would apply) and writes it to the `publish_path` config key (`storage/app/podman` by default), then prints the `podman quadlet install` command to run on the host to finish installing it. Pass `--publish` to opt into this yourself, even when `podman` is available. Secrets are skipped in this mode, since setting them also requires `podman` — run `podman:secret` for the service once `podman` is available.
+Before installing a service, `podman:setup`/`podman:install` always render its `.quadlets` file (with the `{{...}}` substitutions described in [Customizing](docs/customizing.md)) and write it to the `publish_path` config key (`storage/app/podman` by default) — install or not, that rendered file is left behind for inspection. Actually installing it needs the `podman` binary; pass `--no-install` to skip that step yourself, or it's skipped automatically when `podman` can't be found (for example because you're running the command inside a disposable [`php`](https://hub.docker.com/_/php) container that doesn't have it), printing the `podman quadlet install` command to run on the host afterwards. Secrets are skipped in both cases, since setting them also requires `podman` — run `podman:secret` for the service once `podman` is available.
 
 This makes it possible to run the PHP half of setup somewhere PHP is convenient (a container, CI, a machine without PHP installed) and the Podman half on the host where Podman actually runs:
 
@@ -113,7 +113,7 @@ This makes it possible to run the PHP half of setup somewhere PHP is convenient 
 # Renders every default service's .quadlets file into storage/app/podman,
 # without needing podman inside the container:
 podman run --rm -v "$PWD":/var/www/html -w /var/www/html php:8.5-cli \
-    php artisan podman:setup --publish
+    php artisan podman:setup --no-install
 
 # On the host, install the prepared files (the exact command, including any
 # --application/--replace flags, is also printed by the command above):
@@ -142,9 +142,9 @@ php artisan podman:setup --no-secrets --no-replace
 # Install into a named application subdirectory (requires Podman 6+)
 php artisan podman:setup --application=my-app
 
-# Prepare services at the publish path instead of installing them (see
+# Prepare services at the publish path without installing them (see
 # "Setting up without PHP on the host" above)
-php artisan podman:setup --publish
+php artisan podman:setup --no-install
 ```
 
 ### Publish Container Runtime
@@ -179,9 +179,9 @@ php artisan podman:install pgsql --replace
 # Prompt for and set the secrets required by each service before installing
 php artisan podman:install pgsql --secrets
 
-# Prepare the service(s) at the publish path instead of installing them (see
+# Prepare the service(s) at the publish path without installing them (see
 # "Setting up without PHP on the host" above)
-php artisan podman:install pgsql --publish
+php artisan podman:install pgsql --no-install
 ```
 
 ### Set Secrets

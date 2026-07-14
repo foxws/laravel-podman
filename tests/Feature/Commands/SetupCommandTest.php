@@ -125,13 +125,13 @@ it('continues installing the remaining services when one fails, and reports a su
         ->assertExitCode(1);
 });
 
-it('publishes services to storage instead of installing them when the publish option is passed', function () {
+it('prepares services at the publish path instead of installing them when the no-install option is passed', function () {
     $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
     config(['podman.publish_path' => $publishPath]);
 
     $this->useFakePodmanBinary(0);
 
-    $this->artisan('podman:setup', ['--publish' => true])
+    $this->artisan('podman:setup', ['--no-install' => true])
         ->expectsOutputToContain("Service pgsql prepared at {$publishPath}/pgsql.quadlets")
         ->expectsOutputToContain("Service valkey prepared at {$publishPath}/valkey.quadlets")
         ->expectsOutputToContain('Setup complete. Installed: pgsql, valkey')
@@ -143,7 +143,7 @@ it('publishes services to storage instead of installing them when the publish op
     File::deleteDirectory($publishPath);
 });
 
-it('publishes services to storage automatically when the podman binary is unavailable', function () {
+it('prepares services at the publish path automatically when the podman binary is unavailable', function () {
     $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
     config(['podman.publish_path' => $publishPath]);
 

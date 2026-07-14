@@ -25,7 +25,7 @@ class SetupCommand extends Command
         {--no-replace : Do not replace a service if it already exists}
         {--no-secrets : Do not prompt for and set the secrets required by each service}
         {--force : Overwrite existing published runtime files}
-        {--publish : Prepare services at the configured publish path instead of installing them, to run "podman quadlet install" on the host afterwards}
+        {--no-install : Prepare services at the configured publish path without installing them}
     ';
 
     public $description = 'Publish the default set of runtimes and install the default set of services for the application to run with Podman';
@@ -59,7 +59,7 @@ class SetupCommand extends Command
             application: $this->option('application'),
             replace: ! $this->option('no-replace'),
             secrets: ! $this->option('no-secrets'),
-            publish: $this->option('publish'),
+            install: ! $this->option('no-install'),
         );
 
         if ($failedServices !== []) {

@@ -148,9 +148,6 @@ RUN cp ${PHP_INI_DIR}/php.ini-development ${PHP_INI_DIR}/php.ini
 # Custom PHP configuration for development
 COPY runtimes/frankenphp-octane/php-development.ini /usr/local/etc/php/conf.d/xx-php-user.ini
 
-# Set proper ownership
-RUN chown -R docker:docker /app /pnpm
-
 USER docker
 
 EXPOSE 5173 6001 8000 13714

@@ -5,9 +5,15 @@
 [![GitHub Code Style Action Status](https://github.com/foxws/laravel-podman/actions/workflows/fix-php-code-style-issues.yml/badge.svg)](https://github.com/foxws/laravel-podman/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/foxws/laravel-podman.svg?style=flat-square)](https://packagist.org/packages/foxws/laravel-podman)
 
-Laravel Podman brings [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) support to your Laravel application. It ships a set of Artisan commands to install, list, print, and remove the Quadlet-managed services that make up your app (the application itself and sibling services such as a database, cache, or search engine), manage the Podman secrets those services need, and publish the container runtime used to build your application image.
+Laravel Podman brings [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) support to your Laravel application, installing your app and its sibling services (database, cache, search engine, proxy, ...) as rootless, systemd-managed containers.
 
-A Sail-inspired `lpod` CLI script is also included for day-to-day interaction with the running containers (starting/stopping services, opening a shell, running Artisan/Composer/Node commands, and more).
+## Features
+
+- **Artisan-driven Quadlet management** — install, list, print, and remove the systemd-managed services that make up your app, through a set of Artisan commands.
+- **Podman secrets, not plaintext `.env` files** — application and service credentials (database passwords, your `.env` file, ...) are stored as Podman secrets and mounted into containers at runtime, rather than baked into the image or passed around as plain environment variables.
+- **FrankenPHP application image** — a multi-stage `Containerfile` for your app with dedicated `local` (development) and `production` build targets sharing the same FrankenPHP runtime.
+- **Sail-inspired `lpod` CLI** — a `lpod` script for day-to-day container interaction (starting/stopping services, opening a shell, running Artisan/Composer/Node commands, and more).
+- **Customizable, like Sail's `docker-compose.yml`** — publish the bundled `*.quadlets`/runtime templates into your project to tweak an existing service or add your own, the same way Sail lets you edit its published `docker-compose.yml`. See [Customizing](docs/customizing.md).
 
 See the [`docs/`](docs) folder for more: [Command Reference](docs/commands.md), [Setting up without PHP on the host](docs/host-setup.md), [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [The `lpod` CLI](docs/lpod.md), [Customizing](docs/customizing.md).
 

@@ -20,17 +20,17 @@ class PodmanQuadletFile
     public function substitutions(): array
     {
         return [
-            '{{app-env}}' => Config::string('app.env'),
-            '{{app-name}}' => Config::string('app.name'),
-            '{{app-url}}' => Config::string('app.url'),
-            '{{app-host}}' => $this->path->domain(),
-            '{{app-uid}}' => (string) $this->path->uid(),
-            '{{app-gid}}' => (string) $this->path->gid(),
+            '{{appEnv}}' => Config::string('app.env'),
+            '{{appName}}' => Config::string('app.name'),
+            '{{appUrl}}' => Config::string('app.url'),
+            '{{appHost}}' => $this->path->domain(),
+            '{{appUid}}' => (string) $this->path->uid(),
+            '{{appGid}}' => (string) $this->path->gid(),
             '{{application}}' => $this->path->prefix(),
             '{{proxy}}' => $this->path->proxy(),
-            '{{base-path}}' => $this->path->workingPath(),
-            '{{config-path}}' => $this->path->workingConfigPath(),
-            '{{runtime-path}}' => $this->path->workingRuntimePath(),
+            '{{workingPath}}' => $this->path->workingPath(),
+            '{{configPath}}' => $this->path->workingConfigPath(),
+            '{{runtimePath}}' => $this->path->workingRuntimePath(),
         ];
     }
 

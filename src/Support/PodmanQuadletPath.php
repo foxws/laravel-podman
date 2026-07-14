@@ -50,7 +50,7 @@ class PodmanQuadletPath
 
     /**
      * The real, host-visible project path, used only for values baked into
-     * rendered Quadlet content ("{{base-path}}" and the other placeholders
+     * rendered Quadlet content ("{{workingPath}}" and the other placeholders
      * below) — not for where this process itself reads or writes files
      * (that's always relative to basePath()). They differ when Artisan
      * renders templates from somewhere whose filesystem view of the project

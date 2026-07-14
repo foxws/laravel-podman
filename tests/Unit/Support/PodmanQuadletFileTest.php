@@ -48,11 +48,11 @@ it('prepares a quadlet source file with the prefix placeholder replaced', functi
     File::delete($target);
 });
 
-it('replaces the base-path, config-path and runtime-path placeholders', function () {
+it('replaces the workingPath, configPath and runtimePath placeholders', function () {
     $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
     $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';
     config(['podman.runtime_path' => 'runtimes', 'podman.config_path' => 'runtimes/config']);
-    File::put($source, "SetWorkingDirectory={{base-path}}\nRuntime={{runtime-path}}\nConfig={{config-path}}\n");
+    File::put($source, "SetWorkingDirectory={{workingPath}}\nRuntime={{runtimePath}}\nConfig={{configPath}}\n");
 
     $this->file->prepareSource($source, $target);
 
@@ -62,7 +62,7 @@ it('replaces the base-path, config-path and runtime-path placeholders', function
     File::delete($target);
 });
 
-it('uses the configured working path for the base-path, config-path and runtime-path placeholders', function () {
+it('uses the configured working path for the workingPath, configPath and runtimePath placeholders', function () {
     $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
     $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';
     config([
@@ -70,7 +70,7 @@ it('uses the configured working path for the base-path, config-path and runtime-
         'podman.runtime_path' => 'runtimes',
         'podman.config_path' => 'runtimes/config',
     ]);
-    File::put($source, "SetWorkingDirectory={{base-path}}\nRuntime={{runtime-path}}\nConfig={{config-path}}\n");
+    File::put($source, "SetWorkingDirectory={{workingPath}}\nRuntime={{runtimePath}}\nConfig={{configPath}}\n");
 
     $this->file->prepareSource($source, $target);
 
@@ -82,11 +82,11 @@ it('uses the configured working path for the base-path, config-path and runtime-
     File::delete($target);
 });
 
-it('replaces the app-env, app-uid and app-gid placeholders', function () {
+it('replaces the appEnv, appUid and appGid placeholders', function () {
     $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
     $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';
     config(['app.env' => 'testing']);
-    File::put($source, "Environment=APP_ENV={{app-env}}\nEnvironment=UID={{app-uid}}\nEnvironment=GID={{app-gid}}\n");
+    File::put($source, "Environment=APP_ENV={{appEnv}}\nEnvironment=UID={{appUid}}\nEnvironment=GID={{appGid}}\n");
 
     $this->file->prepareSource($source, $target);
 

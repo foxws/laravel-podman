@@ -249,7 +249,7 @@ trait InteractsWithPodmanQuadlet
     protected function publishPodmanRuntime(string $runtime, ?bool $force = null): bool
     {
         $source = "{$this->podmanQuadletPath()->runtimesPath()}/{$runtime}";
-        $target = base_path('runtimes')."/{$runtime}";
+        $target = "{$this->podmanQuadletPath()->runtimePath()}/{$runtime}";
 
         if (File::exists($target) && ! $force) {
             error("The runtime {$runtime} already exists at {$target}. Use --force to overwrite.");

@@ -25,15 +25,47 @@ it('uses the configured uid and gid when set', function () {
         ->and($this->path->gid())->toBe(2001);
 });
 
-it('resolves the base path to Laravel\'s base_path by default', function () {
+it('resolves the base path to Laravel\'s base_path', function () {
     expect($this->path->basePath())->toBe(base_path());
 });
 
-it('uses the configured base path when set', function () {
-    config(['podman.base_path' => '/var/www/html']);
+it('resolves the working path to the base path by default', function () {
+    expect($this->path->workingPath())->toBe($this->path->basePath());
+});
 
-    expect($this->path->basePath())->toBe('/var/www/html')
-        ->and($this->path->runtimePath())->toBe('/var/www/html/runtimes');
+it('uses the configured working path when set, without affecting the base path', function () {
+    config(['podman.working_path' => '/home/francois/app']);
+
+    expect($this->path->workingPath())->toBe('/home/francois/app')
+        ->and($this->path->basePath())->toBe(base_path());
+});
+
+it('does not let the configured working path affect where runtimes/config/publish paths resolve', function () {
+    config(['podman.working_path' => '/home/francois/app', 'podman.runtime_path' => 'runtimes']);
+
+    expect($this->path->runtimePath())->toBe(base_path('runtimes'));
+});
+
+it('resolves the working runtime and config paths against the working path when set', function () {
+    config([
+        'podman.working_path' => '/home/francois/app',
+        'podman.runtime_path' => 'runtimes',
+        'podman.config_path' => 'runtimes/config',
+    ]);
+
+    expect($this->path->workingRuntimePath())->toBe('/home/francois/app/runtimes')
+        ->and($this->path->workingConfigPath())->toBe('/home/francois/app/runtimes/config');
+});
+
+it('keeps an absolute runtime or config path as-is for the working variants, ignoring the working path', function () {
+    config([
+        'podman.working_path' => '/home/francois/app',
+        'podman.runtime_path' => '/srv/runtimes',
+        'podman.config_path' => '/srv/runtimes/config',
+    ]);
+
+    expect($this->path->workingRuntimePath())->toBe('/srv/runtimes')
+        ->and($this->path->workingConfigPath())->toBe('/srv/runtimes/config');
 });
 
 it('defaults the quadlets path to the vendor quadlets directory', function () {

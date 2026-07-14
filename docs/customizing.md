@@ -10,7 +10,7 @@ Everything the package does is driven by `config/podman.php` (publish it with `p
 | `proxy_prefix`              | `PODMAN_PROXY_PREFIX`          | `proxy`                                                  | Namespace used for the `proxy` service/network                          |
 | `quadlets_path`            | `PODMAN_QUADLETS_PATH`         | `containers/quadlets`                                    | Where to look for `*.quadlets` templates before falling back to vendor   |
 | `runtimes_path`            | `PODMAN_RUNTIMES_PATH`         | `containers/runtimes`                                    | Where to look for runtime template folders before falling back to vendor |
-| `base_path`                | `PODMAN_BASE_PATH`             | Laravel's `base_path()`                                  | Base for the `{{base-path}}` placeholder and other relative paths above — override when rendering from a container whose view of the project differs from the host's, see [Setting up without PHP on the host](host-setup.md) |
+| `working_path`             | `PODMAN_WORKING_PATH`          | Laravel's `base_path()`                                  | Real host path baked into the `{{base-path}}`/`{{runtime-path}}`/`{{config-path}}` placeholders only — doesn't affect where files are actually read/written, see [Setting up without PHP on the host](host-setup.md) |
 | `quadlet_uid`/`quadlet_gid` | `PODMAN_QUADLET_UID`/`_GID`    | current user's UID/GID                                   | UID/GID baked into generated Quadlet files                              |
 | `runtime_path`             | `PODMAN_RUNTIME_PATH`          | `runtimes`                                               | Where `podman:publish` writes published runtime files                   |
 | `config_path`              | `PODMAN_CONFIG_PATH`           | `runtimes`                                               | Where service configs (e.g. the proxy's Caddy config) are mounted from   |
@@ -43,9 +43,9 @@ Template files can use the placeholders below, substituted at install/publish ti
 | `{{app-url}}`       | `app.url` config value                                     |
 | `{{app-host}}`      | Host portion of `app.url`                                  |
 | `{{app-uid}}`/`{{app-gid}}` | Resolved `quadlet_uid`/`quadlet_gid`                 |
-| `{{base-path}}`     | Resolved `base_path`                                        |
-| `{{config-path}}`   | Resolved `config_path`                                      |
-| `{{runtime-path}}`  | Resolved `runtime_path`                                      |
+| `{{base-path}}`     | Resolved `working_path`                                     |
+| `{{config-path}}`   | Resolved `config_path`, against `working_path`               |
+| `{{runtime-path}}`  | Resolved `runtime_path`, against `working_path`              |
 
 ## Example: increasing a service's memory limit
 

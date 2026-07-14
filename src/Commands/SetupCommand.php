@@ -22,6 +22,7 @@ class SetupCommand extends Command
         {--service=* : Override the default set of services to install}
         {--runtime=* : Override the default set of runtimes to publish}
         {--application= : The name of the application, installed in its own subdirectory (requires Podman 6+)}
+        {--replace : Replace a service if it already exists (default behavior; pass --no-replace to disable)}
         {--no-replace : Do not replace a service if it already exists}
         {--no-secrets : Do not prompt for and set the secrets required by each service}
         {--force : Overwrite existing published runtime files}

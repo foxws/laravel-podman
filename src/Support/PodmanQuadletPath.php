@@ -45,22 +45,46 @@ class PodmanQuadletPath
 
     public function basePath(): string
     {
-        return Config::get('podman.base_path') ?: base_path();
+        return base_path();
+    }
+
+    /**
+     * The real, host-visible project path, used only for values baked into
+     * rendered Quadlet content ("{{base-path}}" and the other placeholders
+     * below) — not for where this process itself reads or writes files
+     * (that's always relative to basePath()). They differ when Artisan
+     * renders templates from somewhere whose filesystem view of the project
+     * isn't the host's, e.g. inside the disposable container used by
+     * "Setting up without PHP on the host".
+     */
+    public function workingPath(): string
+    {
+        return Config::get('podman.working_path') ?: $this->basePath();
     }
 
     public function runtimePath(): string
     {
-        return $this->absolutePath(Config::get('podman.runtime_path'));
+        return $this->resolvePath(Config::get('podman.runtime_path'), $this->basePath());
+    }
+
+    public function workingRuntimePath(): string
+    {
+        return $this->resolvePath(Config::get('podman.runtime_path'), $this->workingPath());
     }
 
     public function configPath(): string
     {
-        return $this->absolutePath(Config::get('podman.config_path'));
+        return $this->resolvePath(Config::get('podman.config_path'), $this->basePath());
+    }
+
+    public function workingConfigPath(): string
+    {
+        return $this->resolvePath(Config::get('podman.config_path'), $this->workingPath());
     }
 
     public function publishPath(): string
     {
-        return $this->absolutePath(Config::get('podman.publish_path'));
+        return $this->resolvePath(Config::get('podman.publish_path'), $this->basePath());
     }
 
     public function domain(): string
@@ -147,9 +171,9 @@ class PodmanQuadletPath
         return Config::boolean('podman.selinux_volume_mapping');
     }
 
-    protected function absolutePath(string $path): string
+    protected function resolvePath(string $path, string $base): string
     {
-        return Str::startsWith($path, '/') ? $path : Str::rtrim($this->basePath(), '/')."/{$path}";
+        return Str::startsWith($path, '/') ? $path : Str::rtrim($base, '/')."/{$path}";
     }
 
     /**

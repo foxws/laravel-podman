@@ -212,6 +212,17 @@ it('publishes multiple runtimes, returning no failures on success', function () 
     File::deleteDirectory($target);
 });
 
+it('publishes runtimes to the configured runtime path, ignoring the working path', function () {
+    $target = sys_get_temp_dir().'/podman-runtimes-'.uniqid();
+    config(['podman.runtime_path' => $target, 'podman.working_path' => '/home/francois/app']);
+
+    expect($this->publishPodmanRuntimes(['frankenphp-octane']))->toBe([]);
+
+    expect(File::exists("{$target}/frankenphp-octane/Containerfile"))->toBeTrue();
+
+    File::deleteDirectory($target);
+});
+
 it('reports the runtimes that failed to publish while continuing with the rest', function () {
     $target = base_path('runtimes');
     File::ensureDirectoryExists("{$target}/frankenphp-octane");

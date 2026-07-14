@@ -34,6 +34,14 @@ it('publishes the default runtimes and installs the default services without pro
         ->and(File::exists("{$this->runtimesPath}/proxy/Caddyfile"))->toBeTrue();
 });
 
+it('accepts the replace option, which is the default behavior', function () {
+    $this->useFakePodmanBinary(0);
+
+    $this->artisan('podman:setup', ['--service' => ['mailpit'], '--replace' => true])
+        ->expectsOutputToContain('Service mailpit installed successfully.')
+        ->assertExitCode(0);
+});
+
 it('accepts the service option, overriding the default services', function () {
     $this->useFakePodmanBinary(0);
 

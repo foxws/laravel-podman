@@ -95,11 +95,11 @@ vendor/bin/lpod install proxy/proxy.quadlets --replace
 # ...and so on for every service you need.
 ```
 
-Secrets a service needs (e.g. your application's `.env` file, database credentials) are prompted for and set the same way:
+Secrets a service needs (e.g. your application's `.env` file, database credentials) are prompted for and set once the service is installed, by unit name:
 
 ```bash
-vendor/bin/lpod secrets frankenphp-octane/app.quadlets
-vendor/bin/lpod secrets frankenphp-octane/pgsql.quadlets
+vendor/bin/lpod secrets app
+vendor/bin/lpod secrets pgsql
 ```
 
 Once installed, use `lpod` to start everything:
@@ -141,7 +141,7 @@ vendor/bin/lpod my-app shell
 
 # Installing, secrets, and other Quadlet management (see below)
 vendor/bin/lpod install frankenphp-octane/app.quadlets --replace
-vendor/bin/lpod secrets frankenphp-octane/app.quadlets
+vendor/bin/lpod secrets app
 ```
 
 See [The `lpod` CLI](docs/lpod.md) for the full command reference (including `install`/`secrets`/`remove`/`list`/`print`/`uninstall`), shortening the call with an alias/`PATH` entry, and tips & tricks.

@@ -104,7 +104,7 @@ function display_help {
     echo "${YELLOW}Quadlet Management:${NC}"
     echo "  ${GREEN}lpod setup ...${NC}                         Alias for 'lpod-setup' (render presets without PHP on the host)"
     echo "  ${GREEN}lpod install PRESET/SERVICE.quadlets${NC}   Install a rendered quadlet (e.g. from 'podman:generate')"
-    echo "  ${GREEN}lpod secrets PRESET/SERVICE.quadlets${NC}   Parse and set the secrets a rendered quadlet needs"
+    echo "  ${GREEN}lpod secrets SERVICE${NC}                   Parse and set the secrets an installed quadlet needs"
     echo "  ${GREEN}lpod remove NAME${NC}                       Remove an installed quadlet"
     echo "  ${GREEN}lpod uninstall APPLICATION${NC}             Remove an application and all of its quadlets"
     echo "  ${GREEN}lpod list${NC}                               List installed quadlets"
@@ -139,9 +139,8 @@ case "$1" in
         ;;
 
     secrets)
-        TARGET="$2"
-        shift 2
-        exec "$(dirname "${BASH_SOURCE[0]}")/lpod-secrets" "${LPOD_PUBLISH_PATH}/${TARGET}" "$@"
+        shift
+        exec "$(dirname "${BASH_SOURCE[0]}")/lpod-secrets" "$@"
         ;;
 
     remove)

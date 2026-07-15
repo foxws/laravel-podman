@@ -44,9 +44,14 @@ if [ ${#QUADLET_FILES[@]} -eq 0 ]; then
 fi
 
 echo
-echo "Rendered. Install each service with lpod, e.g.:"
+echo "Rendered. Install each service with podman, e.g.:"
 echo
 
 for FILE in "${QUADLET_FILES[@]}"; do
-    echo "  lpod install ${FILE#"${PUBLISH_PATH}"/} --replace"
+    case "$FILE" in
+        /*) ABS_FILE="$FILE" ;;
+        *) ABS_FILE="${PWD}/${FILE}" ;;
+    esac
+
+    echo "  podman quadlet install \"${ABS_FILE}\" --replace"
 done

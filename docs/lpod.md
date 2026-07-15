@@ -47,7 +47,7 @@ Make sure the target directory (`~/.local/bin` or `/usr/local/bin`) is on your `
 
 ## Quadlet management
 
-Once Artisan has rendered a preset (`php artisan podman:setup`/`podman:generate frankenphp-octane`), these commands take it from a rendered file to a running, systemd-managed service. They take a `PRESET/SERVICE.quadlets` path (relative to the `publish_path` config key, `podman` by default) rather than a `SERVICE` name, and forward any extra flags straight to `podman` — pass `--replace`, `--application=my-app`, `--force`, `--ignore`, etc. as needed.
+Once Artisan has rendered a preset (`php artisan podman:setup`/`podman:generate frankenphp-octane`), `install` takes it from a rendered file to a running, systemd-managed service — it takes a `PRESET/SERVICE.quadlets` path (relative to the `publish_path` config key, `podman` by default) rather than a `SERVICE` name. The rest (`secrets`, `remove`, `list`, `print`) operate on the already-installed unit by name instead. All of them forward any extra flags straight to `podman` — pass `--replace`, `--application=my-app`, `--force`, `--ignore`, etc. as needed.
 
 `lpod setup` is an alias for the `lpod-setup` script (also installed as a Composer binary), which renders presets by running `php artisan podman:setup` inside a container — useful when PHP isn't available on the host itself. See [Setting up without PHP on the host](host-setup.md) for details. Any arguments are forwarded straight to `podman:setup`.
 
@@ -58,8 +58,8 @@ lpod setup --preset=frankenphp-octane
 lpod install frankenphp-octane/app.quadlets --replace
 lpod install frankenphp-octane/app.quadlets --application=my-app
 
-lpod secrets frankenphp-octane/app.quadlets            # Prompts for and sets the service's Podman secrets
-lpod secrets frankenphp-octane/app.quadlets --replace
+lpod secrets app                                        # Prompts for and sets the service's Podman secrets
+lpod secrets app --replace
 
 lpod remove pgsql --force --ignore                      # Removes an installed service by its unit name
 lpod uninstall my-app --force                            # Removes an application and all of its services
@@ -68,7 +68,7 @@ lpod list --filter=status=running --format=json --noheading
 lpod print pgsql                                         # Prints the generated systemd unit for a service
 ```
 
-`secrets` reads the `Secret=` directives straight from the rendered `.quadlets` file — `type=env` secrets prompt for a value directly (masked input), while `type=mount` secrets (the default when `type=` is omitted) prompt for a file path, defaulting to `.env`, whose contents are stored as the secret. A secret needed under several names (e.g. a database password used as both `POSTGRES_PASSWORD` and `PGPASSWORD`) is only prompted for once.
+`secrets` reads the `Secret=` directives from the installed unit (`podman quadlet print SERVICE.container`), so the service must already be `install`ed — `type=env` secrets prompt for a value directly (masked input), while `type=mount` secrets (the default when `type=` is omitted) prompt for a file path, defaulting to `.env`, whose contents are stored as the secret. A secret needed under several names (e.g. a database password used as both `POSTGRES_PASSWORD` and `PGPASSWORD`) is only prompted for once.
 
 > **Warning:** `remove`/`uninstall` delete the Podman volumes owned by the services they remove, with no undo — see [Backing up volumes](commands.md#backing-up-volumes).
 

@@ -9,6 +9,8 @@ uses(InteractsWithPodmanQuadlet::class);
 
 it('lists the presets available in the vendor stubs directory', function () {
     expect($this->getPodmanQuadletPresets())->toBe([
+        'devcontainer' => 'devcontainer',
+        'development' => 'development',
         'frankenphp-octane' => 'frankenphp-octane',
         'proxy' => 'proxy',
         's3' => 's3',
@@ -21,6 +23,8 @@ it('merges presets discovered in the configured stubs path with the vendor ones'
     config(['podman.stubs_path' => $stubsPath]);
 
     expect($this->getPodmanQuadletPresets())->toBe([
+        'devcontainer' => 'devcontainer',
+        'development' => 'development',
         'frankenphp-octane' => 'frankenphp-octane',
         'php-container' => 'php-container',
         'proxy' => 'proxy',

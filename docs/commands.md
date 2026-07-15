@@ -2,7 +2,7 @@
 
 The package discovers preset folders (each containing a `quadlets/` directory of `*.quadlets` files and a `runtimes/` directory of container build files) on disk, and exposes them through the Artisan commands below. Every command that needs a preset name will prompt you to select one interactively when it's omitted.
 
-These commands only ever render — none of them touch the `podman` binary. Installing, listing, printing, removing, and setting secrets for the rendered services is [`lpod`](lpod.md)'s job.
+These commands only ever render — none of them touch the `podman` binary, so they work anywhere PHP is available, including inside a container without Podman installed. Installing, listing, printing, removing, and setting secrets for the rendered services is the job of the `lpod`/`lpod-setup`/`lpod-secrets` Composer binaries instead — see [The `lpod` CLI](lpod.md). All three of those run on the host, since they need the real `podman`/`systemctl` binaries.
 
 ## Setup Application
 

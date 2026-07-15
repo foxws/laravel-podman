@@ -130,7 +130,13 @@ Installing, listing, printing, removing, and setting secrets for the rendered se
 
 ## The `lpod` utility
 
-The package ships a `lpod` CLI script, installed as a Composer binary at `vendor/bin/lpod`. It's a thin wrapper around `podman exec`, `podman quadlet`, and `systemctl` for the Quadlet services rendered by Artisan, similar in spirit to Laravel Sail's `sail` script.
+The package ships three Composer binaries that all run **on the host** — they talk to the real `podman`/`systemctl` binaries, unlike the Artisan `podman:*` commands, which only render templates and can run anywhere PHP is available:
+
+- **`vendor/bin/lpod`** — a thin wrapper around `podman exec`, `podman quadlet`, and `systemctl` for the Quadlet services rendered by Artisan, similar in spirit to Laravel Sail's `sail` script.
+- **`vendor/bin/lpod-setup`** — renders presets by running `php artisan podman:setup` inside a disposable container, for hosts that have Podman but not PHP. See [Setting up without PHP on the host](docs/host-setup.md).
+- **`vendor/bin/lpod-secrets`** — prompts for and stores the Podman secrets an installed Quadlet unit needs.
+
+`lpod setup` and `lpod secrets` are convenience aliases for the latter two — call `vendor/bin/lpod-setup`/`vendor/bin/lpod-secrets` directly if you'd rather skip the `lpod` wrapper.
 
 ```bash
 vendor/bin/lpod SERVICE COMMAND [options] [arguments]

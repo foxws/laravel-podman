@@ -1,6 +1,8 @@
 # The `lpod` CLI
 
-The package ships a `lpod` CLI script, installed as a Composer binary at `vendor/bin/lpod`. It's a thin wrapper around `podman exec`, `podman quadlet`, and `systemctl` for the Quadlet services rendered by Artisan (`podman:setup`/`podman:generate`) and installed with `lpod install`, similar in spirit to Laravel Sail's `sail` script. Any command it doesn't recognize is passed straight through to the `podman` binary.
+The package ships three Composer binaries that all run **on the host** — `vendor/bin/lpod`, `vendor/bin/lpod-setup`, and `vendor/bin/lpod-secrets`. All three talk to the real `podman`/`systemctl` binaries, unlike the Artisan `podman:*` commands, which only render templates and can run anywhere PHP is available (see [Command Reference](commands.md)).
+
+`lpod` itself is a thin wrapper around `podman exec`, `podman quadlet`, and `systemctl` for the Quadlet services rendered by Artisan (`podman:setup`/`podman:generate`) and installed with `lpod install`, similar in spirit to Laravel Sail's `sail` script. Any command it doesn't recognize is passed straight through to the `podman` binary. `lpod setup` and `lpod secrets` are convenience aliases for the sibling `lpod-setup`/`lpod-secrets` binaries — see [Quadlet management](#quadlet-management) below.
 
 ```bash
 vendor/bin/lpod SERVICE COMMAND [options] [arguments]
@@ -49,7 +51,7 @@ Make sure the target directory (`~/.local/bin` or `/usr/local/bin`) is on your `
 
 Once Artisan has rendered a preset (`php artisan podman:setup`/`podman:generate frankenphp-octane`), `install` takes it from a rendered file to a running, systemd-managed service — it takes a `PRESET/SERVICE.quadlets` path (relative to the `publish_path` config key, `podman` by default) rather than a `SERVICE` name. The rest (`secrets`, `remove`, `list`, `print`) operate on the already-installed unit by name instead. All of them forward any extra flags straight to `podman` — pass `--replace`, `--application=my-app`, `--force`, `--ignore`, etc. as needed.
 
-`lpod setup` is an alias for the `lpod-setup` script (also installed as a Composer binary), which renders presets by running `php artisan podman:setup` inside a container — useful when PHP isn't available on the host itself. Once rendering finishes, it prints a `podman quadlet install` command (with the file's full, host-absolute path) for each rendered service, ready to copy/paste. See [Setting up without PHP on the host](host-setup.md) for details. Any arguments are forwarded straight to `podman:setup`.
+`lpod setup` is an alias for the `lpod-setup` script (`vendor/bin/lpod-setup`, a sibling Composer binary — see above), which renders presets by running `php artisan podman:setup` inside a container — useful when PHP isn't available on the host itself. Once rendering finishes, it prints a `podman quadlet install` command (with the file's full, host-absolute path) for each rendered service, ready to copy/paste. See [Setting up without PHP on the host](host-setup.md) for details. Any arguments are forwarded straight to `podman:setup`.
 
 ```bash
 lpod setup                                              # Renders the default presets without PHP on the host
@@ -68,7 +70,7 @@ lpod list --filter=status=running --format=json --noheading
 lpod print pgsql                                         # Prints the generated systemd unit for a service
 ```
 
-`secrets` reads the `Secret=` directives from the installed unit (`podman quadlet print SERVICE.container`), so the service must already be `install`ed — `type=env` secrets prompt for a value directly (masked input), while `type=mount` secrets (the default when `type=` is omitted) prompt for a file path, defaulting to `.env`, whose contents are stored as the secret. A secret needed under several names (e.g. a database password used as both `POSTGRES_PASSWORD` and `PGPASSWORD`) is only prompted for once.
+`secrets` is an alias for the `lpod-secrets` script (`vendor/bin/lpod-secrets`, a sibling Composer binary — see above). It reads the `Secret=` directives from the installed unit (`podman quadlet print SERVICE.container`), so the service must already be `install`ed — `type=env` secrets prompt for a value directly (masked input), while `type=mount` secrets (the default when `type=` is omitted) prompt for a file path, defaulting to `.env`, whose contents are stored as the secret. A secret needed under several names (e.g. a database password used as both `POSTGRES_PASSWORD` and `PGPASSWORD`) is only prompted for once.
 
 > **Warning:** `remove`/`uninstall` delete the Podman volumes owned by the services they remove, with no undo — see [Backing up volumes](commands.md#backing-up-volumes).
 

@@ -102,6 +102,7 @@ function display_help {
     echo "  ${GREEN}lpod my-app artisan podman:publish${NC}   Publish the Podman container runtime files"
     echo
     echo "${YELLOW}Quadlet Management:${NC}"
+    echo "  ${GREEN}lpod setup ...${NC}                         Alias for 'lpod-setup' (render presets without PHP on the host)"
     echo "  ${GREEN}lpod install PRESET/SERVICE.quadlets${NC}   Install a rendered quadlet (e.g. from 'podman:generate')"
     echo "  ${GREEN}lpod secrets PRESET/SERVICE.quadlets${NC}   Parse and set the secrets a rendered quadlet needs"
     echo "  ${GREEN}lpod remove NAME${NC}                       Remove an installed quadlet"
@@ -126,6 +127,11 @@ fi
 # names, not a running service, so they're handled before the SERVICE/COMMAND
 # split below...
 case "$1" in
+    setup)
+        shift
+        exec "$(dirname "${BASH_SOURCE[0]}")/lpod-setup" "$@"
+        ;;
+
     install)
         TARGET="$2"
         shift 2

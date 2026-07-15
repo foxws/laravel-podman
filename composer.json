@@ -48,7 +48,8 @@
     },
     "bin": [
         "bin/lpod",
-        "bin/lpod-secrets"
+        "bin/lpod-secrets",
+        "bin/lpod-setup"
     ],
     "autoload": {
         "psr-4": {

@@ -8,7 +8,7 @@ vendor/bin/lpod SERVICE COMMAND [options] [arguments]
 
 `SERVICE` is the name of a Quadlet service (e.g. your application's service, or a sibling service such as `pgsql`).
 
-`install`/`secrets`/`remove`/`list`/`print`/`uninstall` are the exception — they manage Quadlets themselves rather than talking to a running service, so they skip the `SERVICE` argument (see [Quadlet management](#quadlet-management) below).
+`setup`/`install`/`secrets`/`remove`/`list`/`print`/`uninstall` are the exception — they manage Quadlets themselves rather than talking to a running service, so they skip the `SERVICE` argument (see [Quadlet management](#quadlet-management) below).
 
 ## Shortening the `vendor/bin/lpod` call
 
@@ -49,7 +49,12 @@ Make sure the target directory (`~/.local/bin` or `/usr/local/bin`) is on your `
 
 Once Artisan has rendered a preset (`php artisan podman:setup`/`podman:generate frankenphp-octane`), these commands take it from a rendered file to a running, systemd-managed service. They take a `PRESET/SERVICE.quadlets` path (relative to the `publish_path` config key, `podman` by default) rather than a `SERVICE` name, and forward any extra flags straight to `podman` — pass `--replace`, `--application=my-app`, `--force`, `--ignore`, etc. as needed.
 
+`lpod setup` is an alias for the `lpod-setup` script (also installed as a Composer binary), which renders presets by running `php artisan podman:setup` inside a container — useful when PHP isn't available on the host itself. See [Setting up without PHP on the host](host-setup.md) for details. Any arguments are forwarded straight to `podman:setup`.
+
 ```bash
+lpod setup                                              # Renders the default presets without PHP on the host
+lpod setup --preset=frankenphp-octane
+
 lpod install frankenphp-octane/app.quadlets --replace
 lpod install frankenphp-octane/app.quadlets --application=my-app
 

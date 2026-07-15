@@ -14,11 +14,11 @@ return [
     |
     */
 
-    "presets" => env("PODMAN_DEFAULT_PRESETS", [
+    'presets' => env('PODMAN_DEFAULT_PRESETS', [
         // 'development',
         // 'devcontainer',
-        "frankenphp-octane",
-        "proxy",
+        'frankenphp-octane',
+        'proxy',
     ]),
 
     /*
@@ -34,16 +34,16 @@ return [
     |
     */
 
-    "s3_buckets" => env("PODMAN_S3_BUCKETS", [
-        "local",
-        "assets",
-        "media",
-        "conversions",
+    's3_buckets' => env('PODMAN_S3_BUCKETS', [
+        'local',
+        'assets',
+        'media',
+        'conversions',
     ]),
 
-    "s3_cors_buckets" => env("PODMAN_S3_CORS_BUCKETS", [
-        "conversions",
-        "assets",
+    's3_cors_buckets' => env('PODMAN_S3_CORS_BUCKETS', [
+        'conversions',
+        'assets',
     ]),
 
     /*
@@ -56,12 +56,12 @@ return [
     |
     */
 
-    "quadlet_prefix" => env(
-        "PODMAN_QUADLET_PREFIX",
-        env("APP_NAME", "laravel"),
+    'quadlet_prefix' => env(
+        'PODMAN_QUADLET_PREFIX',
+        env('APP_NAME', 'laravel'),
     ),
 
-    "proxy_prefix" => env("PODMAN_PROXY_PREFIX", "proxy"),
+    'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),
 
     /*
     |--------------------------------------------------------------------------
@@ -77,7 +77,7 @@ return [
     |
     */
 
-    "stubs_path" => env("PODMAN_STUBS_PATH", "containers/stubs"),
+    'stubs_path' => env('PODMAN_STUBS_PATH', 'containers/stubs'),
 
     /*
     |--------------------------------------------------------------------------
@@ -93,7 +93,7 @@ return [
     |
     */
 
-    "working_path" => env("PODMAN_WORKING_PATH"),
+    'working_path' => env('PODMAN_WORKING_PATH'),
 
     /*
     |--------------------------------------------------------------------------
@@ -106,9 +106,9 @@ return [
     |
     */
 
-    "quadlet_uid" => env("PODMAN_QUADLET_UID"),
+    'quadlet_uid' => env('PODMAN_QUADLET_UID'),
 
-    "quadlet_gid" => env("PODMAN_QUADLET_GID"),
+    'quadlet_gid' => env('PODMAN_QUADLET_GID'),
 
     /*
     |--------------------------------------------------------------------------
@@ -123,7 +123,7 @@ return [
     |
     */
 
-    "publish_path" => env("PODMAN_PUBLISH_PATH", "podman"),
+    'publish_path' => env('PODMAN_PUBLISH_PATH', 'podman'),
 
     /*
     |--------------------------------------------------------------------------
@@ -136,7 +136,7 @@ return [
     |
     */
 
-    "selinux_volume_mapping" => env("PODMAN_SELINUX_VOLUME_MAPPING", true),
+    'selinux_volume_mapping' => env('PODMAN_SELINUX_VOLUME_MAPPING', true),
 
     /*
     |--------------------------------------------------------------------------
@@ -148,5 +148,5 @@ return [
     |
     */
 
-    "reload_systemd" => env("PODMAN_RELOAD_SYSTEMD", true),
+    'reload_systemd' => env('PODMAN_RELOAD_SYSTEMD', true),
 ];

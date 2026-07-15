@@ -2,7 +2,7 @@
 
 The package finds preset folders on disk (`quadlets/` + `runtimes/`) and exposes them through the Artisan commands below. If you don't pass a preset name, the command prompts you to choose one.
 
-These commands only render files. They never call the `podman` binary, so they work anywhere PHP runs (including inside a container without Podman). Installing, listing, printing, removing, and setting secrets is handled by the host-side `lpod`/`lpod-setup`/`lpod-secrets` binaries — see [The `lpod` CLI](lpod.md).
+These commands only render files. They never call the `podman` binary, so they work anywhere PHP runs (including inside a container without Podman). Installing, listing, printing, removing, and setting secrets is handled by the host-side `lpod`/`lpod-setup`/`lpod-secrets` binaries — see [The `lpod` CLI](lpod.md). Rendered output in `publish_path` (default `podman/`) is generated artifact output: do not commit it, and remove/regenerate it as needed.
 
 ## Setup Application
 

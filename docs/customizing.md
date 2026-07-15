@@ -11,7 +11,7 @@ This package is driven by `config/podman.php` (publish it with `php artisan vend
 | `stubs_path`               | `PODMAN_STUBS_PATH`            | `containers/stubs`                                       | Where to look for preset folders before falling back to the vendor one, per preset |
 | `working_path`             | `PODMAN_WORKING_PATH`          | Laravel's `base_path()`                                  | Real host path baked into the `{{workingPath}}`/`{{runtimePath}}` placeholders only — doesn't affect where files are actually read/written, see [Setting up without PHP on the host](host-setup.md) |
 | `quadlet_uid`/`quadlet_gid` | `PODMAN_QUADLET_UID`/`_GID`    | current user's UID/GID                                   | UID/GID baked into generated Quadlet files                              |
-| `publish_path`             | `PODMAN_PUBLISH_PATH`          | `podman`                                                 | Where `podman:generate` writes every rendered preset — see [Setting up without PHP on the host](host-setup.md) |
+| `publish_path`             | `PODMAN_PUBLISH_PATH`          | `podman`                                                 | Where `podman:generate` writes rendered presets. Generated artifact output only: don't commit this path; delete/re-generate as needed. See [Setting up without PHP on the host](host-setup.md) |
 | `selinux_volume_mapping`   | `PODMAN_SELINUX_VOLUME_MAPPING`| `true`                                                   | Keep `Z`/`z`/`U` volume flags; disable on non-SELinux hosts               |
 | `reload_systemd`           | `PODMAN_RELOAD_SYSTEMD`        | `true`                                                   | Reload systemd after install/remove (used by `lpod`)                     |
 | `presets`                  | `PODMAN_DEFAULT_PRESETS`       | see `config/podman.php`                                  | Presets `podman:setup` publishes/generates when none are given           |
@@ -22,7 +22,7 @@ This package is driven by `config/podman.php` (publish it with `php artisan vend
 
 ## Custom presets
 
-A preset is a folder with a `quadlets/` directory (`*.quadlets` files) and a `runtimes/` directory (container build files), for example the bundled `frankenphp-octane` and `proxy` presets. If `stubs_path` (for example `containers/stubs/frankenphp-octane`) exists for a preset, the package uses that folder **instead of** the vendor one. It is a full replacement per preset (not a file-by-file merge), and other presets are unchanged.
+A preset is a folder with a `quadlets/` directory (`*.quadlets` files) and a `runtimes/` directory (container build files), for example the bundled `frankenphp-octane` and `proxy` presets. `stubs_path` is the lookup root for custom presets. For each preset name, the package uses `stubs_path/{preset}` if it exists; otherwise it uses the vendor preset. Once `stubs_path/{preset}` exists, that preset is a full replacement (no file-by-file merge), and other presets are unchanged.
 
 - To tweak one existing service (for example, `pgsql` memory), publish the preset first (`php artisan podman:publish frankenphp-octane`), then edit the file under `containers/stubs/frankenphp-octane/quadlets/`.
 - To add a new service to a preset, create `containers/stubs/frankenphp-octane/quadlets/my-service.quadlets` (same `# FileName=...` + `---` block format as existing files), run `php artisan podman:generate frankenphp-octane`, then `lpod install frankenphp-octane/my-service.quadlets`.

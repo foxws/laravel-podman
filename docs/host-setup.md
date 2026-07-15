@@ -1,6 +1,6 @@
 # Setting up without PHP on the host
 
-`podman:generate` and `podman:setup` only render files. They replace the `{{...}}` placeholders described in [Customizing](customizing.md) and write output to `publish_path` (`podman/{preset}/` by default). They never call the `podman` binary, so they can run anywhere PHP runs, even where Podman is not installed. Installing rendered services and setting secrets is a separate host-side step done with `lpod`/`lpod-secrets` (see [The `lpod` CLI](lpod.md)).
+`podman:generate` and `podman:setup` only render files. They replace the `{{...}}` placeholders described in [Customizing](customizing.md) and write output to `publish_path` (`podman/{preset}/` by default). They never call the `podman` binary, so they can run anywhere PHP runs, even where Podman is not installed. Installing rendered services and setting secrets is a separate host-side step done with `lpod`/`lpod-secrets` (see [The `lpod` CLI](lpod.md)). This output is generated artifact data, so do not commit it; after install, you can delete and regenerate it at any time.
 
 This split makes it possible to run the PHP half of setup somewhere PHP is convenient (a container, CI, a machine without PHP installed) and the Podman half on the host where Podman actually runs:
 

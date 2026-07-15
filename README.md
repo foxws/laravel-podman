@@ -5,7 +5,9 @@
 [![GitHub Code Style Action Status](https://github.com/foxws/laravel-podman/actions/workflows/fix-php-code-style-issues.yml/badge.svg)](https://github.com/foxws/laravel-podman/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/foxws/laravel-podman.svg?style=flat-square)](https://packagist.org/packages/foxws/laravel-podman)
 
-Laravel Podman brings [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) support to your Laravel application by installing your app and its services (database, cache, search engine, proxy, ...) as [systemd-managed](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) containers.
+Laravel Podman is a lightweight Laravel package that brings [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) support to your app. It generates services from presets and installs them as [systemd-managed](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) containers.
+
+It relies on your host Podman/systemd setup (instead of an all-in-one runtime), so it gives you a more advanced and flexible setup. You can swap bundled parts like the default Caddy proxy for your own setup (for example Nginx).
 
 ## Features
 
@@ -93,7 +95,7 @@ return [
 | `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy terminating HTTPS in front of the other services. See [Proxy](docs/proxy.md).                                                                           |
 | `s3`                | A `cors.json` policy applied by `podman:s3-setup` against your S3-compatible storage buckets. Not Quadlet-managed either — no `quadlets/`/`runtimes/`, just the one file. See [S3 Buckets](docs/s3.md). |
 
-**Custom presets.** A preset is a folder containing a `quadlets/` directory of `*.quadlets` files and a `runtimes/` directory of container build files (the `devcontainer`/`s3` presets are exceptions — see the table above). `stubs_path` controls where the package looks for preset folders, and defaults to `containers/stubs` in your project. The fallback happens per preset, not as a whole directory swap — publish one preset (`php artisan podman:publish frankenphp-octane`) to customize it without needing to touch any other preset. Leave a preset unpublished to keep using the one bundled with the package.
+**Custom presets.** A preset is a folder containing a `quadlets/` directory of `*.quadlets` files and a `runtimes/` directory of container build files (the `devcontainer`/`s3` presets are exceptions — see the table above). `stubs_path` (default `containers/stubs`) is the lookup root for custom presets. For each preset name, the package uses `stubs_path/{preset}` if it exists; otherwise it falls back to the bundled vendor preset. Once a preset exists under `stubs_path`, that preset is fully overridden (no file-by-file merge). So you can publish one preset (`php artisan podman:publish frankenphp-octane`) without touching the others.
 
 ## Quick Start
 
@@ -104,6 +106,8 @@ php artisan podman:setup
 ```
 
 > **Note:** This step only renders files — it substitutes your app's config into the preset's templates and writes the result to the `publish_path` config key (`podman` by default, one subfolder per preset). It never touches the `podman` binary, so it works even without Podman installed (e.g. inside a disposable `php` container in CI). If you don't have PHP on the host at all, see [Setting up without PHP on the host](docs/host-setup.md).
+>
+> Generated files in `publish_path` (default `podman/`) are build artifacts. Do not commit them. Add the path to `.gitignore` (default: `/podman`), and remove/re-generate it any time after `lpod install`.
 
 The presets it generates by default come from the `presets` config key (`frankenphp-octane`/`proxy` out of the box; `development`/`devcontainer` are opt-in — see [Presets](#presets)) — edit that, set `PODMAN_DEFAULT_PRESETS`, or override per run:
 

@@ -8,20 +8,12 @@ use Foxws\Podman\Support\PodmanQuadletFile;
 use Foxws\Podman\Support\PodmanQuadletPath;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
-use Spatie\TemporaryDirectory\TemporaryDirectory;
-use SplFileInfo;
-use Symfony\Component\Process\Process;
 
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
-use function Laravel\Prompts\password;
-use function Laravel\Prompts\text;
 
 trait InteractsWithPodmanQuadlet
 {
-    protected ?TemporaryDirectory $podmanQuadletTemporaryDirectory = null;
-
     protected function podmanQuadletPath(): PodmanQuadletPath
     {
         return new PodmanQuadletPath;
@@ -33,324 +25,129 @@ trait InteractsWithPodmanQuadlet
     }
 
     /**
-     * A directory that is deleted once this command instance is destroyed,
-     * used to materialize quadlet files the podman binary reads from disk.
+     * Copy a preset's vendor-provided "quadlets/"/"runtimes/" files into the
+     * configured stubs path for customization.
      */
-    protected function podmanQuadletTemporaryDirectory(): TemporaryDirectory
+    protected function publishPodmanPreset(string $preset, ?bool $force = null): bool
     {
-        return $this->podmanQuadletTemporaryDirectory ??= TemporaryDirectory::make()->deleteWhenDestroyed();
-    }
-
-    protected function installPodmanQuadlet(
-        string $service,
-        ?string $application = null,
-        ?bool $replace = null,
-    ): Process {
         $path = $this->podmanQuadletPath();
-        $source = "{$path->quadletsPath()}/{$service}.quadlets";
-        $target = $this->podmanQuadletTemporaryDirectory()->path("{$service}.quadlets");
+        $source = $path->vendorPresetPath($preset);
+        $target = $path->publishedPresetPath($preset);
 
-        $command = ['podman', 'quadlet', 'install'];
-
-        if ($application) {
-            $command[] = '--application';
-            $command[] = $application;
-        }
-
-        if ($replace) {
-            $command[] = '--replace';
-        }
-
-        if (! $path->shouldReloadSystemd()) {
-            $command[] = '--reload-systemd=false';
-        }
-
-        $command[] = $this->podmanQuadletFile()->prepareSource($source, $target);
-
-        return new Process($command);
-    }
-
-    /**
-     * Install one or more services, prompting for and setting their secrets
-     * first when requested. Returns the names of the services that failed.
-     *
-     * @param  array<int, string>  $services
-     * @return array<int, string>
-     */
-    protected function installPodmanQuadlets(
-        array $services,
-        ?string $application = null,
-        ?bool $replace = null,
-        ?bool $secrets = null,
-    ): array {
-        $failed = [];
-
-        foreach ($services as $service) {
-            if ($secrets && ! $this->promptForPodmanQuadletSecrets($service, replace: $replace)) {
-                $failed[] = $service;
-
-                continue;
-            }
-
-            $process = $this->installPodmanQuadlet(
-                service: $service,
-                application: $application,
-                replace: $replace,
-            );
-
-            $process->run();
-
-            if (! $process->isSuccessful()) {
-                error($process->getErrorOutput());
-
-                $failed[] = $service;
-
-                continue;
-            }
-
-            info("Service {$service} installed successfully.");
-        }
-
-        return $failed;
-    }
-
-    protected function removePodmanQuadlet(
-        string $service,
-        ?bool $ignore = null,
-        ?bool $force = null,
-    ): Process {
-        $command = ['podman', 'quadlet', 'rm', $service];
-
-        if ($ignore) {
-            $command[] = '--ignore';
-        }
-
-        if ($force) {
-            $command[] = '--force';
-        }
-
-        if (! $this->podmanQuadletPath()->shouldReloadSystemd()) {
-            $command[] = '--reload-systemd=false';
-        }
-
-        return new Process($command);
-    }
-
-    protected function listPodmanQuadlet(
-        ?string $filter = null,
-        ?string $format = null,
-        ?bool $noheading = null,
-    ): Process {
-        $command = ['podman', 'quadlet', 'list'];
-
-        if ($filter) {
-            $command[] = '--filter';
-            $command[] = $filter;
-        }
-
-        if ($format) {
-            $command[] = '--format';
-            $command[] = $format;
-        }
-
-        if ($noheading) {
-            $command[] = '--noheading';
-        }
-
-        return new Process($command);
-    }
-
-    protected function printPodmanQuadlet(
-        string $service,
-    ): Process {
-        $command = ['podman', 'quadlet', 'print', $service];
-
-        return new Process($command);
-    }
-
-    protected function uninstallPodmanQuadlet(
-        string $application,
-        ?bool $force = null,
-    ): Process {
-        $command = ['podman', 'quadlet', 'rm', '--recursive', $application];
-
-        if ($force) {
-            $command[] = '--force';
-        }
-
-        if (! $this->podmanQuadletPath()->shouldReloadSystemd()) {
-            $command[] = '--reload-systemd=false';
-        }
-
-        return new Process($command);
-    }
-
-    protected function setPodmanSecret(
-        string $secret,
-        string $value,
-        ?bool $replace = null,
-    ): Process {
-        $command = ['podman', 'secret', 'create', $secret, '-'];
-
-        if ($replace) {
-            $command[] = '--replace';
-        }
-
-        $process = new Process($command);
-        $process->setInput($value);
-
-        return $process;
-    }
-
-    protected function publishPodmanRuntime(string $runtime, ?bool $force = null): bool
-    {
-        $source = "{$this->podmanQuadletPath()->runtimesPath()}/{$runtime}";
-        $target = base_path('runtimes')."/{$runtime}";
-
-        if (File::exists($target) && ! $force) {
-            error("The runtime {$runtime} already exists at {$target}. Use --force to overwrite.");
+        if (File::isDirectory($target) && ! $force) {
+            error("The preset {$preset} already exists at {$target}. Use --force to overwrite.");
 
             return false;
         }
 
-        $this->podmanQuadletFile()->publishDirectory($source, $target);
+        $this->podmanQuadletFile()->publishDirectory($source, $target, $preset);
 
         return true;
     }
 
     /**
-     * Publish one or more runtimes. Returns the names of the runtimes that failed.
+     * Publish one or more presets. Returns the names of the presets that failed.
      *
-     * @param  array<int, string>  $runtimes
+     * @param  array<int, string>  $presets
      * @return array<int, string>
      */
-    protected function publishPodmanRuntimes(array $runtimes, ?bool $force = null): array
+    protected function publishPodmanPresets(array $presets, ?bool $force = null): array
     {
         $failed = [];
 
-        foreach ($runtimes as $runtime) {
-            if (! $this->publishPodmanRuntime($runtime, force: $force)) {
-                $failed[] = $runtime;
+        foreach ($presets as $preset) {
+            if (! $this->publishPodmanPreset($preset, force: $force)) {
+                $failed[] = $preset;
 
                 continue;
             }
 
-            info("Runtime {$runtime} published to {$this->getPodmanRuntimePath()}");
+            info("Preset {$preset} published to {$this->podmanQuadletPath()->publishedPresetPath($preset)}");
         }
 
         return $failed;
     }
 
-    protected function promptForPodmanQuadletSecrets(string $service, ?bool $replace = null): bool
+    /**
+     * Render every ".quadlets" file and runtime build file for a preset
+     * (from the vendor copy, or the published copy if it exists) into the
+     * configured publish path, ready for "lpod install"/"podman quadlet
+     * install" on the host.
+     */
+    protected function generatePodmanPreset(string $preset): void
     {
-        foreach ($this->getPodmanQuadletSecrets($service) as $secret => $definition) {
-            if ($definition['type'] === 'mount') {
-                $path = text(
-                    label: "Enter the file path for {$secret} (".implode(', ', $definition['targets']).')',
-                    default: base_path('.env'),
-                    required: true,
-                );
+        $path = $this->podmanQuadletPath();
+        $file = $this->podmanQuadletFile();
 
-                if (! File::exists($path)) {
-                    error("The file {$path} does not exist.");
+        $quadletsSource = $path->presetQuadletsPath($preset);
 
-                    return false;
+        if (File::isDirectory($quadletsSource)) {
+            $quadletsTarget = $path->presetPublishPath($preset);
+
+            foreach (File::files($quadletsSource) as $quadlet) {
+                if ($quadlet->getExtension() !== 'quadlets') {
+                    continue;
                 }
 
-                $value = File::get($path);
-            } else {
-                $value = password(
-                    label: "Enter the value for {$secret} (".implode(', ', $definition['targets']).')',
-                    required: true,
-                );
+                $file->prepareSource($quadlet->getRealPath(), "{$quadletsTarget}/{$quadlet->getFilename()}", $preset);
             }
+        }
 
-            $process = $this->setPodmanSecret(
-                secret: $secret,
-                value: $value,
-                replace: $replace,
+        $runtimesSource = $path->presetRuntimesPath($preset);
+
+        if (File::isDirectory($runtimesSource)) {
+            $file->publishDirectory($runtimesSource, $path->presetPublishRuntimesPath($preset), $preset);
+        }
+    }
+
+    /**
+     * Generate one or more presets.
+     *
+     * @param  array<int, string>  $presets
+     */
+    protected function generatePodmanPresets(array $presets): void
+    {
+        foreach ($presets as $preset) {
+            $this->generatePodmanPreset($preset);
+
+            info("Preset {$preset} generated to {$this->podmanQuadletPath()->presetPublishPath($preset)}");
+        }
+    }
+
+    /**
+     * The names of every preset available, from both the vendor-provided
+     * "stubs/" directory and the configured stubs path (deduplicated).
+     *
+     * @return array<string, string>
+     */
+    protected function getPodmanQuadletPresets(): array
+    {
+        $path = $this->podmanQuadletPath();
+
+        $presets = Collection::make(File::directories("{$path->vendorPath()}/stubs"))
+            ->map(fn (string $dir): string => basename($dir));
+
+        $stubsPath = $path->stubsPath();
+
+        if ($stubsPath && File::isDirectory($stubsPath)) {
+            $presets = $presets->merge(
+                Collection::make(File::directories($stubsPath))
+                    ->map(fn (string $dir): string => basename($dir)),
             );
-
-            $process->run();
-
-            if (! $process->isSuccessful()) {
-                error($process->getErrorOutput());
-
-                return false;
-            }
         }
 
-        return true;
-    }
-
-    protected function getPodmanQuadlets(): array
-    {
-        return Collection::make(File::files($this->podmanQuadletPath()->quadletsPath()))
-            ->filter(fn (SplFileInfo $file): bool => $file->getExtension() === 'quadlets')
-            ->map(fn (SplFileInfo $file): string => $file->getBasename('.'.$file->getExtension()))
+        return $presets->unique()
             ->sort()
             ->values()
-            ->mapWithKeys(fn (string $service): array => [$service => $service])
+            ->mapWithKeys(fn (string $preset): array => [$preset => $preset])
             ->toArray();
     }
 
-    protected function getPodmanQuadletDefaultServices(): array
+    /**
+     * @return array<int, string>
+     */
+    protected function getPodmanQuadletDefaultPresets(): array
     {
-        return $this->podmanQuadletPath()->defaultServices();
-    }
-
-    protected function getPodmanQuadletRuntimes(): array
-    {
-        return Collection::make(File::directories($this->podmanQuadletPath()->runtimesPath()))
-            ->map(fn (string $path): string => basename($path))
-            ->sort()
-            ->values()
-            ->mapWithKeys(fn (string $runtime): array => [$runtime => $runtime])
-            ->toArray();
-    }
-
-    protected function getPodmanQuadletDefaultRuntimes(): array
-    {
-        return $this->podmanQuadletPath()->defaultRuntimes();
-    }
-
-    protected function getPodmanQuadletSecrets(string $service): array
-    {
-        $source = "{$this->podmanQuadletPath()->quadletsPath()}/{$service}.quadlets";
-
-        $contents = $this->podmanQuadletFile()->renderSource($source);
-
-        $secrets = [];
-
-        foreach (explode("\n", $contents) as $line) {
-            if (! Str::startsWith($line, 'Secret=')) {
-                continue;
-            }
-
-            $options = explode(',', Str::after($line, 'Secret='));
-            $name = array_shift($options);
-            $type = 'mount';
-            $target = $name;
-
-            foreach ($options as $option) {
-                if (Str::startsWith($option, 'type=')) {
-                    $type = Str::after($option, 'type=');
-                }
-
-                if (Str::startsWith($option, 'target=')) {
-                    $target = Str::after($option, 'target=');
-                }
-            }
-
-            $secrets[$name]['type'] = $type;
-            $secrets[$name]['targets'][] = $target;
-        }
-
-        return $secrets;
-    }
-
-    protected function getPodmanRuntimePath(): string
-    {
-        return $this->podmanQuadletPath()->runtimePath();
+        return $this->podmanQuadletPath()->defaultPresets();
     }
 }

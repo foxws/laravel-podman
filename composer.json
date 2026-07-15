@@ -27,10 +27,10 @@
         "illuminate/filesystem": "^11.0|^12.0|^13.0",
         "illuminate/support": "^11.0|^12.0|^13.0",
         "spatie/laravel-package-tools": "^1.16",
-        "spatie/temporary-directory": "^2.4",
         "symfony/console": "^6.0|^7.0|^8.0"
     },
     "require-dev": {
+        "aws/aws-sdk-php": "^3.322",
         "laravel/pint": "^1.14",
         "nunomaduro/collision": "^8.8",
         "larastan/larastan": "^3.0",
@@ -43,8 +43,13 @@
         "phpstan/phpstan-phpunit": "^2.0",
         "spatie/laravel-ray": "^1.35"
     },
+    "suggest": {
+        "aws/aws-sdk-php": "Required to use the \"podman:s3-setup\" command (^3.322)."
+    },
     "bin": [
-        "bin/lpod"
+        "bin/lpod",
+        "bin/lpod-secrets",
+        "bin/lpod-setup"
     ],
     "autoload": {
         "psr-4": {

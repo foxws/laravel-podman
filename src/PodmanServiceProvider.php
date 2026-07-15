@@ -20,14 +20,18 @@ class PodmanServiceProvider extends PackageServiceProvider
             ->name('laravel-podman')
             ->hasConfigFile('podman')
             ->hasCommands(
-                Commands\InstallCommand::class,
-                Commands\ListCommand::class,
-                Commands\PrintCommand::class,
+                Commands\GenerateCommand::class,
                 Commands\PublishCommand::class,
-                Commands\RemoveCommand::class,
-                Commands\SecretCommand::class,
+                Commands\S3SetupCommand::class,
                 Commands\SetupCommand::class,
-                Commands\UninstallCommand::class,
             );
+    }
+
+    public function packageRegistered(): void
+    {
+        $this->app->bind(
+            Support\PodmanS3Manager::class,
+            fn (): Support\PodmanS3Manager => Support\PodmanS3Manager::fromConfig(),
+        );
     }
 }

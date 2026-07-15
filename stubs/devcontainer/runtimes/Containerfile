@@ -6,16 +6,13 @@ ARG NODE_VERSION=24
 ARG POSTGRES_VERSION=18
 ARG PHP_EXTENSIONS=""
 
-WORKDIR /app
+WORKDIR /tmp
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 ENV LANG=C.UTF-8
 ENV PNPM_HOME="/pnpm"
 ENV PATH="${PATH}:${PNPM_HOME}"
-ENV FRANKEN_CLI="frankenphp php-cli /app/artisan"
-ENV PHP_CLI="php -d variables_order=EGPCS /app/artisan"
-ENV APP_COMMAND="${FRANKEN_CLI} octane:frankenphp --host=0.0.0.0 --port=8000 --admin-port=2019 --watch"
 ENV APP_USER="docker"
 
 # Set timezone
@@ -24,7 +21,7 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezo
 # Main dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg curl ca-certificates libcap2-bin unzip \
-    libavif-bin jpegoptim optipng pngquant gifsicle \
+    git nano openssh-client awscli \
     && apt-get -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
@@ -64,8 +61,8 @@ RUN cp ${PHP_INI_DIR}/php.ini-development ${PHP_INI_DIR}/php.ini
 # Install PHP extensions
 RUN install-php-extensions @composer \
     apcu bcmath exif ffi gd \
-    igbinary imagick inotify intl pcntl \
-    pdo_pgsql redis sockets uv zip
+    igbinary imagick intl pcntl \
+    pdo_pgsql redis sockets zip
 
 # Install additional PHP extensions if specified
 RUN if [ -n "$PHP_EXTENSIONS" ]; then \
@@ -76,7 +73,7 @@ fi
 RUN setcap -r /usr/local/bin/frankenphp
 
 # Custom PHP configuration for development
-COPY runtimes/frankenphp-octane/php-development.ini /usr/local/etc/php/conf.d/xx-php-user.ini
+COPY runtimes/frankenphp-octane/php-devcontainer.ini /usr/local/etc/php/conf.d/xx-php-user.ini
 
 # Node.js Configuration
 RUN npm install -g npm@latest corepack@latest svgo@latest \
@@ -85,16 +82,9 @@ RUN npm install -g npm@latest corepack@latest svgo@latest \
     && chown -R docker:docker ${PNPM_HOME} \
     && pnpm config set store-dir ${PNPM_HOME}/store
 
-# Entrypoint
-COPY --chmod=755 runtimes/frankenphp-octane/entrypoint.sh /usr/local/bin/entrypoint.sh
-
 # Clean up unnecessary files and caches to reduce image size
 RUN apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 USER docker
-
-EXPOSE 5173 6001 8000 13714
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

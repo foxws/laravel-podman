@@ -22,6 +22,6 @@ vendor/bin/lpod install frankenphp-octane/pgsql.quadlets --replace
 
 > **Note:** `--userns=keep-id -u "$(id -u):$(id -g)"` runs the container as your host user instead of root, so the rendered files (and anything else written under the bind mount) come out owned by you rather than root. Drop it if you're running rootful Podman or don't mind fixing ownership afterwards. On SELinux hosts, the bind mount also needs the `:Z` label (as above) or the container won't be permitted to read `artisan` at all — Podman will fail with `Could not open input file: artisan` without it.
 
-> **Note:** Once `lpod` itself is available on the host, `lpod setup` is a shortcut for the `podman run ...` invocation above — it wraps the `lpod-setup` script (also installed as a Composer binary) and forwards any arguments straight to `podman:setup`, e.g. `lpod setup --preset=frankenphp-octane`.
+> **Note:** Once `lpod` itself is available on the host, `lpod setup` is a shortcut for the `podman run ...` invocation above — it wraps the `lpod-setup` script (also installed as a Composer binary) and forwards any arguments straight to `podman:setup`, e.g. `lpod setup --preset=frankenphp-octane`. Afterward it prints a ready-to-run `podman quadlet install "$PWD/podman/{preset}/{service}.quadlets" --replace` command for each rendered file, so you can copy/paste them (or pipe them into a shell) without needing `lpod` itself.
 
 See [The `lpod` CLI](lpod.md) for `setup`/`install`/`secrets`/`remove`/`list`/`print`/`uninstall` and everything else `lpod` does once services are running.

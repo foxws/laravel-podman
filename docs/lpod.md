@@ -49,7 +49,7 @@ Make sure the target directory (`~/.local/bin` or `/usr/local/bin`) is on your `
 
 Once Artisan has rendered a preset (`php artisan podman:setup`/`podman:generate frankenphp-octane`), `install` takes it from a rendered file to a running, systemd-managed service — it takes a `PRESET/SERVICE.quadlets` path (relative to the `publish_path` config key, `podman` by default) rather than a `SERVICE` name. The rest (`secrets`, `remove`, `list`, `print`) operate on the already-installed unit by name instead. All of them forward any extra flags straight to `podman` — pass `--replace`, `--application=my-app`, `--force`, `--ignore`, etc. as needed.
 
-`lpod setup` is an alias for the `lpod-setup` script (also installed as a Composer binary), which renders presets by running `php artisan podman:setup` inside a container — useful when PHP isn't available on the host itself. See [Setting up without PHP on the host](host-setup.md) for details. Any arguments are forwarded straight to `podman:setup`.
+`lpod setup` is an alias for the `lpod-setup` script (also installed as a Composer binary), which renders presets by running `php artisan podman:setup` inside a container — useful when PHP isn't available on the host itself. Once rendering finishes, it prints a `podman quadlet install` command (with the file's full, host-absolute path) for each rendered service, ready to copy/paste. See [Setting up without PHP on the host](host-setup.md) for details. Any arguments are forwarded straight to `podman:setup`.
 
 ```bash
 lpod setup                                              # Renders the default presets without PHP on the host

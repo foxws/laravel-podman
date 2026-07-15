@@ -44,7 +44,7 @@ This is the contents of the published config file:
 return [
     'presets' => env('PODMAN_DEFAULT_PRESETS', [
         // 'development',
-        'devcontainer',
+        // 'devcontainer',
         'frankenphp-octane',
         'proxy',
     ]),
@@ -107,7 +107,7 @@ php artisan podman:setup
 
 > **Note:** This step only renders files — it substitutes your app's config into the preset's templates and writes the result to the `publish_path` config key (`podman` by default, one subfolder per preset). It never touches the `podman` binary, so it works even without Podman installed (e.g. inside a disposable `php` container in CI). If you don't have PHP on the host at all, see [Setting up without PHP on the host](docs/host-setup.md).
 
-The presets it generates by default come from the `presets` config key (`devcontainer`/`frankenphp-octane`/`proxy` out of the box — see [Presets](#presets)) — edit that, set `PODMAN_DEFAULT_PRESETS`, or override per run:
+The presets it generates by default come from the `presets` config key (`frankenphp-octane`/`proxy` out of the box — see [Presets](#presets)) — edit that, set `PODMAN_DEFAULT_PRESETS`, or override per run:
 
 ```bash
 php artisan podman:setup --preset=frankenphp-octane

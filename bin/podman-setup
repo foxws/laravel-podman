@@ -19,31 +19,36 @@ fi
 
 # Define environment variables...
 PHP_IMAGE=${PODMAN_SETUP_PHP_IMAGE:-"docker.io/dunglas/frankenphp:latest"}
-PUBLISH_PATH=${PODMAN_SETUP_PUBLISH_PATH:-"storage/app/podman"}
+PUBLISH_PATH=${PODMAN_SETUP_PUBLISH_PATH:-"podman"}
 
-# Reuse "--application" for the install step, so services end up namespaced
-# the same way they were rendered...
-APPLICATION=""
+# "podman:setup" only understands "--preset="; everything else (e.g.
+# --application, --replace) is a "podman quadlet install" flag, used below...
+ARTISAN_ARGS=()
+INSTALL_ARGS=()
 
 for ARG in "$@"; do
     case "$ARG" in
-        --application=*)
-            APPLICATION="${ARG#--application=}"
+        --preset=*)
+            ARTISAN_ARGS+=("$ARG")
+            ;;
+        *)
+            INSTALL_ARGS+=("$ARG")
             ;;
     esac
 done
 
-# Render every requested service's ".quadlets" file into "$PUBLISH_PATH",
-# running as the host user so nothing ends up owned by root...
+# Render every default preset's ".quadlets"/runtime files into
+# "$PUBLISH_PATH/{preset}", running as the host user so nothing ends up
+# owned by root...
 echo "Rendering Quadlet units using the '${PHP_IMAGE}' image..."
 
 podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
     -e PODMAN_WORKING_PATH="$PWD" \
     -v "$PWD":/var/www/html:Z -w /var/www/html "$PHP_IMAGE" \
-    php artisan podman:setup --no-install "$@"
+    php artisan podman:setup "${ARTISAN_ARGS[@]}"
 
 shopt -s nullglob
-QUADLET_FILES=("${PUBLISH_PATH}"/*.quadlets)
+QUADLET_FILES=("${PUBLISH_PATH}"/*/*.quadlets)
 shopt -u nullglob
 
 if [ ${#QUADLET_FILES[@]} -eq 0 ]; then
@@ -53,14 +58,6 @@ if [ ${#QUADLET_FILES[@]} -eq 0 ]; then
 fi
 
 # Install the rendered units using the host's own podman/systemd...
-INSTALL_ARGS=(quadlet install)
-
-if [ -n "$APPLICATION" ]; then
-    INSTALL_ARGS+=(--application "$APPLICATION")
-fi
-
-INSTALL_ARGS+=("${QUADLET_FILES[@]}" --replace)
-
 echo "Installing rendered Quadlet units from '${PUBLISH_PATH}'..."
 
-exec podman "${INSTALL_ARGS[@]}"
+exec podman quadlet install "${QUADLET_FILES[@]}" --replace "${INSTALL_ARGS[@]}"

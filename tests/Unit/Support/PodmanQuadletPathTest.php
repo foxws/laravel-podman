@@ -40,106 +40,54 @@ it('uses the configured working path when set, without affecting the base path',
         ->and($this->path->basePath())->toBe(base_path());
 });
 
-it('does not let the configured working path affect where runtimes/config/publish paths resolve', function () {
-    config(['podman.working_path' => '/home/francois/app', 'podman.runtime_path' => 'runtimes']);
-
-    expect($this->path->runtimePath())->toBe(base_path('runtimes'));
+it('resolves the vendor preset path for a preset that has not been published', function () {
+    expect($this->path->presetPath('frankenphp-octane'))->toBe($this->path->vendorPresetPath('frankenphp-octane'))
+        ->and($this->path->vendorPresetPath('frankenphp-octane'))->toBe("{$this->path->vendorPath()}/stubs/frankenphp-octane");
 });
 
-it('resolves the working runtime and config paths against the working path when set', function () {
-    config([
-        'podman.working_path' => '/home/francois/app',
-        'podman.runtime_path' => 'runtimes',
-        'podman.config_path' => 'runtimes/config',
-    ]);
+it('uses the published preset path when it exists', function () {
+    $preset = $this->makePresetPath('frankenphp-octane', ['app']);
 
-    expect($this->path->workingRuntimePath())->toBe('/home/francois/app/runtimes')
-        ->and($this->path->workingConfigPath())->toBe('/home/francois/app/runtimes/config');
+    expect($this->path->presetPath('frankenphp-octane'))->toBe($preset)
+        ->and($this->path->publishedPresetPath('frankenphp-octane'))->toBe($preset);
+
+    File::deleteDirectory(dirname($preset));
 });
 
-it('keeps an absolute runtime or config path as-is for the working variants, ignoring the working path', function () {
-    config([
-        'podman.working_path' => '/home/francois/app',
-        'podman.runtime_path' => '/srv/runtimes',
-        'podman.config_path' => '/srv/runtimes/config',
-    ]);
-
-    expect($this->path->workingRuntimePath())->toBe('/srv/runtimes')
-        ->and($this->path->workingConfigPath())->toBe('/srv/runtimes/config');
-});
-
-it('defaults the quadlets path to the vendor quadlets directory', function () {
-    expect($this->path->quadletsPath())->toBe("{$this->path->vendorPath()}/quadlets");
-});
-
-it('uses the configured quadlets path when set', function () {
-    $path = $this->makeQuadletsPath(['pgsql']);
-
-    expect($this->path->quadletsPath())->toBe($path);
-
-    File::deleteDirectory($path);
-});
-
-it('falls back to the vendor quadlets directory when the configured path does not exist', function () {
-    config(['podman.quadlets_path' => sys_get_temp_dir().'/podman-quadlets-missing-'.uniqid()]);
-
-    expect($this->path->quadletsPath())->toBe("{$this->path->vendorPath()}/quadlets");
-});
-
-it('defaults the runtimes path to the vendor runtimes directory', function () {
-    expect($this->path->runtimesPath())->toBe("{$this->path->vendorPath()}/runtimes");
-});
-
-it('uses the configured runtimes path when it exists', function () {
-    $path = sys_get_temp_dir().'/podman-runtimes-'.uniqid();
-    File::ensureDirectoryExists($path);
-    config(['podman.runtimes_path' => $path]);
-
-    expect($this->path->runtimesPath())->toBe($path);
-
-    File::deleteDirectory($path);
-});
-
-it('falls back to the vendor runtimes directory when the configured runtimes path does not exist', function () {
-    config(['podman.runtimes_path' => sys_get_temp_dir().'/podman-runtimes-missing-'.uniqid()]);
-
-    expect($this->path->runtimesPath())->toBe("{$this->path->vendorPath()}/runtimes");
-});
-
-it('resolves a relative runtime path against the base path', function () {
-    config(['podman.runtime_path' => 'runtimes']);
-
-    expect($this->path->runtimePath())->toBe(base_path('runtimes'));
-});
-
-it('keeps an absolute runtime path as-is', function () {
-    config(['podman.runtime_path' => '/srv/runtimes']);
-
-    expect($this->path->runtimePath())->toBe('/srv/runtimes');
-});
-
-it('resolves a relative config path against the base path', function () {
-    config(['podman.config_path' => 'runtimes/config']);
-
-    expect($this->path->configPath())->toBe(base_path('runtimes/config'));
-});
-
-it('keeps an absolute config path as-is', function () {
-    config(['podman.config_path' => '/srv/runtimes/config']);
-
-    expect($this->path->configPath())->toBe('/srv/runtimes/config');
+it('resolves presetQuadletsPath and presetRuntimesPath relative to the preset path', function () {
+    expect($this->path->presetQuadletsPath('frankenphp-octane'))->toBe($this->path->vendorPresetPath('frankenphp-octane').'/quadlets')
+        ->and($this->path->presetRuntimesPath('frankenphp-octane'))->toBe($this->path->vendorPresetPath('frankenphp-octane').'/runtimes');
 });
 
 it('resolves a relative publish path against the base path', function () {
-    config(['podman.publish_path' => 'storage/app/podman']);
+    config(['podman.publish_path' => 'podman']);
 
-    expect($this->path->publishPath())->toBe(base_path('storage/app/podman'));
+    expect($this->path->publishPath())->toBe(base_path('podman'));
 });
 
 it('keeps an absolute publish path as-is', function () {
     config(['podman.publish_path' => '/srv/podman']);
 
     expect($this->path->publishPath())->toBe('/srv/podman');
+});
+
+it('resolves the preset publish path and its runtimes subfolder', function () {
+    config(['podman.publish_path' => 'podman']);
+
+    expect($this->path->presetPublishPath('frankenphp-octane'))->toBe(base_path('podman/frankenphp-octane'))
+        ->and($this->path->presetPublishRuntimesPath('frankenphp-octane'))->toBe(base_path('podman/frankenphp-octane/runtimes'));
+});
+
+it('resolves the working preset runtime path against the working path when set', function () {
+    config(['podman.publish_path' => 'podman', 'podman.working_path' => '/home/francois/app']);
+
+    expect($this->path->workingPresetRuntimePath('frankenphp-octane'))->toBe('/home/francois/app/podman/frankenphp-octane/runtimes');
+});
+
+it('resolves the working preset runtime path against the base path by default', function () {
+    config(['podman.publish_path' => 'podman']);
+
+    expect($this->path->workingPresetRuntimePath('frankenphp-octane'))->toBe(base_path('podman/frankenphp-octane/runtimes'));
 });
 
 it('resolves the domain from the app url', function () {
@@ -174,58 +122,28 @@ it('disables selinux volume mapping when configured', function () {
     expect($this->path->shouldUseSelinuxVolumeMapping())->toBeFalse();
 });
 
-it('splits the configured comma-separated services into an array', function () {
-    config(['podman.services' => 'pgsql,valkey,app']);
+it('splits the configured comma-separated presets into an array', function () {
+    config(['podman.presets' => 'frankenphp-octane,proxy']);
 
-    expect($this->path->defaultServices())->toBe(['pgsql', 'valkey', 'app']);
+    expect($this->path->defaultPresets())->toBe(['frankenphp-octane', 'proxy']);
 });
 
-it('accepts the configured services as a plain array', function () {
-    config(['podman.services' => ['pgsql', 'valkey', 'app']]);
+it('accepts the configured presets as a plain array', function () {
+    config(['podman.presets' => ['frankenphp-octane', 'proxy']]);
 
-    expect($this->path->defaultServices())->toBe(['pgsql', 'valkey', 'app']);
+    expect($this->path->defaultPresets())->toBe(['frankenphp-octane', 'proxy']);
 });
 
-it('trims whitespace and drops empty entries from an array of configured services', function () {
-    config(['podman.services' => [' pgsql ', '', ' valkey ']]);
+it('trims whitespace and drops empty entries from the configured presets', function () {
+    config(['podman.presets' => ' frankenphp-octane ,, proxy ']);
 
-    expect($this->path->defaultServices())->toBe(['pgsql', 'valkey']);
+    expect($this->path->defaultPresets())->toBe(['frankenphp-octane', 'proxy']);
 });
 
-it('trims whitespace and drops empty entries from the configured services', function () {
-    config(['podman.services' => ' pgsql ,, valkey ']);
+it('returns no default presets when none are configured', function () {
+    config(['podman.presets' => '']);
 
-    expect($this->path->defaultServices())->toBe(['pgsql', 'valkey']);
-});
-
-it('returns no default services when none are configured', function () {
-    config(['podman.services' => '']);
-
-    expect($this->path->defaultServices())->toBe([]);
-});
-
-it('splits the configured comma-separated runtimes into an array', function () {
-    config(['podman.runtimes' => 'frankenphp-octane,proxy']);
-
-    expect($this->path->defaultRuntimes())->toBe(['frankenphp-octane', 'proxy']);
-});
-
-it('accepts the configured runtimes as a plain array', function () {
-    config(['podman.runtimes' => ['frankenphp-octane', 'proxy']]);
-
-    expect($this->path->defaultRuntimes())->toBe(['frankenphp-octane', 'proxy']);
-});
-
-it('trims whitespace and drops empty entries from the configured runtimes', function () {
-    config(['podman.runtimes' => ' frankenphp-octane ,, proxy ']);
-
-    expect($this->path->defaultRuntimes())->toBe(['frankenphp-octane', 'proxy']);
-});
-
-it('returns no default runtimes when none are configured', function () {
-    config(['podman.runtimes' => '']);
-
-    expect($this->path->defaultRuntimes())->toBe([]);
+    expect($this->path->defaultPresets())->toBe([]);
 });
 
 it('splits the configured comma-separated s3 buckets into an array', function () {
@@ -258,8 +176,6 @@ it('returns no s3 cors buckets when none are configured', function () {
     expect($this->path->s3CorsBuckets())->toBe([]);
 });
 
-it('resolves the s3 cors policy path against the runtime path', function () {
-    config(['podman.runtime_path' => 'runtimes']);
-
-    expect($this->path->s3CorsPolicyPath())->toBe(base_path('runtimes').'/s3/cors.json');
+it('resolves the s3 cors policy path against the s3 preset path', function () {
+    expect($this->path->s3CorsPolicyPath())->toBe($this->path->vendorPresetPath('s3').'/cors.json');
 });

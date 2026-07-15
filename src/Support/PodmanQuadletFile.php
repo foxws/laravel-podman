@@ -17,7 +17,7 @@ class PodmanQuadletFile
     /**
      * @return array<string, string>
      */
-    public function substitutions(): array
+    public function substitutions(string $preset): array
     {
         return [
             '{{appEnv}}' => Config::string('app.env'),
@@ -29,14 +29,13 @@ class PodmanQuadletFile
             '{{application}}' => $this->path->prefix(),
             '{{proxy}}' => $this->path->proxy(),
             '{{workingPath}}' => $this->path->workingPath(),
-            '{{configPath}}' => $this->path->workingConfigPath(),
-            '{{runtimePath}}' => $this->path->workingRuntimePath(),
+            '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),
         ];
     }
 
-    public function renderSource(string $source): string
+    public function renderSource(string $source, string $preset): string
     {
-        $contents = strtr(File::get($source), $this->substitutions());
+        $contents = strtr(File::get($source), $this->substitutions($preset));
 
         if (! $this->path->shouldUseSelinuxVolumeMapping()) {
             $contents = $this->removeSelinuxVolumeFlags($contents);
@@ -45,23 +44,23 @@ class PodmanQuadletFile
         return $contents;
     }
 
-    public function prepareSource(string $source, string $target): string
+    public function prepareSource(string $source, string $target, string $preset): string
     {
         File::ensureDirectoryExists(dirname($target));
 
-        File::put($target, $this->renderSource($source));
+        File::put($target, $this->renderSource($source, $preset));
 
         return $target;
     }
 
-    public function publishDirectory(string $source, string $target): void
+    public function publishDirectory(string $source, string $target, string $preset): void
     {
         File::ensureDirectoryExists($target);
 
         foreach (File::allFiles($source) as $file) {
             $destination = "{$target}/{$file->getRelativePathname()}";
 
-            $this->prepareSource($file->getRealPath(), $destination);
+            $this->prepareSource($file->getRealPath(), $destination, $preset);
         }
     }
 

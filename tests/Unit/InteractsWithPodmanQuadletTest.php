@@ -7,280 +7,153 @@ use Illuminate\Support\Facades\File;
 
 uses(InteractsWithPodmanQuadlet::class);
 
-it('lists the available quadlet services discovered in the quadlets path', function () {
-    $path = $this->makeQuadletsPath(['pgsql', 'mariadb']);
-    File::put("{$path}/README.md", 'not a service');
-
-    expect($this->getPodmanQuadlets())->toBe([
-        'mariadb' => 'mariadb',
-        'pgsql' => 'pgsql',
-    ]);
-
-    File::deleteDirectory($path);
-});
-
-it('lists the available runtimes discovered in the vendor runtimes directory', function () {
-    expect($this->getPodmanQuadletRuntimes())->toBe([
+it('lists the presets available in the vendor stubs directory', function () {
+    expect($this->getPodmanQuadletPresets())->toBe([
         'frankenphp-octane' => 'frankenphp-octane',
         'proxy' => 'proxy',
         's3' => 's3',
     ]);
 });
 
-it('returns the configured list of default services', function () {
-    config(['podman.services' => 'valkey,app']);
+it('merges presets discovered in the configured stubs path with the vendor ones', function () {
+    $stubsPath = sys_get_temp_dir().'/podman-stubs-'.uniqid();
+    File::ensureDirectoryExists("{$stubsPath}/php-container/quadlets");
+    config(['podman.stubs_path' => $stubsPath]);
 
-    expect($this->getPodmanQuadletDefaultServices())->toBe(['valkey', 'app']);
-});
-
-it('returns the configured list of default runtimes', function () {
-    config(['podman.runtimes' => 'proxy,frankenphp-octane']);
-
-    expect($this->getPodmanQuadletDefaultRuntimes())->toBe(['proxy', 'frankenphp-octane']);
-});
-
-it('resolves the configured runtime path against the base path', function () {
-    config(['podman.runtime_path' => 'runtimes']);
-
-    expect($this->getPodmanRuntimePath())->toBe(base_path('runtimes'));
-});
-
-it('discovers the secrets required by a service, grouping shared secrets by target', function () {
-    $path = $this->makeQuadletsPath(['pgsql']);
-    File::put(
-        "{$path}/pgsql.quadlets",
-        "Secret={{application}}-pgsql-db,type=env,target=POSTGRES_DB\n".
-        "Secret={{application}}-pgsql-password,type=env,target=POSTGRES_PASSWORD\n".
-        "Secret={{application}}-pgsql-password,type=env,target=PGPASSWORD\n",
-    );
-
-    expect($this->getPodmanQuadletSecrets('pgsql'))->toBe([
-        'laravel-pgsql-db' => ['type' => 'env', 'targets' => ['POSTGRES_DB']],
-        'laravel-pgsql-password' => ['type' => 'env', 'targets' => ['POSTGRES_PASSWORD', 'PGPASSWORD']],
+    expect($this->getPodmanQuadletPresets())->toBe([
+        'frankenphp-octane' => 'frankenphp-octane',
+        'php-container' => 'php-container',
+        'proxy' => 'proxy',
+        's3' => 's3',
     ]);
 
-    File::deleteDirectory($path);
+    File::deleteDirectory($stubsPath);
 });
 
-it('defaults a secret to the mount type when type is not specified', function () {
-    $path = $this->makeQuadletsPath(['app']);
-    File::put("{$path}/app.quadlets", "Secret={{application}}-env,target=/config/app.env,mode=0400\n");
+it('returns the configured list of default presets', function () {
+    config(['podman.presets' => 'proxy,frankenphp-octane']);
 
-    expect($this->getPodmanQuadletSecrets('app'))->toBe([
-        'laravel-env' => ['type' => 'mount', 'targets' => ['/config/app.env']],
-    ]);
-
-    File::deleteDirectory($path);
+    expect($this->getPodmanQuadletDefaultPresets())->toBe(['proxy', 'frankenphp-octane']);
 });
 
-it('returns no secrets for a service that does not define any', function () {
-    $path = $this->makeQuadletsPath(['pgsql']);
+it('publishes a preset from the vendor stubs into the configured stubs path', function () {
+    $stubsPath = sys_get_temp_dir().'/podman-stubs-'.uniqid();
+    config(['podman.stubs_path' => $stubsPath]);
 
-    expect($this->getPodmanQuadletSecrets('pgsql'))->toBe([]);
+    expect($this->publishPodmanPreset('proxy'))->toBeTrue();
 
-    File::deleteDirectory($path);
+    expect(File::exists("{$stubsPath}/proxy/quadlets/proxy.quadlets"))->toBeTrue()
+        ->and(File::exists("{$stubsPath}/proxy/runtimes/Caddyfile"))->toBeTrue();
+
+    File::deleteDirectory($stubsPath);
 });
 
-it('builds the install quadlet process command', function () {
-    $path = $this->makeQuadletsPath(['pgsql']);
+it('refuses to overwrite an already-published preset without the force option', function () {
+    $stubsPath = sys_get_temp_dir().'/podman-stubs-'.uniqid();
+    File::ensureDirectoryExists("{$stubsPath}/proxy");
+    File::put("{$stubsPath}/proxy/marker", 'existing');
+    config(['podman.stubs_path' => $stubsPath]);
 
-    $process = $this->installPodmanQuadlet(service: 'pgsql', application: 'my-app', replace: true);
+    expect($this->publishPodmanPreset('proxy'))->toBeFalse();
 
-    expect($process->getCommandLine())
-        ->toContain("'podman' 'quadlet' 'install'")
-        ->toContain("'--application' 'my-app'")
-        ->toContain("'--replace'");
+    expect(File::exists("{$stubsPath}/proxy/marker"))->toBeTrue();
 
-    File::deleteDirectory($path);
+    File::deleteDirectory($stubsPath);
 });
 
-it('omits reload-systemd flag by default when installing', function () {
-    $path = $this->makeQuadletsPath(['pgsql']);
+it('overwrites an already-published preset when the force option is passed', function () {
+    $stubsPath = sys_get_temp_dir().'/podman-stubs-'.uniqid();
+    File::ensureDirectoryExists("{$stubsPath}/proxy");
+    File::put("{$stubsPath}/proxy/marker", 'existing');
+    config(['podman.stubs_path' => $stubsPath]);
 
-    $process = $this->installPodmanQuadlet(service: 'pgsql');
+    expect($this->publishPodmanPreset('proxy', force: true))->toBeTrue();
 
-    expect($process->getCommandLine())->not->toContain('--reload-systemd');
+    expect(File::exists("{$stubsPath}/proxy/quadlets/proxy.quadlets"))->toBeTrue();
 
-    File::deleteDirectory($path);
+    File::deleteDirectory($stubsPath);
 });
 
-it('appends reload-systemd=false when reloading systemd is disabled', function () {
-    $path = $this->makeQuadletsPath(['pgsql']);
-    config(['podman.reload_systemd' => false]);
+it('publishes multiple presets, returning no failures on success', function () {
+    $stubsPath = sys_get_temp_dir().'/podman-stubs-'.uniqid();
+    config(['podman.stubs_path' => $stubsPath]);
 
-    $process = $this->installPodmanQuadlet(service: 'pgsql');
+    expect($this->publishPodmanPresets(['frankenphp-octane', 'proxy']))->toBe([]);
 
-    expect($process->getCommandLine())->toContain("'--reload-systemd=false'");
+    expect(File::isDirectory("{$stubsPath}/frankenphp-octane"))->toBeTrue()
+        ->and(File::isDirectory("{$stubsPath}/proxy"))->toBeTrue();
 
-    File::deleteDirectory($path);
+    File::deleteDirectory($stubsPath);
 });
 
-it('materializes the install source at the configured publish path', function () {
-    $path = $this->makeQuadletsPath(['pgsql']);
+it('reports the presets that failed to publish while continuing with the rest', function () {
+    $stubsPath = sys_get_temp_dir().'/podman-stubs-'.uniqid();
+    File::ensureDirectoryExists("{$stubsPath}/proxy");
+    File::put("{$stubsPath}/proxy/marker", 'existing');
+    config(['podman.stubs_path' => $stubsPath]);
+
+    expect($this->publishPodmanPresets(['proxy', 'frankenphp-octane']))->toBe(['proxy']);
+
+    expect(File::exists("{$stubsPath}/proxy/marker"))->toBeTrue()
+        ->and(File::isDirectory("{$stubsPath}/frankenphp-octane"))->toBeTrue();
+
+    File::deleteDirectory($stubsPath);
+});
+
+it('generates a preset\'s quadlets and runtime files into the configured publish path', function () {
+    $stubsPath = sys_get_temp_dir().'/podman-stubs-'.uniqid();
+    File::ensureDirectoryExists("{$stubsPath}/my-preset/quadlets");
+    File::ensureDirectoryExists("{$stubsPath}/my-preset/runtimes");
+    File::put("{$stubsPath}/my-preset/quadlets/app.quadlets", "Runtime={{runtimePath}}\n");
+    File::put("{$stubsPath}/my-preset/quadlets/README.md", 'not a quadlet');
+    File::put("{$stubsPath}/my-preset/runtimes/Containerfile", "FROM base\n");
+
     $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
-    config(['podman.publish_path' => $publishPath]);
+    config(['podman.stubs_path' => $stubsPath, 'podman.publish_path' => $publishPath]);
 
-    $this->installPodmanQuadlet(service: 'pgsql');
+    $this->generatePodmanPreset('my-preset');
 
-    expect(File::exists("{$publishPath}/pgsql.quadlets"))->toBeTrue();
+    expect(File::exists("{$publishPath}/my-preset/app.quadlets"))->toBeTrue()
+        ->and(File::exists("{$publishPath}/my-preset/README.md"))->toBeFalse()
+        ->and(File::get("{$publishPath}/my-preset/app.quadlets"))->toBe("Runtime={$publishPath}/my-preset/runtimes\n")
+        ->and(File::get("{$publishPath}/my-preset/runtimes/Containerfile"))->toBe("FROM base\n");
 
-    File::deleteDirectory($path);
+    File::deleteDirectory($stubsPath);
     File::deleteDirectory($publishPath);
 });
 
-it('reports whether the podman binary is available', function () {
-    $this->useFakePodmanBinary(0);
+it('generates only the quadlets or only the runtimes when the preset has just one of them', function () {
+    $stubsPath = sys_get_temp_dir().'/podman-stubs-'.uniqid();
+    File::ensureDirectoryExists("{$stubsPath}/quadlets-only/quadlets");
+    File::put("{$stubsPath}/quadlets-only/quadlets/app.quadlets", "Foo=bar\n");
 
-    expect($this->podmanBinaryAvailable())->toBeTrue();
-
-    $this->makePodmanBinaryUnavailable();
-
-    expect($this->podmanBinaryAvailable())->toBeFalse();
-});
-
-it('renders and writes a quadlet file to the configured publish path', function () {
-    $path = $this->makeQuadletsPath(['pgsql']);
     $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
-    config(['podman.publish_path' => $publishPath]);
+    config(['podman.stubs_path' => $stubsPath, 'podman.publish_path' => $publishPath]);
 
-    $target = $this->publishPodmanQuadlet('pgsql');
+    $this->generatePodmanPreset('quadlets-only');
 
-    expect($target)->toBe("{$publishPath}/pgsql.quadlets")
-        ->and(File::exists($target))->toBeTrue();
+    expect(File::exists("{$publishPath}/quadlets-only/app.quadlets"))->toBeTrue()
+        ->and(File::isDirectory("{$publishPath}/quadlets-only/runtimes"))->toBeFalse();
 
-    File::deleteDirectory($path);
+    File::deleteDirectory($stubsPath);
     File::deleteDirectory($publishPath);
 });
 
-it('falls back to publishing services instead of installing them when podman is unavailable', function () {
-    $path = $this->makeQuadletsPath(['pgsql', 'valkey']);
+it('generates multiple presets', function () {
+    $stubsPath = sys_get_temp_dir().'/podman-stubs-'.uniqid();
+    File::ensureDirectoryExists("{$stubsPath}/preset-a/quadlets");
+    File::ensureDirectoryExists("{$stubsPath}/preset-b/quadlets");
+    File::put("{$stubsPath}/preset-a/quadlets/app.quadlets", "Foo=bar\n");
+    File::put("{$stubsPath}/preset-b/quadlets/app.quadlets", "Foo=bar\n");
+
     $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
-    config(['podman.publish_path' => $publishPath]);
+    config(['podman.stubs_path' => $stubsPath, 'podman.publish_path' => $publishPath]);
 
-    $this->makePodmanBinaryUnavailable();
+    $this->generatePodmanPresets(['preset-a', 'preset-b']);
 
-    expect($this->installPodmanQuadlets(['pgsql', 'valkey']))->toBe([]);
+    expect(File::exists("{$publishPath}/preset-a/app.quadlets"))->toBeTrue()
+        ->and(File::exists("{$publishPath}/preset-b/app.quadlets"))->toBeTrue();
 
-    expect(File::exists("{$publishPath}/pgsql.quadlets"))->toBeTrue()
-        ->and(File::exists("{$publishPath}/valkey.quadlets"))->toBeTrue();
-
-    File::deleteDirectory($path);
+    File::deleteDirectory($stubsPath);
     File::deleteDirectory($publishPath);
-});
-
-it('skips installing when explicitly disabled, even when podman is available', function () {
-    $path = $this->makeQuadletsPath(['pgsql']);
-    $publishPath = sys_get_temp_dir().'/podman-publish-'.uniqid();
-    config(['podman.publish_path' => $publishPath]);
-
-    $this->useFakePodmanBinary(0);
-
-    expect($this->installPodmanQuadlets(['pgsql'], install: false))->toBe([]);
-
-    expect(File::exists("{$publishPath}/pgsql.quadlets"))->toBeTrue();
-
-    File::deleteDirectory($path);
-    File::deleteDirectory($publishPath);
-});
-
-it('installs multiple services, returning no failures on success', function () {
-    $path = $this->makeQuadletsPath(['pgsql', 'valkey']);
-    $this->useFakePodmanBinary(0);
-
-    expect($this->installPodmanQuadlets(['pgsql', 'valkey']))->toBe([]);
-
-    File::deleteDirectory($path);
-});
-
-it('reports the services that failed to install while continuing with the rest', function () {
-    $path = $this->makeQuadletsPath(['pgsql', 'valkey']);
-    $this->useFakePodmanBinary(1);
-
-    expect($this->installPodmanQuadlets(['pgsql', 'valkey']))->toBe(['pgsql', 'valkey']);
-
-    File::deleteDirectory($path);
-});
-
-it('publishes multiple runtimes, returning no failures on success', function () {
-    $target = base_path('runtimes');
-
-    expect($this->publishPodmanRuntimes(['frankenphp-octane', 'proxy']))->toBe([]);
-
-    expect(File::exists("{$target}/frankenphp-octane/Containerfile"))->toBeTrue()
-        ->and(File::exists("{$target}/proxy/Caddyfile"))->toBeTrue();
-
-    File::deleteDirectory($target);
-});
-
-it('publishes runtimes to the configured runtime path, ignoring the working path', function () {
-    $target = sys_get_temp_dir().'/podman-runtimes-'.uniqid();
-    config(['podman.runtime_path' => $target, 'podman.working_path' => '/home/francois/app']);
-
-    expect($this->publishPodmanRuntimes(['frankenphp-octane']))->toBe([]);
-
-    expect(File::exists("{$target}/frankenphp-octane/Containerfile"))->toBeTrue();
-
-    File::deleteDirectory($target);
-});
-
-it('reports the runtimes that failed to publish while continuing with the rest', function () {
-    $target = base_path('runtimes');
-    File::ensureDirectoryExists("{$target}/frankenphp-octane");
-    File::put("{$target}/frankenphp-octane/Containerfile", 'existing');
-
-    expect($this->publishPodmanRuntimes(['frankenphp-octane', 'proxy']))->toBe(['frankenphp-octane']);
-
-    expect(File::get("{$target}/frankenphp-octane/Containerfile"))->toBe('existing')
-        ->and(File::exists("{$target}/proxy/Caddyfile"))->toBeTrue();
-
-    File::deleteDirectory($target);
-});
-
-it('builds the remove quadlet process command', function () {
-    $process = $this->removePodmanQuadlet(service: 'pgsql', ignore: true, force: true);
-
-    expect($process->getCommandLine())
-        ->toContain("'podman' 'quadlet' 'rm' 'pgsql'")
-        ->toContain("'--ignore'")
-        ->toContain("'--force'");
-});
-
-it('builds the uninstall quadlet process command', function () {
-    $process = $this->uninstallPodmanQuadlet(application: 'my-app', force: true);
-
-    expect($process->getCommandLine())
-        ->toContain("'podman' 'quadlet' 'rm' '--recursive' 'my-app'")
-        ->toContain("'--force'");
-});
-
-it('builds the list quadlet process command', function () {
-    $process = $this->listPodmanQuadlet(filter: 'status=running', format: 'json', noheading: true);
-
-    expect($process->getCommandLine())
-        ->toContain("'podman' 'quadlet' 'list'")
-        ->toContain("'--filter' 'status=running'")
-        ->toContain("'--format' 'json'")
-        ->toContain("'--noheading'");
-});
-
-it('builds the print quadlet process command', function () {
-    $process = $this->printPodmanQuadlet(service: 'pgsql');
-
-    expect($process->getCommandLine())->toBe("'podman' 'quadlet' 'print' 'pgsql'");
-});
-
-it('builds the set secret process command', function () {
-    $process = $this->setPodmanSecret(secret: 'laravel-pgsql-db', value: 'myapp', replace: true);
-
-    expect($process->getCommandLine())
-        ->toContain("'podman' 'secret' 'create' 'laravel-pgsql-db' '-'")
-        ->toContain("'--replace'");
-
-    expect($process->getInput())->toBe('myapp');
-});
-
-it('omits the replace flag by default when setting a secret', function () {
-    $process = $this->setPodmanSecret(secret: 'laravel-pgsql-db', value: 'myapp');
-
-    expect($process->getCommandLine())->not->toContain('--replace');
 });

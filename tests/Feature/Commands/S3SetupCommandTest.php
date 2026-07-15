@@ -23,24 +23,24 @@ function bindPodmanS3Manager(MockHandler $handler): void
 }
 
 beforeEach(function () {
-    $this->runtimePath = sys_get_temp_dir().'/podman-s3-runtime-'.uniqid();
+    $this->stubsPath = sys_get_temp_dir().'/podman-s3-stubs-'.uniqid();
 
-    File::ensureDirectoryExists("{$this->runtimePath}/s3");
-    File::put("{$this->runtimePath}/s3/cors.json", json_encode([
+    File::ensureDirectoryExists("{$this->stubsPath}/s3");
+    File::put("{$this->stubsPath}/s3/cors.json", json_encode([
         'CORSRules' => [
             ['AllowedOrigins' => ['*'], 'AllowedMethods' => ['GET', 'HEAD']],
         ],
     ]));
 
     config([
-        'podman.runtime_path' => $this->runtimePath,
+        'podman.stubs_path' => $this->stubsPath,
         'podman.s3_buckets' => ['local', 'conversions'],
         'podman.s3_cors_buckets' => ['conversions'],
     ]);
 });
 
 afterEach(function () {
-    File::deleteDirectory($this->runtimePath);
+    File::deleteDirectory($this->stubsPath);
 });
 
 it('creates the configured buckets and applies the CORS policy', function () {
@@ -79,7 +79,7 @@ it('reports the buckets that failed to be created', function () {
 });
 
 it('fails when the CORS policy file is missing', function () {
-    File::delete("{$this->runtimePath}/s3/cors.json");
+    File::delete("{$this->stubsPath}/s3/cors.json");
 
     bindPodmanS3Manager(new MockHandler([
         new Result([]),

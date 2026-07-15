@@ -54,7 +54,7 @@ return [
 
     'config_path' => env('PODMAN_CONFIG_PATH', 'runtimes/config'),
 
-    'publish_path' => env('PODMAN_PUBLISH_PATH', 'storage/app/podman'),
+    'publish_path' => env('PODMAN_PUBLISH_PATH', 'podman'),
 
     'selinux_volume_mapping' => env('PODMAN_SELINUX_VOLUME_MAPPING', true),
 

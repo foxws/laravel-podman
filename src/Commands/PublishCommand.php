@@ -17,25 +17,25 @@ class PublishCommand extends Command
     use InteractsWithPodmanQuadlet;
 
     public $signature = 'podman:publish
-        {runtime? : The name of the runtime to publish}
+        {preset? : The name of the preset to publish}
         {--force : Overwrite existing files}
     ';
 
-    public $description = 'Publish the Podman container runtime files for customization.';
+    public $description = 'Publish a preset (its quadlets and runtime files) for customization.';
 
     public function handle(): int
     {
-        $runtime = $this->argument('runtime') ?? select(
-            label: 'Select a runtime to publish',
-            options: $this->getPodmanQuadletRuntimes(),
+        $preset = $this->argument('preset') ?? select(
+            label: 'Select a preset to publish',
+            options: $this->getPodmanQuadletPresets(),
             required: true,
         );
 
-        if (! $this->publishPodmanRuntime($runtime, force: $this->option('force'))) {
+        if (! $this->publishPodmanPreset($preset, force: $this->option('force'))) {
             return self::FAILURE;
         }
 
-        info("Runtime {$runtime} published to {$this->getPodmanRuntimePath()}");
+        info("Preset {$preset} published to {$this->podmanQuadletPath()->publishedPresetPath($preset)}");
 
         return self::SUCCESS;
     }

@@ -29,7 +29,7 @@ it('renders a quadlet source without writing a temporary file', function () {
     File::put($source, "Volume={{application}}-pgsql:/var/lib/postgresql:rw\n");
     config(['podman.quadlet_prefix' => 'acme']);
 
-    expect($this->file->renderSource($source))->toContain('acme-pgsql');
+    expect($this->file->renderSource($source, 'frankenphp-octane'))->toContain('acme-pgsql');
 
     File::delete($source);
 });
@@ -40,7 +40,7 @@ it('prepares a quadlet source file with the prefix placeholder replaced', functi
     File::put($source, "Volume={{application}}-pgsql:/var/lib/postgresql:rw\n");
     config(['podman.quadlet_prefix' => 'acme']);
 
-    $this->file->prepareSource($source, $target);
+    $this->file->prepareSource($source, $target, 'frankenphp-octane');
 
     expect(File::get($target))->toContain('acme-pgsql');
 
@@ -48,35 +48,47 @@ it('prepares a quadlet source file with the prefix placeholder replaced', functi
     File::delete($target);
 });
 
-it('replaces the workingPath, configPath and runtimePath placeholders', function () {
+it('replaces the workingPath and runtimePath placeholders', function () {
     $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
     $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';
-    config(['podman.runtime_path' => 'runtimes', 'podman.config_path' => 'runtimes/config']);
-    File::put($source, "SetWorkingDirectory={{workingPath}}\nRuntime={{runtimePath}}\nConfig={{configPath}}\n");
+    config(['podman.publish_path' => 'podman']);
+    File::put($source, "SetWorkingDirectory={{workingPath}}\nRuntime={{runtimePath}}\n");
 
-    $this->file->prepareSource($source, $target);
+    $this->file->prepareSource($source, $target, 'frankenphp-octane');
 
-    expect(File::get($target))->toBe('SetWorkingDirectory='.base_path()."\nRuntime=".base_path('runtimes')."\nConfig=".base_path('runtimes/config')."\n");
+    expect(File::get($target))->toBe(
+        'SetWorkingDirectory='.base_path()."\nRuntime=".base_path('podman/frankenphp-octane/runtimes')."\n",
+    );
 
     File::delete($source);
     File::delete($target);
 });
 
-it('uses the configured working path for the workingPath, configPath and runtimePath placeholders', function () {
+it('uses the configured working path for the workingPath and runtimePath placeholders', function () {
     $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
     $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';
-    config([
-        'podman.working_path' => '/home/francois/app',
-        'podman.runtime_path' => 'runtimes',
-        'podman.config_path' => 'runtimes/config',
-    ]);
-    File::put($source, "SetWorkingDirectory={{workingPath}}\nRuntime={{runtimePath}}\nConfig={{configPath}}\n");
+    config(['podman.working_path' => '/home/francois/app', 'podman.publish_path' => 'podman']);
+    File::put($source, "SetWorkingDirectory={{workingPath}}\nRuntime={{runtimePath}}\n");
 
-    $this->file->prepareSource($source, $target);
+    $this->file->prepareSource($source, $target, 'frankenphp-octane');
 
     expect(File::get($target))->toBe(
-        "SetWorkingDirectory=/home/francois/app\nRuntime=/home/francois/app/runtimes\nConfig=/home/francois/app/runtimes/config\n",
+        "SetWorkingDirectory=/home/francois/app\nRuntime=/home/francois/app/podman/frankenphp-octane/runtimes\n",
     );
+
+    File::delete($source);
+    File::delete($target);
+});
+
+it('scopes the runtimePath placeholder to the given preset', function () {
+    $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
+    $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';
+    config(['podman.publish_path' => 'podman']);
+    File::put($source, "Runtime={{runtimePath}}\n");
+
+    $this->file->prepareSource($source, $target, 'proxy');
+
+    expect(File::get($target))->toBe('Runtime='.base_path('podman/proxy/runtimes')."\n");
 
     File::delete($source);
     File::delete($target);
@@ -88,7 +100,7 @@ it('replaces the appEnv, appUid and appGid placeholders', function () {
     config(['app.env' => 'testing']);
     File::put($source, "Environment=APP_ENV={{appEnv}}\nEnvironment=UID={{appUid}}\nEnvironment=GID={{appGid}}\n");
 
-    $this->file->prepareSource($source, $target);
+    $this->file->prepareSource($source, $target, 'frankenphp-octane');
 
     expect(File::get($target))->toBe(
         "Environment=APP_ENV=testing\nEnvironment=UID={$this->path->uid()}\nEnvironment=GID={$this->path->gid()}\n",
@@ -104,7 +116,7 @@ it('strips selinux volume flags while preparing the source when disabled', funct
     File::put($source, "Volume={{application}}-pgsql:/var/lib/postgresql:rw,Z,U\n");
     config(['podman.selinux_volume_mapping' => false, 'podman.quadlet_prefix' => 'laravel']);
 
-    $this->file->prepareSource($source, $target);
+    $this->file->prepareSource($source, $target, 'frankenphp-octane');
 
     expect(File::get($target))->toBe("Volume=laravel-pgsql:/var/lib/postgresql:rw\n");
 
@@ -121,7 +133,7 @@ it('publishes a directory recursively while substituting placeholders in every f
     File::put("{$source}/Containerfile", "FROM base\n");
     File::put("{$source}/sites/app.quadlets", "Network={{application}}.network\n");
 
-    $this->file->publishDirectory($source, $target);
+    $this->file->publishDirectory($source, $target, 'frankenphp-octane');
 
     expect(File::get("{$target}/Containerfile"))->toBe("FROM base\n")
         ->and(File::get("{$target}/sites/app.quadlets"))->toBe("Network=acme.network\n");

@@ -21,26 +21,54 @@ class PodmanQuadletPath
         );
     }
 
-    public function quadletsPath(): string
+    public function stubsPath(): string
     {
-        $path = Config::get('podman.quadlets_path');
-
-        if ($path && File::isDirectory($path)) {
-            return $path;
-        }
-
-        return "{$this->vendorPath()}/quadlets";
+        return Config::string('podman.stubs_path');
     }
 
-    public function runtimesPath(): string
+    /**
+     * The preset's original, vendor-provided source directory. Always the
+     * vendor copy regardless of whether it's been published, since this is
+     * what "podman:publish" copies from.
+     */
+    public function vendorPresetPath(string $preset): string
     {
-        $path = Config::get('podman.runtimes_path');
+        return "{$this->vendorPath()}/stubs/{$preset}";
+    }
 
-        if ($path && File::isDirectory($path)) {
-            return $path;
+    /**
+     * Where "podman:publish" copies a preset to for customization.
+     */
+    public function publishedPresetPath(string $preset): string
+    {
+        return "{$this->stubsPath()}/{$preset}";
+    }
+
+    /**
+     * A preset's source directory ("quadlets/" + "runtimes/") to read
+     * templates from. Falls back to the vendor-provided preset per preset,
+     * not as a whole directory swap — customizing one preset doesn't
+     * require copying every other preset too.
+     */
+    public function presetPath(string $preset): string
+    {
+        $candidate = $this->publishedPresetPath($preset);
+
+        if (File::isDirectory($candidate)) {
+            return $candidate;
         }
 
-        return "{$this->vendorPath()}/runtimes";
+        return $this->vendorPresetPath($preset);
+    }
+
+    public function presetQuadletsPath(string $preset): string
+    {
+        return "{$this->presetPath($preset)}/quadlets";
+    }
+
+    public function presetRuntimesPath(string $preset): string
+    {
+        return "{$this->presetPath($preset)}/runtimes";
     }
 
     public function basePath(): string
@@ -50,41 +78,46 @@ class PodmanQuadletPath
 
     /**
      * The real, host-visible project path, used only for values baked into
-     * rendered Quadlet content ("{{workingPath}}" and the other placeholders
-     * below) — not for where this process itself reads or writes files
-     * (that's always relative to basePath()). They differ when Artisan
-     * renders templates from somewhere whose filesystem view of the project
-     * isn't the host's, e.g. inside the disposable container used by
-     * "Setting up without PHP on the host".
+     * rendered Quadlet content ("{{workingPath}}"/"{{runtimePath}}") — not
+     * for where this process itself reads or writes files (that's always
+     * relative to basePath()). They differ when Artisan renders templates
+     * from somewhere whose filesystem view of the project isn't the host's,
+     * e.g. inside the disposable container used by "Setting up without PHP
+     * on the host".
      */
     public function workingPath(): string
     {
         return Config::get('podman.working_path') ?: $this->basePath();
     }
 
-    public function runtimePath(): string
-    {
-        return $this->resolvePath(Config::get('podman.runtime_path'), $this->basePath());
-    }
-
-    public function workingRuntimePath(): string
-    {
-        return $this->resolvePath(Config::get('podman.runtime_path'), $this->workingPath());
-    }
-
-    public function configPath(): string
-    {
-        return $this->resolvePath(Config::get('podman.config_path'), $this->basePath());
-    }
-
-    public function workingConfigPath(): string
-    {
-        return $this->resolvePath(Config::get('podman.config_path'), $this->workingPath());
-    }
-
     public function publishPath(): string
     {
         return $this->resolvePath(Config::get('podman.publish_path'), $this->basePath());
+    }
+
+    /**
+     * Where a preset's generated ".quadlets" files and "runtimes/" build
+     * files are written to, relative to this process's own filesystem.
+     */
+    public function presetPublishPath(string $preset): string
+    {
+        return "{$this->publishPath()}/{$preset}";
+    }
+
+    public function presetPublishRuntimesPath(string $preset): string
+    {
+        return "{$this->presetPublishPath($preset)}/runtimes";
+    }
+
+    /**
+     * The host-visible equivalent of presetPublishRuntimesPath(), baked into
+     * the "{{runtimePath}}" placeholder.
+     */
+    public function workingPresetRuntimePath(string $preset): string
+    {
+        $publishPath = $this->resolvePath(Config::get('podman.publish_path'), $this->workingPath());
+
+        return "{$publishPath}/{$preset}/runtimes";
     }
 
     public function domain(): string
@@ -127,17 +160,9 @@ class PodmanQuadletPath
     /**
      * @return array<int, string>
      */
-    public function defaultServices(): array
+    public function defaultPresets(): array
     {
-        return $this->parseNameList(Config::get('podman.services', []));
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    public function defaultRuntimes(): array
-    {
-        return $this->parseNameList(Config::get('podman.runtimes', []));
+        return $this->parseNameList(Config::get('podman.presets', []));
     }
 
     /**
@@ -158,7 +183,7 @@ class PodmanQuadletPath
 
     public function s3CorsPolicyPath(): string
     {
-        return "{$this->runtimePath()}/s3/cors.json";
+        return "{$this->presetPath('s3')}/cors.json";
     }
 
     public function shouldReloadSystemd(): bool

@@ -18,7 +18,7 @@ if ! command -v podman >/dev/null 2>&1; then
 fi
 
 # Define environment variables...
-PHP_IMAGE=${LPOD_SETUP_PHP_IMAGE:-"docker.io/dunglas/frankenphp:latest"}
+PHP_IMAGE=${LPOD_SETUP_PHP_IMAGE:-"docker.io/library/php:8.5-cli"}
 PUBLISH_PATH=${LPOD_PUBLISH_PATH:-"podman"}
 
 # Render every requested preset's ".quadlets"/runtime files into

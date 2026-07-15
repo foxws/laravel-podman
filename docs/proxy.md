@@ -1,8 +1,8 @@
 # Proxy
 
-The bundled `proxy` preset runs [Caddy](https://caddyserver.com/) as a reverse proxy. It terminates HTTPS — with automatic local certificates in development and automatic Let's Encrypt certificates in production — and routes subdomains to your app, Vite dev server, Reverb, and RustFS containers.
+The bundled `proxy` preset runs [Caddy](https://caddyserver.com/) as a reverse proxy. It handles HTTPS (local certificates in development, Let's Encrypt in production) and routes subdomains to your app, Vite, Reverb, and RustFS containers.
 
-> To use Traefik, Nginx, or another proxy instead, omit `proxy` when running `podman:setup` (`--preset=` without `proxy`, and drop it from the `presets` config too) and point your own proxy at the `app`, `reverb`, and `rustfs` containers.
+> To use Traefik, Nginx, or another proxy, omit the `proxy` preset when running `podman:setup` (and remove it from `presets`), then point your own proxy to `app`, `reverb`, and `rustfs`.
 
 ## Setup
 
@@ -22,14 +22,14 @@ lpod install proxy/proxy.quadlets --replace
 
 ## Configuring Caddy
 
-The preset's Caddy config lives at `stubs/proxy/runtimes/` (`Caddyfile` and `sites/laravel.Caddyfile`) — vendor-provided until you customize it. `podman:generate proxy` renders it into `podman/proxy/runtimes/`, which is what the running container actually mounts at `/etc/caddy`; that generated copy gets overwritten every time you regenerate, so it's only good for a quick, throwaway tweak:
+The preset Caddy config lives in `stubs/proxy/runtimes/` (`Caddyfile` and `sites/laravel.Caddyfile`) until you customize it. `podman:generate proxy` renders those files into `podman/proxy/runtimes/`, which the running container mounts at `/etc/caddy`. That generated folder is overwritten on each regenerate, so use it only for quick temporary changes:
 
 ```bash
 vi podman/proxy/runtimes/Caddyfile
 lpod proxy restart
 ```
 
-For a change that should survive regeneration, publish the preset first, edit the published copy, then regenerate and restart:
+For persistent changes, publish the preset first, edit the published copy, then regenerate and restart:
 
 ```bash
 php artisan podman:publish proxy   # copies stubs/proxy into containers/stubs/proxy
@@ -38,7 +38,7 @@ php artisan podman:generate proxy
 lpod proxy restart
 ```
 
-The bundled `sites/laravel.Caddyfile` routes your app's domain (derived from `APP_URL`) and a few subdomains to their containers:
+The bundled `sites/laravel.Caddyfile` routes your app domain (from `APP_URL`) and a few subdomains:
 
 | Subdomain | Routes to            |
 | --------- | --------------------- |
@@ -68,11 +68,11 @@ For local development, point your app's domain and subdomains at `127.0.0.1` in 
 ::1       laravel.test vite.laravel.test ws.laravel.test s3.laravel.test fs.laravel.test mail.laravel.test
 ```
 
-For a homelab/multi-device setup, a local DNS resolver (e.g. [AdGuard Home](https://adguard.com/en/adguard-home/overview.html)) with a wildcard rewrite for `*.laravel.test` → your server IP avoids editing hosts files per device.
+For homelab or multi-device setups, use a local DNS resolver (for example [AdGuard Home](https://adguard.com/en/adguard-home/overview.html)) with a wildcard rewrite from `*.laravel.test` to your server IP. This avoids editing hosts files on every device.
 
 ## Trusting the local certificate
 
-Local development uses Caddy's own certificate authority (`local_certs` in the bundled `Caddyfile`). Trust it once so your browser/OS stop flagging it:
+Local development uses Caddy's own certificate authority (`local_certs` in the bundled `Caddyfile`). Trust it once so your browser/OS stop warning:
 
 ```bash
 podman cp systemd-proxy:/data/caddy/pki/authorities/local/root.crt ~/proxy.crt
@@ -84,11 +84,11 @@ sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keyc
 sudo cp ~/proxy.crt /usr/local/share/ca-certificates/caddy.crt && sudo update-ca-certificates
 ```
 
-This is for local development only — in production, point `APP_URL` (and the domains in `sites/*.Caddyfile`) at a real public domain, and Caddy obtains/renews a proper Let's Encrypt certificate automatically.
+This is for local development only. In production, point `APP_URL` (and domains in `sites/*.Caddyfile`) to a real public domain and Caddy will automatically obtain and renew a Let's Encrypt certificate.
 
 ## Troubleshooting
 
 - **Certificate not trusted** — re-import the CA certificate (above) and restart your browser.
 - **Connection refused** — check `vendor/bin/lpod proxy status`, and confirm ports 80/443 aren't already in use by something else on the host.
 - **404 / wrong container** — verify the domain in `sites/laravel.Caddyfile` matches `APP_URL`, and that the target service (e.g. `reverb`) is installed and running.
-- **Changes not applying** — Caddy only picks up `podman/proxy/runtimes/` edits after `vendor/bin/lpod proxy restart`; if you edited `containers/stubs/proxy/runtimes/` instead, run `php artisan podman:generate proxy` first to re-render it into `podman/proxy/runtimes/`.
+- **Changes not applying** — Caddy picks up `podman/proxy/runtimes/` changes only after `vendor/bin/lpod proxy restart`; if you changed `containers/stubs/proxy/runtimes/`, run `php artisan podman:generate proxy` first.

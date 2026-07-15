@@ -1,6 +1,6 @@
 # Customizing
 
-Everything the package does is driven by `config/podman.php` (publish it with `php artisan vendor:publish --tag="laravel-podman-config"`) plus the preset template files it reads from disk. This page covers the ways to customize both.
+This package is driven by `config/podman.php` (publish it with `php artisan vendor:publish --tag="podman-config"`) and preset template files on disk. This page shows how to customize both.
 
 ## Config keys
 
@@ -22,12 +22,12 @@ Everything the package does is driven by `config/podman.php` (publish it with `p
 
 ## Custom presets
 
-A preset is a folder containing a `quadlets/` directory of `*.quadlets` files and a `runtimes/` directory of container build files (e.g. the bundled `frankenphp-octane` and `proxy` presets). If `stubs_path` (e.g. `containers/stubs/frankenphp-octane`) exists for a given preset, the package looks there **instead of** the vendor-provided one — it's a full swap per preset, not a per-file overlay, and other presets are unaffected. That means:
+A preset is a folder with a `quadlets/` directory (`*.quadlets` files) and a `runtimes/` directory (container build files), for example the bundled `frankenphp-octane` and `proxy` presets. If `stubs_path` (for example `containers/stubs/frankenphp-octane`) exists for a preset, the package uses that folder **instead of** the vendor one. It is a full replacement per preset (not a file-by-file merge), and other presets are unchanged.
 
-- To tweak one existing service (e.g. bump `pgsql`'s memory limit), publish the whole preset first (`php artisan podman:publish frankenphp-octane`), then edit the one file you care about under `containers/stubs/frankenphp-octane/quadlets/`. `podman:generate` will only see files under `containers/stubs/frankenphp-octane` once it exists — nothing from the vendor preset is merged in.
-- To add a brand new service to a preset, create `containers/stubs/frankenphp-octane/quadlets/my-service.quadlets` (following the same `# FileName=...` / `---`-separated block format as the bundled ones — see any existing file for the syntax) and generate it with `php artisan podman:generate frankenphp-octane`, then `lpod install frankenphp-octane/my-service.quadlets`.
-- The same applies to a preset's `runtimes/` folder for customizing the application image build (`Containerfile`, `entrypoint.sh`, php ini files) or the proxy preset's Caddy templates.
-- To add a whole new preset (e.g. an alternative PHP runtime), create `containers/stubs/my-preset/quadlets/`/`containers/stubs/my-preset/runtimes/` directly — there's no vendor fallback to swap out since the preset doesn't exist upstream.
+- To tweak one existing service (for example, `pgsql` memory), publish the preset first (`php artisan podman:publish frankenphp-octane`), then edit the file under `containers/stubs/frankenphp-octane/quadlets/`.
+- To add a new service to a preset, create `containers/stubs/frankenphp-octane/quadlets/my-service.quadlets` (same `# FileName=...` + `---` block format as existing files), run `php artisan podman:generate frankenphp-octane`, then `lpod install frankenphp-octane/my-service.quadlets`.
+- The same rule applies to `runtimes/` when customizing app build files (`Containerfile`, `entrypoint.sh`, php ini files) or proxy Caddy templates.
+- To add a brand new preset (for example, another PHP runtime), create `containers/stubs/my-preset/quadlets/` and `containers/stubs/my-preset/runtimes/` directly.
 
 Template files can use the placeholders below, substituted at publish/generate time:
 
@@ -58,7 +58,7 @@ lpod install frankenphp-octane/pgsql.quadlets --replace
 
 ## Multi-application hosts
 
-Running more than one application on the same host? Pass `--application=` to `lpod install` (requires Podman 6+) to install each app's services into their own subdirectory, avoiding name clashes — see [The `lpod` CLI](lpod.md) for details.
+Running more than one application on the same host? Pass `--application=` to `lpod install` (requires Podman 6+) so each app gets its own install subdirectory and names do not clash — see [The `lpod` CLI](lpod.md).
 
 ## See also
 

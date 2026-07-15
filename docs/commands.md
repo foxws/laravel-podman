@@ -1,8 +1,8 @@
 # Command Reference
 
-The package discovers preset folders (each containing a `quadlets/` directory of `*.quadlets` files and a `runtimes/` directory of container build files) on disk, and exposes them through the Artisan commands below. Every command that needs a preset name will prompt you to select one interactively when it's omitted.
+The package finds preset folders on disk (`quadlets/` + `runtimes/`) and exposes them through the Artisan commands below. If you don't pass a preset name, the command prompts you to choose one.
 
-These commands only ever render — none of them touch the `podman` binary, so they work anywhere PHP is available, including inside a container without Podman installed. Installing, listing, printing, removing, and setting secrets for the rendered services is the job of the `lpod`/`lpod-setup`/`lpod-secrets` Composer binaries instead — see [The `lpod` CLI](lpod.md). All three of those run on the host, since they need the real `podman`/`systemctl` binaries.
+These commands only render files. They never call the `podman` binary, so they work anywhere PHP runs (including inside a container without Podman). Installing, listing, printing, removing, and setting secrets is handled by the host-side `lpod`/`lpod-setup`/`lpod-secrets` binaries — see [The `lpod` CLI](lpod.md).
 
 ## Setup Application
 
@@ -38,7 +38,7 @@ See [Setting up without PHP on the host](host-setup.md) for running this somewhe
 
 ## Setup S3 Buckets
 
-Creates the S3 buckets your app needs and applies a CORS policy to the ones that serve requests directly to a browser. Requires `aws/aws-sdk-php` (`composer require aws/aws-sdk-php`) — not installed by default, since most apps don't need S3. See [S3 Buckets](s3.md) for the full guide.
+Creates the S3 buckets your app needs and applies a CORS policy to the ones browsers read directly. Requires `aws/aws-sdk-php` (`composer require aws/aws-sdk-php`), which is optional and not installed by default. See [S3 Buckets](s3.md) for details.
 
 ```bash
 php artisan podman:s3-setup
@@ -56,4 +56,4 @@ podman volume export laravel-pgsql -o pgsql-backup.tar
 lpod my-app run pg_dump -U postgres -d laravel > backup.sql
 ```
 
-Restore with `podman volume import laravel-pgsql pgsql-backup.tar` (before reinstalling the service) or by replaying the database-specific dump, depending on which approach you used to back up.
+Restore with `podman volume import laravel-pgsql pgsql-backup.tar` (before reinstalling the service), or replay the database dump if you used that method.

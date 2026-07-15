@@ -5,24 +5,22 @@
 [![GitHub Code Style Action Status](https://github.com/foxws/laravel-podman/actions/workflows/fix-php-code-style-issues.yml/badge.svg)](https://github.com/foxws/laravel-podman/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/foxws/laravel-podman.svg?style=flat-square)](https://packagist.org/packages/foxws/laravel-podman)
 
-Laravel Podman brings [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) support to your Laravel application, installing your app and its sibling services (database, cache, search engine, proxy, ...) as rootless, systemd-managed containers.
+Laravel Podman brings [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) support to your Laravel application by installing your app and its services (database, cache, search engine, proxy, ...) as [systemd-managed](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) containers.
 
 ## Features
 
-- **Artisan renders, `lpod` installs** — Artisan commands substitute your app's config into a preset's Quadlet units and never touch the `podman` binary, so they work even without Podman installed; `lpod` handles installing, listing, printing, and removing the systemd-managed services on the host.
-- **A preset per environment** — `frankenphp-octane` (production-style app plus its full set of sibling services), `development` (the same services with your working copy live-mounted for local editing instead of baked into the image), `devcontainer` (a VS Code Dev Containers image), and `proxy` (Caddy) ship out of the box — pick the ones you need, or add your own. See [Presets](#presets) below.
-- **Podman secrets, not plaintext `.env` files** — application and service credentials (database passwords, your `.env` file, ...) are stored as Podman secrets and mounted into containers at runtime, rather than baked into the image or passed around as plain environment variables.
-- **FrankenPHP application image** — a multi-stage `Containerfile` for your app with dedicated `development` and `frankenphp-octane` (production) build targets sharing the same FrankenPHP runtime.
-- **S3-compatible object storage setup** — the `s3` preset and `podman:s3-setup` command create buckets and apply a CORS policy against any AWS-compatible service (MinIO, RustFS, Garage, real S3, ...). See [S3 Buckets](docs/s3.md).
-- **Sail-inspired `lpod` CLI** — a `lpod` script for day-to-day container interaction (starting/stopping services, opening a shell, running Artisan/Composer/Node commands, and more).
-- **Customizable, like Sail's `docker-compose.yml`** — publish the bundled `*.quadlets`/runtime templates into your project to tweak an existing service or add your own, the same way Sail lets you edit its published `docker-compose.yml`. See [Customizing](docs/customizing.md).
+- **Ready presets** — Use built-in presets for common needs: `frankenphp-octane`, `development`, `devcontainer`, and `proxy`. You can also add your own. See [Presets](#presets).
+- **Generate first, install later** — Artisan commands create Quadlet files from your app config. Then `lpod` installs and manages those services on the host.
+- **Simple daily commands with `lpod`** — Start and stop services, open a shell, run app commands, and manage installed units from one CLI.
+- **Setup without host PHP (`lpod-setup`)** — Render presets on machines that have Podman but not PHP installed.
+- **Safe secret handling (`lpod-secrets`)** — Store `.env` values and service passwords as Podman secrets instead of plain text files.
 
-See the [`docs/`](docs) folder for more: [Command Reference](docs/commands.md), [Setting up without PHP on the host](docs/host-setup.md), [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [The `lpod` CLI](docs/lpod.md), [Customizing](docs/customizing.md).
+See the [`docs/`](docs) folder for more: [Command Reference](docs/commands.md), [Setting up without PHP on the host](docs/host-setup.md), [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [The `lpod` CLI](docs/lpod.md), [Customizing](docs/customizing.md), [Comparison](docs/comparison.md).
 
 ## Requirements
 
 - Linux with systemd (rootless or system-wide); macOS and Windows, including WSL, are not supported
-- A recent version of Podman with the `quadlet` CLI plugin (`podman quadlet --help` should work); the `--application` option (`lpod install ... --application=my-app`) requires Podman 6+
+- A recent version of Podman with the `quadlet` CLI plugin (`podman quadlet --help` should work)
 
 ## Installation
 
@@ -87,13 +85,13 @@ return [
 
 ## Presets
 
-| Preset              | Purpose                                                                                                                                                            |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `frankenphp-octane` | Production-style app image (code baked in) plus its full set of sibling services — database, cache, queue worker, WebSockets, scheduler, SSR, search, S3-compatible storage, mail catcher. |
-| `development`       | The same services, but with your working copy live-mounted into the container instead of baked in, for local editing. Commented out by default — see the config above. |
-| `devcontainer`       | An image for the VS Code/JetBrains [Dev Containers](https://containers.dev/) workflow. Not Quadlet-managed — just a `Containerfile` and `devcontainer.json`, no `quadlets/`. |
-| `proxy`              | [Caddy](https://caddyserver.com/) reverse proxy terminating HTTPS in front of the other services. See [Proxy](docs/proxy.md).                                     |
-| `s3`                 | A `cors.json` policy applied by `podman:s3-setup` against your S3-compatible storage buckets. Not Quadlet-managed either — no `quadlets/`/`runtimes/`, just the one file. See [S3 Buckets](docs/s3.md). |
+| Preset              | Purpose                                                                                                                                                                                                 |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frankenphp-octane` | Production-style app image (code baked in) plus its full set of sibling services — database, cache, queue worker, WebSockets, scheduler, SSR, search, S3-compatible storage, mail catcher.              |
+| `development`       | The same services, but with your working copy live-mounted into the container instead of baked in, for local editing. Commented out by default — see the config above.                                  |
+| `devcontainer`      | An image for the VS Code/JetBrains [Dev Containers](https://containers.dev/) workflow. Not Quadlet-managed — just a `Containerfile` and `devcontainer.json`, no `quadlets/`.                            |
+| `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy terminating HTTPS in front of the other services. See [Proxy](docs/proxy.md).                                                                           |
+| `s3`                | A `cors.json` policy applied by `podman:s3-setup` against your S3-compatible storage buckets. Not Quadlet-managed either — no `quadlets/`/`runtimes/`, just the one file. See [S3 Buckets](docs/s3.md). |
 
 **Custom presets.** A preset is a folder containing a `quadlets/` directory of `*.quadlets` files and a `runtimes/` directory of container build files (the `devcontainer`/`s3` presets are exceptions — see the table above). `stubs_path` controls where the package looks for preset folders, and defaults to `containers/stubs` in your project. The fallback happens per preset, not as a whole directory swap — publish one preset (`php artisan podman:publish frankenphp-octane`) to customize it without needing to touch any other preset. Leave a preset unpublished to keep using the one bundled with the package.
 
@@ -107,7 +105,7 @@ php artisan podman:setup
 
 > **Note:** This step only renders files — it substitutes your app's config into the preset's templates and writes the result to the `publish_path` config key (`podman` by default, one subfolder per preset). It never touches the `podman` binary, so it works even without Podman installed (e.g. inside a disposable `php` container in CI). If you don't have PHP on the host at all, see [Setting up without PHP on the host](docs/host-setup.md).
 
-The presets it generates by default come from the `presets` config key (`frankenphp-octane`/`proxy` out of the box — see [Presets](#presets)) — edit that, set `PODMAN_DEFAULT_PRESETS`, or override per run:
+The presets it generates by default come from the `presets` config key (`frankenphp-octane`/`proxy` out of the box; `development`/`devcontainer` are opt-in — see [Presets](#presets)) — edit that, set `PODMAN_DEFAULT_PRESETS`, or override per run:
 
 ```bash
 php artisan podman:setup --preset=frankenphp-octane
@@ -154,12 +152,12 @@ See [Setting up without PHP on the host](docs/host-setup.md) for the raw `podman
 
 The package discovers preset folders (each containing a `quadlets/` directory of `*.quadlets` files and a `runtimes/` directory of container build files) on disk, and exposes them through Artisan commands that only ever render — never install. Every command that needs a preset name will prompt you to select one interactively when it's omitted. Full flag reference and examples: [Command Reference](docs/commands.md).
 
-| Command | Description |
-| --- | --- |
-| `podman:setup` | Generate the default set of presets in one go (see [Quick Start](#quick-start)) |
-| `podman:publish PRESET` | Publish a preset (its quadlets and runtime files) for customization |
-| `podman:generate PRESET` | Render a single preset's quadlets and runtime files |
-| `podman:s3-setup` | Create S3 buckets and a CORS policy (requires `aws/aws-sdk-php`, see [S3 Buckets](docs/s3.md)) |
+| Command                  | Description                                                                                    |
+| ------------------------ | ---------------------------------------------------------------------------------------------- |
+| `podman:setup`           | Generate the default set of presets in one go (see [Quick Start](#quick-start))                |
+| `podman:publish PRESET`  | Publish a preset (its quadlets and runtime files) for customization                            |
+| `podman:generate PRESET` | Render a single preset's quadlets and runtime files                                            |
+| `podman:s3-setup`        | Create S3 buckets and a CORS policy (requires `aws/aws-sdk-php`, see [S3 Buckets](docs/s3.md)) |
 
 Installing, listing, printing, removing, and setting secrets for the rendered services is `lpod`'s job, not Artisan's — see below.
 

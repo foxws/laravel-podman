@@ -1,8 +1,8 @@
 # The `lpod` CLI
 
-The package ships three Composer binaries that all run **on the host** — `vendor/bin/lpod`, `vendor/bin/lpod-setup`, and `vendor/bin/lpod-secrets`. All three talk to the real `podman`/`systemctl` binaries, unlike the Artisan `podman:*` commands, which only render templates and can run anywhere PHP is available (see [Command Reference](commands.md)).
+The package ships three Composer binaries that run **on the host**: `vendor/bin/lpod`, `vendor/bin/lpod-setup`, and `vendor/bin/lpod-secrets`. They use the real `podman`/`systemctl` binaries. Artisan `podman:*` commands only render files and can run anywhere PHP is available (see [Command Reference](commands.md)).
 
-`lpod` itself is a thin wrapper around `podman exec`, `podman quadlet`, and `systemctl` for the Quadlet services rendered by Artisan (`podman:setup`/`podman:generate`) and installed with `lpod install`, similar in spirit to Laravel Sail's `sail` script. Any command it doesn't recognize is passed straight through to the `podman` binary. `lpod setup` and `lpod secrets` are convenience aliases for the sibling `lpod-setup`/`lpod-secrets` binaries — see [Quadlet management](#quadlet-management) below.
+`lpod` is a thin wrapper around `podman exec`, `podman quadlet`, and `systemctl` for services rendered by Artisan (`podman:setup`/`podman:generate`) and installed with `lpod install`. Any command it does not recognize is passed to `podman` directly. `lpod setup` and `lpod secrets` are convenience aliases for `lpod-setup` and `lpod-secrets` — see [Quadlet management](#quadlet-management).
 
 ```bash
 vendor/bin/lpod SERVICE COMMAND [options] [arguments]
@@ -36,7 +36,7 @@ function lpod
 end
 ```
 
-**Or install it onto your `PATH`.** This is simplest if you're only working with a single Podman-managed application on the machine, since the symlink always points at the `vendor/bin/lpod` of the project you created it from:
+**Or install it on your `PATH`.** This is simplest when you work with one Podman-managed app on the machine, because the symlink points to one project's `vendor/bin/lpod`:
 
 ```bash
 ln -s "$(pwd)/vendor/bin/lpod" ~/.local/bin/lpod
@@ -49,9 +49,9 @@ Make sure the target directory (`~/.local/bin` or `/usr/local/bin`) is on your `
 
 ## Quadlet management
 
-Once Artisan has rendered a preset (`php artisan podman:setup`/`podman:generate frankenphp-octane`), `install` takes it from a rendered file to a running, systemd-managed service — it takes a `PRESET/SERVICE.quadlets` path (relative to the `publish_path` config key, `podman` by default) rather than a `SERVICE` name. The rest (`secrets`, `remove`, `list`, `print`) operate on the already-installed unit by name instead. All of them forward any extra flags straight to `podman` — pass `--replace`, `--application=my-app`, `--force`, `--ignore`, etc. as needed.
+After Artisan renders presets (`php artisan podman:setup` or `podman:generate frankenphp-octane`), `install` turns a rendered file into a running systemd-managed service. It takes a `PRESET/SERVICE.quadlets` path (relative to `publish_path`, `podman` by default), not a service name. The other commands (`secrets`, `remove`, `list`, `print`) target already-installed units by name. Extra flags are forwarded to `podman` (`--replace`, `--application=my-app`, `--force`, `--ignore`, etc.).
 
-`lpod setup` is an alias for the `lpod-setup` script (`vendor/bin/lpod-setup`, a sibling Composer binary — see above), which renders presets by running `php artisan podman:setup` inside a container — useful when PHP isn't available on the host itself. Once rendering finishes, it prints a `podman quadlet install` command (with the file's full, host-absolute path) for each rendered service, ready to copy/paste. See [Setting up without PHP on the host](host-setup.md) for details. Any arguments are forwarded straight to `podman:setup`.
+`lpod setup` is an alias for `vendor/bin/lpod-setup`. It runs `php artisan podman:setup` inside a container, which is useful when PHP is not installed on the host. When rendering finishes, it prints `podman quadlet install` commands (with full host paths) for each rendered service. Arguments are forwarded to `podman:setup`. See [Setting up without PHP on the host](host-setup.md).
 
 ```bash
 lpod setup                                              # Renders the default presets without PHP on the host
@@ -70,7 +70,7 @@ lpod list --filter=status=running --format=json --noheading
 lpod print pgsql                                         # Prints the generated systemd unit for a service
 ```
 
-`secrets` is an alias for the `lpod-secrets` script (`vendor/bin/lpod-secrets`, a sibling Composer binary — see above). It reads the `Secret=` directives from the installed unit (`podman quadlet print SERVICE.container`), so the service must already be `install`ed — `type=env` secrets prompt for a value directly (masked input), while `type=mount` secrets (the default when `type=` is omitted) prompt for a file path, defaulting to `.env`, whose contents are stored as the secret. A secret needed under several names (e.g. a database password used as both `POSTGRES_PASSWORD` and `PGPASSWORD`) is only prompted for once.
+`secrets` is an alias for `vendor/bin/lpod-secrets`. It reads `Secret=` directives from an installed unit (`podman quadlet print SERVICE.container`), so the service must be installed first. `type=env` prompts for a value (masked input). `type=mount` (default if `type=` is omitted) prompts for a file path, defaulting to `.env`, and stores that file contents as the secret. If one secret is reused under multiple names (for example `POSTGRES_PASSWORD` and `PGPASSWORD`), it is prompted once.
 
 > **Warning:** `remove`/`uninstall` delete the Podman volumes owned by the services they remove, with no undo — see [Backing up volumes](commands.md#backing-up-volumes).
 
@@ -142,7 +142,7 @@ lpod --help                          # Print the full list of commands
 
 ### `SERVICE` is only used for container commands
 
-`lpod SERVICE COMMAND ...` always needs a `SERVICE` as the first word, but it's only actually used for the built-in lifecycle/exec commands (`up`, `shell`, `run`, `artisan`, ...). Any command `lpod` doesn't recognize is passed straight through to the `podman` binary instead, and `SERVICE` is discarded entirely:
+`lpod SERVICE COMMAND ...` always starts with `SERVICE`, but `SERVICE` is only used for built-in lifecycle/exec commands (`up`, `shell`, `run`, `artisan`, ...). For commands `lpod` does not recognize, it passes through to `podman` and ignores `SERVICE`:
 
 ```bash
 # SERVICE ("_") is ignored here — this just runs `podman logs -f systemd-app`
@@ -151,11 +151,11 @@ lpod _ inspect systemd-pgsql
 lpod _ stats
 ```
 
-Container names always follow the `systemd-<service>` pattern (e.g. `systemd-pgsql`, `systemd-app-horizon`), since that's what Quadlet names them to avoid clashing with unmanaged containers — useful for `podman cp`, `podman logs`, `podman inspect`, etc.
+Container names follow the `systemd-<service>` pattern (for example `systemd-pgsql`, `systemd-app-horizon`). This is useful for `podman cp`, `podman logs`, `podman inspect`, and similar commands.
 
 ### `run` for one-off commands
 
-`lpod SERVICE run CMD [args...]` execs an arbitrary command in a service's container — handy for things there isn't a dedicated shortcut for:
+`lpod SERVICE run CMD [args...]` runs any command in a service container when there is no dedicated shortcut:
 
 ```bash
 lpod pgsql run pg_dump -U postgres -d app > backup.sql
@@ -163,7 +163,7 @@ lpod valkey run valkey-cli flushall
 lpod app run env FOO=bar php artisan some:command   # inject a one-off env var via `env`
 ```
 
-Redirecting output (`> backup.sql`) makes `lpod` skip allocating a pseudo-TTY automatically (it only requests one when stdout is actually a terminal), so piping/redirecting a command's output doesn't get corrupted by TTY control characters.
+When output is redirected (`> backup.sql`), `lpod` automatically skips pseudo-TTY allocation. This avoids TTY control characters in redirected or piped output.
 
 ### `bin` for Composer binaries
 
@@ -176,7 +176,7 @@ lpod app bin pest --filter=SomeTest
 
 ### `debug` for a one-off Xdebug run
 
-`lpod SERVICE debug ARTISAN_COMMAND` runs an Artisan command with `XDEBUG_TRIGGER=1` set for just that invocation, instead of leaving Xdebug enabled permanently:
+`lpod SERVICE debug ARTISAN_COMMAND` runs one Artisan command with `XDEBUG_TRIGGER=1` instead of enabling Xdebug all the time:
 
 ```bash
 lpod app debug queue:work
@@ -185,15 +185,15 @@ lpod app debug tinker
 
 ### `root-shell` vs `shell`
 
-`shell`/`bash` exec into the container as the mapped app user (`docker` by default); `root-shell`/`root-bash` exec as `root` — reach for the latter when you need to install packages or fix permissions ad hoc inside a running container.
+`shell`/`bash` enter the container as the mapped app user (`docker` by default). `root-shell`/`root-bash` enter as `root` for tasks like package installs or permission fixes.
 
 ### AI agent env vars are forwarded automatically
 
-If `lpod` detects it's running under a recognized AI coding agent (Claude Code, Cursor, Copilot, Codex, Gemini CLI, and a handful of others — see the `AGENT_ENV_VARS` list in `bin/lpod`), it forwards those identifying environment variables into the container for every `exec`-based command. Useful if application code (or a package) branches on agent presence.
+If `lpod` detects a supported AI coding agent (Claude Code, Cursor, Copilot, Codex, Gemini CLI, and others; see `AGENT_ENV_VARS` in `bin/lpod`), it forwards those env vars into the container for `exec`-based commands.
 
 ### Rootless vs system-wide, automatically
 
-`up`/`down`/`restart`/`status` use `systemctl --user` when you run `lpod` as a normal user, and plain `systemctl` when run as `root` — matching whichever manager actually owns your installed Quadlet units. You don't need to remember which one applies.
+`up`/`down`/`restart`/`status` use `systemctl --user` for normal users and plain `systemctl` for `root`, matching whichever manager owns the installed units.
 
 ### Swapping the Podman binary
 
@@ -203,8 +203,8 @@ Set `LPOD_PODMAN_BINARY` to point `lpod` at a different single executable (e.g. 
 LPOD_PODMAN_BINARY=/usr/local/bin/podman-remote lpod app shell
 ```
 
-It must be a single executable path — `LPOD_PODMAN_BINARY="sudo podman"` won't work, since it's invoked directly rather than through a shell.
+It must be a single executable path. `LPOD_PODMAN_BINARY="sudo podman"` will not work because `lpod` calls it directly, not through a shell.
 
 ### `dusk`/`dusk:fails` expect a Selenium container
 
-Both point `APP_URL` at the app's own container hostname and `DUSK_DRIVER_URL` at `http://selenium:4444/wd/hub` for the duration of the test run — install a `selenium` service on the same network first, [laravel/dusk](https://github.com/laravel/dusk) isn't otherwise wired up.
+Both set `APP_URL` to the app container hostname and `DUSK_DRIVER_URL` to `http://selenium:4444/wd/hub` for that test run. Install a `selenium` service on the same network first; [laravel/dusk](https://github.com/laravel/dusk) is not wired otherwise.

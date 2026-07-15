@@ -15,7 +15,7 @@ ENV PNPM_HOME="/pnpm"
 ENV PATH="${PATH}:${PNPM_HOME}"
 ENV FRANKEN_CLI="frankenphp php-cli /app/artisan"
 ENV PHP_CLI="php -d variables_order=EGPCS /app/artisan"
-ENV APP_COMMAND="${FRANKEN_CLI} octane:frankenphp --host=0.0.0.0 --port=8000 --admin-port=2019"
+ENV APP_COMMAND="${FRANKEN_CLI} octane:frankenphp --host=0.0.0.0 --port=8000 --admin-port=2019 --watch"
 ENV APP_USER="docker"
 
 # Set timezone
@@ -24,6 +24,7 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezo
 # Main dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gnupg curl ca-certificates libcap2-bin unzip \
+    git nano openssh-client awscli \
     libavif-bin jpegoptim optipng pngquant gifsicle \
     && apt-get -y autoremove \
     && apt-get clean \
@@ -59,7 +60,7 @@ RUN mkdir -p /app /config \
     && chown -R docker:docker /app /config
 
 # PHP Configuration
-RUN cp ${PHP_INI_DIR}/php.ini-production ${PHP_INI_DIR}/php.ini
+RUN cp ${PHP_INI_DIR}/php.ini-development ${PHP_INI_DIR}/php.ini
 
 # Install PHP extensions
 RUN install-php-extensions @composer \
@@ -82,8 +83,8 @@ RUN npm install -g npm@latest corepack@latest svgo@latest \
 # Strip file capabilities from frankenphp
 RUN setcap -r /usr/local/bin/frankenphp
 
-# Custom PHP configuration
-COPY runtimes/frankenphp-octane/php-production.ini /usr/local/etc/php/conf.d/xx-php-user.ini
+# Custom PHP configuration for development
+COPY runtimes/frankenphp-octane/php-development.ini /usr/local/etc/php/conf.d/xx-php-user.ini
 
 # Entrypoint
 COPY --chmod=755 runtimes/frankenphp-octane/entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -93,27 +94,8 @@ RUN apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Copy application source
-COPY --chown=docker:docker . /app
-
-# Switch to non-root user
 USER docker
 
-# Make sure an basic .env file exists
-RUN cp .env.example .env
-
-# Install PHP dependencies
-RUN --mount=type=cache,target=/home/docker/.composer/cache,uid=${UID},gid=${GID} \
-    composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction --no-scripts
-
-# Install Node.js dependencies
-RUN --mount=type=cache,target=/pnpm/store,uid=${UID},gid=${GID} \
-    pnpm install --frozen-lockfile
-
-# Complete composer setup and build assets
-RUN composer dump-autoload --optimize \
-    && pnpm build && pnpm build:ssr && pnpm prune --prod
-
-EXPOSE 6001 8000 13714
+EXPOSE 5173 6001 8000 13714
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

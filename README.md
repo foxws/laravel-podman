@@ -9,7 +9,7 @@ Laravel Podman brings [Podman Quadlet](https://docs.podman.io/en/latest/markdown
 
 ## Features
 
-- **Artisan-driven Quadlet management** — install, list, print, and remove the systemd-managed services that make up your app, through a set of Artisan commands.
+- **Artisan renders, `lpod` installs** — Artisan commands substitute your app's config into a preset's Quadlet units and never touch the `podman` binary, so they work even without Podman installed; `lpod` handles installing, listing, printing, and removing the systemd-managed services on the host.
 - **Podman secrets, not plaintext `.env` files** — application and service credentials (database passwords, your `.env` file, ...) are stored as Podman secrets and mounted into containers at runtime, rather than baked into the image or passed around as plain environment variables.
 - **FrankenPHP application image** — a multi-stage `Containerfile` for your app with dedicated `local` (development) and `production` build targets sharing the same FrankenPHP runtime.
 - **Sail-inspired `lpod` CLI** — a `lpod` script for day-to-day container interaction (starting/stopping services, opening a shell, running Artisan/Composer/Node commands, and more).
@@ -20,7 +20,7 @@ See the [`docs/`](docs) folder for more: [Command Reference](docs/commands.md), 
 ## Requirements
 
 - Linux with systemd (rootless or system-wide); macOS and Windows, including WSL, are not supported
-- A recent version of Podman with the `quadlet` CLI plugin (`podman quadlet --help` should work); the `--application` option used by `podman:install` requires Podman 6+
+- A recent version of Podman with the `quadlet` CLI plugin (`podman quadlet --help` should work); the `--application` option (`lpod install ... --application=my-app`) requires Podman 6+
 
 ## Installation
 
@@ -42,84 +42,95 @@ This is the contents of the published config file:
 return [
     'quadlet_prefix' => env('PODMAN_QUADLET_PREFIX', env('APP_NAME', 'laravel')),
 
+    'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),
+
+    'stubs_path' => env('PODMAN_STUBS_PATH', 'containers/stubs'),
+
+    'working_path' => env('PODMAN_WORKING_PATH'),
+
     'quadlet_uid' => env('PODMAN_QUADLET_UID'),
 
     'quadlet_gid' => env('PODMAN_QUADLET_GID'),
-
-    'quadlets_path' => env('PODMAN_QUADLETS_PATH', 'containers/quadlets'),
-
-    'runtimes_path' => env('PODMAN_RUNTIMES_PATH', 'containers/runtimes'),
-
-    'runtime_path' => env('PODMAN_RUNTIME_PATH', 'runtimes'),
-
-    'config_path' => env('PODMAN_CONFIG_PATH', 'runtimes/config'),
 
     'publish_path' => env('PODMAN_PUBLISH_PATH', 'podman'),
 
     'selinux_volume_mapping' => env('PODMAN_SELINUX_VOLUME_MAPPING', true),
 
     'reload_systemd' => env('PODMAN_RELOAD_SYSTEMD', true),
+
+    'presets' => env('PODMAN_DEFAULT_PRESETS', [
+        'frankenphp-octane',
+        'proxy',
+    ]),
 ];
 ```
 
 `quadlet_prefix` is used to namespace the services installed for your application (for example `laravel-pgsql`), and defaults to your `APP_NAME`. `quadlet_uid`/`quadlet_gid` default to the UID/GID of the user running the Artisan command.
 
-**Custom templates.** `quadlets_path`/`runtimes_path` control where the package looks for `*.quadlets` files and runtime folders (each containing a `Containerfile`), and default to `containers/quadlets`/`containers/runtimes` in your project. If either directory exists, the package uses it exclusively instead of the vendor-provided one — so to customize an existing service (e.g. tweak `pgsql.quadlets`) or add your own, copy the full set of files you need into that directory, not just the ones you're changing. Leave a directory absent (the default until you create it) to keep using the one bundled with the package.
+**Custom presets.** A preset is a folder containing a `quadlets/` directory of `*.quadlets` files and a `runtimes/` directory of container build files (e.g. the bundled `frankenphp-octane` and `proxy` presets). `stubs_path` controls where the package looks for preset folders, and defaults to `containers/stubs` in your project. The fallback happens per preset, not as a whole directory swap — publish one preset (`php artisan podman:publish frankenphp-octane`) to customize it without needing to touch any other preset. Leave a preset unpublished to keep using the one bundled with the package.
 
 ## Quick Start
 
-The fastest way to get an application running is `podman:setup`. It publishes the default runtimes and installs the default services in one go, so you don't need to call `podman:publish`/`podman:install` per service:
+The fastest way to render an application's Quadlet units is `podman:setup`. It generates the default presets' `.quadlets`/runtime build files in one go, so you don't need to call `podman:generate` per preset:
 
 ```bash
 php artisan podman:setup
 ```
 
-> **Note:** This step requires PHP, since it's an Artisan command, and normally requires the `podman` binary too, since it installs Quadlet units and Podman secrets directly on your system. It's a one-time cost — once your services are installed, everyday commands (starting services, running Artisan/Composer/Node commands, opening a shell, etc.) go through [`lpod`](#the-lpod-utility) instead, which runs entirely inside the containers and doesn't need PHP on the host. If you don't have PHP on the host at all, see [Setting up without PHP on the host](docs/host-setup.md).
+> **Note:** This step only renders files — it substitutes your app's config into the preset's templates and writes the result to the `publish_path` config key (`podman` by default, one subfolder per preset). It never touches the `podman` binary, so it works even without Podman installed (e.g. inside a disposable `php` container in CI). If you don't have PHP on the host at all, see [Setting up without PHP on the host](docs/host-setup.md).
 
-By default it also prompts for and sets any secrets the installed services need (e.g. your application's `.env` file, database credentials) and replaces services that already exist, so re-running it is safe. Pass `--no-secrets` and/or `--no-replace` to opt out:
-
-```bash
-php artisan podman:setup --no-secrets --no-replace
-```
-
-The runtimes and services it publishes/installs by default come from the `runtimes` and `services` config keys (`frankenphp-octane`/`proxy` and `proxy`/`app`/`pgsql`/`valkey`/`horizon`/`reverb`/`schedule` out of the box) — edit those, set `PODMAN_DEFAULT_RUNTIMES`/`PODMAN_DEFAULT_SERVICES`, or override per run:
+The presets it generates by default come from the `presets` config key (`frankenphp-octane`/`proxy` out of the box) — edit that, set `PODMAN_DEFAULT_PRESETS`, or override per run:
 
 ```bash
-php artisan podman:setup --runtime=frankenphp-octane --service=app --service=pgsql --service=valkey
+php artisan podman:setup --preset=frankenphp-octane
 ```
 
-Once installed, use the `lpod` CLI (see [below](#the-lpod-utility)) to start everything:
+Installing is a separate step, handled by [`lpod`](#the-lpod-utility) on the host (this is the one step that actually needs the `podman` binary):
+
+```bash
+vendor/bin/lpod install frankenphp-octane/app.quadlets --replace
+vendor/bin/lpod install frankenphp-octane/pgsql.quadlets --replace
+vendor/bin/lpod install frankenphp-octane/valkey.quadlets --replace
+vendor/bin/lpod install proxy/proxy.quadlets --replace
+# ...and so on for every service you need.
+```
+
+Secrets a service needs (e.g. your application's `.env` file, database credentials) are prompted for and set the same way:
+
+```bash
+vendor/bin/lpod secrets frankenphp-octane/app.quadlets
+vendor/bin/lpod secrets frankenphp-octane/pgsql.quadlets
+```
+
+Once installed, use `lpod` to start everything:
 
 ```bash
 vendor/bin/lpod my-app up
 vendor/bin/lpod my-app open   # Opens the application URL in your browser
 ```
 
-The bundled `proxy` runtime terminates HTTPS with a locally-trusted certificate — trust it once so your browser/OS stop flagging it, see [Trusting the local certificate](docs/proxy.md#trusting-the-local-certificate).
+The bundled `proxy` preset terminates HTTPS with a locally-trusted certificate — trust it once so your browser/OS stop flagging it, see [Trusting the local certificate](docs/proxy.md#trusting-the-local-certificate).
 
 Setting up somewhere PHP isn't installed (a disposable container, CI)? See [Setting up without PHP on the host](docs/host-setup.md).
 
 ## Usage
 
-The package discovers its Quadlet service definitions (`*.quadlets` files) and its container runtimes (folders containing a `Containerfile`) on disk, and exposes them through Artisan commands. Every command that needs a service or runtime name will prompt you to select one interactively when it's omitted. Full flag reference and examples: [Command Reference](docs/commands.md).
+The package discovers preset folders (each containing a `quadlets/` directory of `*.quadlets` files and a `runtimes/` directory of container build files) on disk, and exposes them through Artisan commands that only ever render — never install. Every command that needs a preset name will prompt you to select one interactively when it's omitted. Full flag reference and examples: [Command Reference](docs/commands.md).
 
 | Command | Description |
 | --- | --- |
-| `podman:setup` | Publish default runtimes and install default services in one go (see [Quick Start](#quick-start)) |
-| `podman:publish RUNTIME` | Publish a container runtime so it can be customized before building |
-| `podman:install SERVICE...` | Install one or more Quadlet services |
-| `podman:secret SERVICE` | Prompt for and set a service's Podman secrets |
-| `podman:list` | List installed Quadlets |
-| `podman:print SERVICE` | Print the generated systemd unit for a service |
-| `podman:remove SERVICE` | Remove an installed service |
-| `podman:uninstall APPLICATION` | Remove an application and all of its services |
+| `podman:setup` | Generate the default set of presets in one go (see [Quick Start](#quick-start)) |
+| `podman:publish PRESET` | Publish a preset (its quadlets and runtime files) for customization |
+| `podman:generate PRESET` | Render a single preset's quadlets and runtime files |
 | `podman:s3-setup` | Create S3 buckets and a CORS policy (requires `aws/aws-sdk-php`, see [S3 Buckets](docs/s3.md)) |
 
-> **Warning:** `podman:remove`/`podman:uninstall` delete the Podman volumes owned by the services they remove (databases, uploaded files, search indexes), with no undo. Back up first — see [Backing up volumes](docs/commands.md#backing-up-volumes).
+Installing, listing, printing, removing, and setting secrets for the rendered services is `lpod`'s job, not Artisan's — see below.
+
+> **Warning:** `lpod remove`/`lpod uninstall` delete the Podman volumes owned by the services they remove (databases, uploaded files, search indexes), with no undo. Back up first — see [Backing up volumes](docs/commands.md#backing-up-volumes).
 
 ## The `lpod` utility
 
-The package ships a `lpod` CLI script, installed as a Composer binary at `vendor/bin/lpod`. It's a thin wrapper around `podman exec` and `systemctl` for the Quadlet services you installed with `podman:install`, similar in spirit to Laravel Sail's `sail` script.
+The package ships a `lpod` CLI script, installed as a Composer binary at `vendor/bin/lpod`. It's a thin wrapper around `podman exec`, `podman quadlet`, and `systemctl` for the Quadlet services rendered by Artisan, similar in spirit to Laravel Sail's `sail` script.
 
 ```bash
 vendor/bin/lpod SERVICE COMMAND [options] [arguments]
@@ -127,9 +138,13 @@ vendor/bin/lpod SERVICE COMMAND [options] [arguments]
 vendor/bin/lpod my-app up
 vendor/bin/lpod my-app artisan queue:work
 vendor/bin/lpod my-app shell
+
+# Installing, secrets, and other Quadlet management (see below)
+vendor/bin/lpod install frankenphp-octane/app.quadlets --replace
+vendor/bin/lpod secrets frankenphp-octane/app.quadlets
 ```
 
-See [The `lpod` CLI](docs/lpod.md) for the full command reference, shortening the call with an alias/`PATH` entry, and tips & tricks.
+See [The `lpod` CLI](docs/lpod.md) for the full command reference (including `install`/`secrets`/`remove`/`list`/`print`/`uninstall`), shortening the call with an alias/`PATH` entry, and tips & tricks.
 
 ## Testing
 

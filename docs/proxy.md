@@ -1,30 +1,41 @@
 # Proxy
 
-The bundled `proxy` runtime/service runs [Caddy](https://caddyserver.com/) as a reverse proxy. It terminates HTTPS — with automatic local certificates in development and automatic Let's Encrypt certificates in production — and routes subdomains to your app, Vite dev server, Reverb, and RustFS containers.
+The bundled `proxy` preset runs [Caddy](https://caddyserver.com/) as a reverse proxy. It terminates HTTPS — with automatic local certificates in development and automatic Let's Encrypt certificates in production — and routes subdomains to your app, Vite dev server, Reverb, and RustFS containers.
 
-> To use Traefik, Nginx, or another proxy instead, omit `proxy` when running `podman:setup` (`--service=` without `proxy`, and drop it from `--runtime=`/the `runtimes` config too) and point your own proxy at the `app`, `reverb`, and `rustfs` containers.
+> To use Traefik, Nginx, or another proxy instead, omit `proxy` when running `podman:setup` (`--preset=` without `proxy`, and drop it from the `presets` config too) and point your own proxy at the `app`, `reverb`, and `rustfs` containers.
 
 ## Setup
 
-`proxy` is one of the default runtimes and services (see the `runtimes`/`services` keys in `config/podman.php`), so a plain setup already publishes and installs it:
+`proxy` is one of the default presets (see the `presets` key in `config/podman.php`), so a plain setup already generates it:
 
 ```bash
 php artisan podman:setup
+lpod install proxy/proxy.quadlets --replace
 ```
 
-To publish and install just the proxy on its own:
+To generate and install just the proxy on its own:
 
 ```bash
-php artisan podman:publish proxy
-php artisan podman:install proxy
+php artisan podman:generate proxy
+lpod install proxy/proxy.quadlets --replace
 ```
 
 ## Configuring Caddy
 
-`podman:publish proxy` writes the editable Caddy config into your project at `runtimes/proxy/` (`Caddyfile` and `sites/laravel.Caddyfile`). The running container mounts this same directory at `/etc/caddy`, so edits take effect on the next restart:
+The preset's Caddy config lives at `stubs/proxy/runtimes/` (`Caddyfile` and `sites/laravel.Caddyfile`) — vendor-provided until you customize it. `podman:generate proxy` renders it into `podman/proxy/runtimes/`, which is what the running container actually mounts at `/etc/caddy`; that generated copy gets overwritten every time you regenerate, so it's only good for a quick, throwaway tweak:
 
 ```bash
-vi runtimes/proxy/Caddyfile runtimes/proxy/sites/laravel.Caddyfile
+vi podman/proxy/runtimes/Caddyfile
+lpod proxy restart
+```
+
+For a change that should survive regeneration, publish the preset first, edit the published copy, then regenerate and restart:
+
+```bash
+php artisan podman:publish proxy   # copies stubs/proxy into containers/stubs/proxy
+vi containers/stubs/proxy/runtimes/Caddyfile containers/stubs/proxy/runtimes/sites/laravel.Caddyfile
+php artisan podman:generate proxy
+lpod proxy restart
 ```
 
 The bundled `sites/laravel.Caddyfile` routes your app's domain (derived from `APP_URL`) and a few subdomains to their containers:
@@ -80,4 +91,4 @@ This is for local development only — in production, point `APP_URL` (and the d
 - **Certificate not trusted** — re-import the CA certificate (above) and restart your browser.
 - **Connection refused** — check `vendor/bin/lpod proxy status`, and confirm ports 80/443 aren't already in use by something else on the host.
 - **404 / wrong container** — verify the domain in `sites/laravel.Caddyfile` matches `APP_URL`, and that the target service (e.g. `reverb`) is installed and running.
-- **Changes not applying** — Caddy only picks up `runtimes/proxy/` edits after `vendor/bin/lpod proxy restart`.
+- **Changes not applying** — Caddy only picks up `podman/proxy/runtimes/` edits after `vendor/bin/lpod proxy restart`; if you edited `containers/stubs/proxy/runtimes/` instead, run `php artisan podman:generate proxy` first to re-render it into `podman/proxy/runtimes/`.

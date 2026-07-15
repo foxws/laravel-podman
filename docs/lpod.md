@@ -1,12 +1,14 @@
 # The `lpod` CLI
 
-The package ships a `lpod` CLI script, installed as a Composer binary at `vendor/bin/lpod`. It's a thin wrapper around `podman exec` and `systemctl` for the Quadlet services you installed with `podman:install`, similar in spirit to Laravel Sail's `sail` script. Any command it doesn't recognize is passed straight through to the `podman` binary.
+The package ships a `lpod` CLI script, installed as a Composer binary at `vendor/bin/lpod`. It's a thin wrapper around `podman exec`, `podman quadlet`, and `systemctl` for the Quadlet services rendered by Artisan (`podman:setup`/`podman:generate`) and installed with `lpod install`, similar in spirit to Laravel Sail's `sail` script. Any command it doesn't recognize is passed straight through to the `podman` binary.
 
 ```bash
 vendor/bin/lpod SERVICE COMMAND [options] [arguments]
 ```
 
 `SERVICE` is the name of a Quadlet service (e.g. your application's service, or a sibling service such as `pgsql`).
+
+`install`/`secrets`/`remove`/`list`/`print`/`uninstall` are the exception — they manage Quadlets themselves rather than talking to a running service, so they skip the `SERVICE` argument (see [Quadlet management](#quadlet-management) below).
 
 ## Shortening the `vendor/bin/lpod` call
 
@@ -42,6 +44,28 @@ sudo ln -s "$(pwd)/vendor/bin/lpod" /usr/local/bin/lpod
 ```
 
 Make sure the target directory (`~/.local/bin` or `/usr/local/bin`) is on your `PATH`. Once installed either way, the examples below can be run as `lpod ...` instead of `vendor/bin/lpod ...`.
+
+## Quadlet management
+
+Once Artisan has rendered a preset (`php artisan podman:setup`/`podman:generate frankenphp-octane`), these commands take it from a rendered file to a running, systemd-managed service. They take a `PRESET/SERVICE.quadlets` path (relative to the `publish_path` config key, `podman` by default) rather than a `SERVICE` name, and forward any extra flags straight to `podman` — pass `--replace`, `--application=my-app`, `--force`, `--ignore`, etc. as needed.
+
+```bash
+lpod install frankenphp-octane/app.quadlets --replace
+lpod install frankenphp-octane/app.quadlets --application=my-app
+
+lpod secrets frankenphp-octane/app.quadlets            # Prompts for and sets the service's Podman secrets
+lpod secrets frankenphp-octane/app.quadlets --replace
+
+lpod remove pgsql --force --ignore                      # Removes an installed service by its unit name
+lpod uninstall my-app --force                            # Removes an application and all of its services
+
+lpod list --filter=status=running --format=json --noheading
+lpod print pgsql                                         # Prints the generated systemd unit for a service
+```
+
+`secrets` reads the `Secret=` directives straight from the rendered `.quadlets` file — `type=env` secrets prompt for a value directly (masked input), while `type=mount` secrets (the default when `type=` is omitted) prompt for a file path, defaulting to `.env`, whose contents are stored as the secret. A secret needed under several names (e.g. a database password used as both `POSTGRES_PASSWORD` and `PGPASSWORD`) is only prompted for once.
+
+> **Warning:** `remove`/`uninstall` delete the Podman volumes owned by the services they remove, with no undo — see [Backing up volumes](commands.md#backing-up-volumes).
 
 ## Command reference
 

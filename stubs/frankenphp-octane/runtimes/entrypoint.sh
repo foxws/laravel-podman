@@ -48,5 +48,6 @@ ${FRANKEN_CLI} storage:link
 log "INFO" "Optimizing application..."
 ${FRANKEN_CLI} optimize
 
+# Run the provided command
 log "INFO" "Starting command..."
 exec ${APP_COMMAND}

@@ -2,7 +2,6 @@
 set -euo pipefail
 
 APP_COMMAND=${APP_COMMAND:-'/usr/bin/bash'}
-APP_ENV=${APP_ENV:-'production'}
 
 log() {
     local type="$1"
@@ -45,12 +44,6 @@ ${FRANKEN_CLI} optimize:clear
 log "INFO" "Creating storage symlinks..."
 ${FRANKEN_CLI} storage:link
 
-# Optimize for production
-if [ "${APP_ENV}" = "production" ]; then
-    # Ensure all caches are warmed up
-    log "INFO" "Optimizing application..."
-    ${FRANKEN_CLI} optimize
-fi
-
+# Run the provided command
 log "INFO" "Starting command..."
 exec ${APP_COMMAND}

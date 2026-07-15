@@ -1,4 +1,4 @@
-FROM docker.io/dunglas/frankenphp:latest AS base
+FROM docker.io/dunglas/frankenphp:latest
 
 ARG UID=1000
 ARG GID=1000
@@ -73,18 +73,18 @@ RUN if [ -n "$PHP_EXTENSIONS" ]; then \
     install-php-extensions $PHP_EXTENSIONS; \
 fi
 
+# Strip file capabilities from frankenphp
+RUN setcap -r /usr/local/bin/frankenphp
+
+# Custom PHP configuration for development
+COPY runtimes/frankenphp-octane/php-development.ini /usr/local/etc/php/conf.d/xx-php-user.ini
+
 # Node.js Configuration
 RUN npm install -g npm@latest corepack@latest svgo@latest \
     && corepack enable && corepack prepare pnpm@latest --activate \
     && mkdir -p ${PNPM_HOME}/store \
     && chown -R docker:docker ${PNPM_HOME} \
     && pnpm config set store-dir ${PNPM_HOME}/store
-
-# Strip file capabilities from frankenphp
-RUN setcap -r /usr/local/bin/frankenphp
-
-# Custom PHP configuration for development
-COPY runtimes/frankenphp-octane/php-development.ini /usr/local/etc/php/conf.d/xx-php-user.ini
 
 # Entrypoint
 COPY --chmod=755 runtimes/frankenphp-octane/entrypoint.sh /usr/local/bin/entrypoint.sh

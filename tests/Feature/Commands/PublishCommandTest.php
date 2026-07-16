@@ -52,3 +52,13 @@ it('overwrites existing files when the force option is passed', function () {
 
     expect(File::exists("{$this->stubsPath}/frankenphp-octane/quadlets/app.quadlets"))->toBeTrue();
 });
+
+it('refuses to run when podman is disabled', function () {
+    config(['podman.enabled' => false]);
+
+    $this->artisan('podman:publish', ['preset' => 'frankenphp-octane'])
+        ->expectsOutputToContain('Podman is disabled.')
+        ->assertExitCode(1);
+
+    expect(File::isDirectory("{$this->stubsPath}/frankenphp-octane"))->toBeFalse();
+});

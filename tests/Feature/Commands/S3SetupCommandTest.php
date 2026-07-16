@@ -116,3 +116,11 @@ it('skips the CORS step when no CORS buckets are configured', function () {
         ->expectsOutputToContain('Done.')
         ->assertExitCode(0);
 });
+
+it('refuses to run when podman is disabled', function () {
+    config(['podman.enabled' => false]);
+
+    $this->artisan('podman:s3-setup')
+        ->expectsOutputToContain('Podman is disabled.')
+        ->assertExitCode(1);
+});

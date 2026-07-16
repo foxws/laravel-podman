@@ -112,6 +112,16 @@ it('disables selinux volume mapping when configured', function () {
     expect($this->path->shouldUseSelinuxVolumeMapping())->toBeFalse();
 });
 
+it('defaults enabled to true', function () {
+    expect($this->path->isEnabled())->toBeTrue();
+});
+
+it('disables when configured', function () {
+    config(['podman.enabled' => false]);
+
+    expect($this->path->isEnabled())->toBeFalse();
+});
+
 it('splits the configured comma-separated presets into an array', function () {
     config(['podman.presets' => 'frankenphp-octane,proxy']);
 

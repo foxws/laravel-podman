@@ -3,6 +3,21 @@
 return [
     /*
     |--------------------------------------------------------------------------
+    | Enabled
+    |--------------------------------------------------------------------------
+    |
+    | This value determines whether "podman:generate", "podman:setup",
+    | "podman:publish" and "podman:s3-setup" are allowed to run. Disable it
+    | to guard against these commands running by accident in an environment
+    | where installing/replacing services is meant to only happen over SSH
+    | with "lpod" (for example production).
+    |
+    */
+
+    'enabled' => env('PODMAN_ENABLED', true),
+
+    /*
+    |--------------------------------------------------------------------------
     | Presets
     |--------------------------------------------------------------------------
     |

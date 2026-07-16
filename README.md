@@ -42,6 +42,8 @@ This is the contents of the published config file:
 
 ```php
 return [
+    'enabled' => env('PODMAN_ENABLED', true),
+
     'presets' => env('PODMAN_DEFAULT_PRESETS', [
         // 'development',
         // 'devcontainer',

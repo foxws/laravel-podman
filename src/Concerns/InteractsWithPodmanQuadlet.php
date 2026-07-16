@@ -25,6 +25,20 @@ trait InteractsWithPodmanQuadlet
     }
 
     /**
+     * Guard "podman:*" commands behind "podman.enabled".
+     */
+    protected function ensurePodmanIsEnabled(): bool
+    {
+        if ($this->podmanQuadletPath()->isEnabled()) {
+            return true;
+        }
+
+        error('Podman is disabled. Set PODMAN_ENABLED=true (or podman.enabled) to run this command.');
+
+        return false;
+    }
+
+    /**
      * Copy a preset's vendor-provided "quadlets/"/"runtimes/" files into the
      * configured stubs path for customization.
      */

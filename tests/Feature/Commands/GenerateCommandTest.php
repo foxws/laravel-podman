@@ -40,3 +40,13 @@ it('substitutes placeholders in the generated quadlets file', function () {
 
     expect(File::get("{$this->publishPath}/frankenphp-octane/app.quadlets"))->toContain('localhost/acme:latest');
 });
+
+it('refuses to run when podman is disabled', function () {
+    config(['podman.enabled' => false]);
+
+    $this->artisan('podman:generate', ['preset' => 'proxy'])
+        ->expectsOutputToContain('Podman is disabled.')
+        ->assertExitCode(1);
+
+    expect(File::isDirectory("{$this->publishPath}/proxy"))->toBeFalse();
+});

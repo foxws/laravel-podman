@@ -26,6 +26,10 @@ class S3SetupCommand extends Command
 
     public function handle(): int
     {
+        if (! $this->ensurePodmanIsEnabled()) {
+            return self::FAILURE;
+        }
+
         if (! class_exists(S3Client::class)) {
             error('The AWS SDK is required to use this command. Install it with "composer require aws/aws-sdk-php".');
 

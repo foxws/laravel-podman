@@ -6,6 +6,7 @@ This package is driven by `config/podman.php` (publish it with `php artisan vend
 
 | Key                       | Env variable                  | Default                                                | Purpose                                                                |
 | -------------------------- | ------------------------------ | ------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `enabled`                  | `PODMAN_ENABLED`               | `true`                                                   | Master switch for `podman:generate`/`podman:setup`/`podman:publish`/`podman:s3-setup`. Disable in environments where `lpod` over SSH should be the only way to touch services (e.g. production) |
 | `quadlet_prefix`           | `PODMAN_QUADLET_PREFIX`        | `APP_NAME` (falls back to `laravel`)                     | Namespaces installed services, e.g. `laravel-pgsql`                      |
 | `proxy_prefix`              | `PODMAN_PROXY_PREFIX`          | `proxy`                                                  | Namespace used for the `proxy` service/network                          |
 | `stubs_path`               | `PODMAN_STUBS_PATH`            | `containers/stubs`                                       | Where to look for preset folders before falling back to the vendor one, per preset |

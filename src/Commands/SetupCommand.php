@@ -25,6 +25,10 @@ class SetupCommand extends Command
 
     public function handle(): int
     {
+        if (! $this->ensurePodmanIsEnabled()) {
+            return self::FAILURE;
+        }
+
         $presets = Arr::wrap($this->option('preset')) ?: $this->getPodmanQuadletDefaultPresets();
 
         if ($presets === []) {

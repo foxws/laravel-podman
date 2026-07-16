@@ -186,6 +186,11 @@ class PodmanQuadletPath
         return "{$this->presetPath('s3')}/cors.json";
     }
 
+    public function isEnabled(): bool
+    {
+        return Config::boolean('podman.enabled');
+    }
+
     public function shouldUseSelinuxVolumeMapping(): bool
     {
         return Config::boolean('podman.selinux_volume_mapping');

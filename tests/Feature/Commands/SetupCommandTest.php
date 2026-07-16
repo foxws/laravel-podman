@@ -44,3 +44,13 @@ it('reports an error and stops when no default presets are configured and none a
         ->expectsOutputToContain('No default presets are configured.')
         ->assertExitCode(1);
 });
+
+it('refuses to run when podman is disabled', function () {
+    config(['podman.enabled' => false, 'podman.presets' => 'proxy']);
+
+    $this->artisan('podman:setup')
+        ->expectsOutputToContain('Podman is disabled.')
+        ->assertExitCode(1);
+
+    expect(File::isDirectory("{$this->publishPath}/proxy"))->toBeFalse();
+});

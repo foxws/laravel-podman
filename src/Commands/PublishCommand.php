@@ -25,6 +25,10 @@ class PublishCommand extends Command
 
     public function handle(): int
     {
+        if (! $this->ensurePodmanIsEnabled()) {
+            return self::FAILURE;
+        }
+
         $preset = $this->argument('preset') ?? select(
             label: 'Select a preset to publish',
             options: $this->getPodmanQuadletPresets(),

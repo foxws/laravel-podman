@@ -132,15 +132,15 @@ case "$1" in
         exec "$(dirname "${BASH_SOURCE[0]}")/lpod-setup" "$@"
         ;;
 
+    secrets)
+        shift
+        exec "$(dirname "${BASH_SOURCE[0]}")/lpod-secrets" "$@"
+        ;;
+
     install)
         TARGET="$2"
         shift 2
         exec "${LPOD_PODMAN_BINARY:-podman}" quadlet install "${LPOD_PUBLISH_PATH}/${TARGET}" "$@"
-        ;;
-
-    secrets)
-        shift
-        exec "$(dirname "${BASH_SOURCE[0]}")/lpod-secrets" "$@"
         ;;
 
     remove)

@@ -76,8 +76,6 @@ return [
     'publish_path' => env('PODMAN_PUBLISH_PATH', 'podman'),
 
     'selinux_volume_mapping' => env('PODMAN_SELINUX_VOLUME_MAPPING', true),
-
-    'reload_systemd' => env('PODMAN_RELOAD_SYSTEMD', true),
 ];
 ```
 

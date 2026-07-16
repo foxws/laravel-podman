@@ -102,16 +102,6 @@ it('kebab-cases the configured quadlet prefix', function () {
     expect($this->path->prefix())->toBe('my-app');
 });
 
-it('defaults reload systemd to true', function () {
-    expect($this->path->shouldReloadSystemd())->toBeTrue();
-});
-
-it('disables reload systemd when configured', function () {
-    config(['podman.reload_systemd' => false]);
-
-    expect($this->path->shouldReloadSystemd())->toBeFalse();
-});
-
 it('defaults selinux volume mapping to true', function () {
     expect($this->path->shouldUseSelinuxVolumeMapping())->toBeTrue();
 });

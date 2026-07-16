@@ -186,11 +186,6 @@ class PodmanQuadletPath
         return "{$this->presetPath('s3')}/cors.json";
     }
 
-    public function shouldReloadSystemd(): bool
-    {
-        return Config::boolean('podman.reload_systemd');
-    }
-
     public function shouldUseSelinuxVolumeMapping(): bool
     {
         return Config::boolean('podman.selinux_volume_mapping');

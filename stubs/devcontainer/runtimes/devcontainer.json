@@ -1,10 +1,10 @@
 {
-    "name": "{{application}}-podman-devcontainer",
+    "name": "{{application}}-devcontainer",
     "remoteUser": "docker",
     "containerUser": "docker",
     "runArgs": [
         "--security-opt=label=disable",
-        "--network=systemd-{{application",
+        "--network=systemd-{{application}}",
         "--userns=keep-id:uid={{appUid}},gid={{appGid}}",
         "--init",
     ],

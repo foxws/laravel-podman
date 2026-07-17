@@ -12,14 +12,14 @@ If you don't have PHP on the rendering machine either (a bare server, minimal CI
 podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
     -e PODMAN_WORKING_PATH="$PWD" \
     -v "$PWD":/var/www/html:Z -w /var/www/html docker.io/library/php:8.5-cli \
-    php artisan podman:setup
+    php artisan podman:setup --preset=frankenphp-octane
 
 # On the host: install each rendered service, then set its secrets
-vendor/bin/lpod install development/pgsql.quadlets --replace
+vendor/bin/lpod install frankenphp-octane/pgsql.quadlets --replace
 vendor/bin/lpod secrets pgsql
 ```
 
-For example, an app named `acme` renders `podman/development/valkey.quadlets` as:
+For example, an app named `acme` renders `podman/frankenphp-octane/valkey.quadlets` as:
 
 ```ini
 # FileName=acme-valkey
@@ -45,7 +45,7 @@ TimeoutStopSec=60
 Label=acme-valkey
 ```
 
-`lpod install development/valkey.quadlets --replace` turns that into a running service.
+`lpod install frankenphp-octane/valkey.quadlets --replace` turns that into a running service.
 
 > **Notes**
 > - `PODMAN_WORKING_PATH` (or `--working-path=` on `podman:generate`) only changes host paths *baked into* the rendered files (`SetWorkingDirectory=`, etc.) — rendering itself always happens from `/var/www/html` here.

@@ -55,6 +55,17 @@ Since `lpod` doesn't depend on the Composer package being installed, you can ski
 cp vendor/bin/lpod ~/.local/bin/lpod
 ```
 
+Or, on a host with no project checkout at all, fetch it straight from GitHub (swap `lpod` for `lpod-setup`/`lpod-secrets` to grab those too; pin to a tag instead of `main` for a reproducible version):
+
+```bash
+curl -fsSL -o ~/.local/bin/lpod https://raw.githubusercontent.com/foxws/laravel-podman/main/bin/lpod
+chmod +x ~/.local/bin/lpod
+
+# or with wget
+wget -qO ~/.local/bin/lpod https://raw.githubusercontent.com/foxws/laravel-podman/main/bin/lpod
+chmod +x ~/.local/bin/lpod
+```
+
 ## Quadlet management
 
 After Artisan renders presets (`php artisan podman:setup` or `podman:generate frankenphp-octane`), `install` turns a rendered file into a running systemd-managed service. It takes a `PRESET/SERVICE.quadlets` path (relative to `publish_path`, `podman` by default), not a service name. The other commands (`secrets`, `remove`, `list`, `print`) target already-installed units by name. Extra flags are forwarded to `podman` (`--replace`, `--application=my-app`, `--force`, `--ignore`, etc.).

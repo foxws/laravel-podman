@@ -2,6 +2,8 @@
 
 The package ships three Composer binaries that run **on the host**: `vendor/bin/lpod`, `vendor/bin/lpod-setup`, and `vendor/bin/lpod-secrets`. They use the real `podman`/`systemctl` binaries. Artisan `podman:*` commands only render files and can run anywhere PHP is available (see [Command Reference](commands.md)).
 
+These are plain bash scripts with no dependency on Composer's autoloader, so they don't have to be run through `vendor/bin/` or even from within a project that has this package installed. Copy `bin/lpod`, `bin/lpod-setup`, and `bin/lpod-secrets` to any host yourself — onto your `PATH`, or tracked in your dotfiles — and run them standalone. This is also why the package itself can be a dev-only dependency (`composer require foxws/laravel-podman --dev`) and skipped in production: only rendering needs PHP/Composer, everything host-side goes through these scripts.
+
 `lpod` is a thin wrapper around `podman exec`, `podman quadlet`, and `systemctl` for services rendered by Artisan (`podman:setup`/`podman:generate`) and installed with `lpod install`. Any command it does not recognize is passed to `podman` directly. `lpod setup` and `lpod secrets` are convenience aliases for `lpod-setup` and `lpod-secrets` — see [Quadlet management](#quadlet-management).
 
 ```bash
@@ -46,6 +48,23 @@ sudo ln -s "$(pwd)/vendor/bin/lpod" /usr/local/bin/lpod
 ```
 
 Make sure the target directory (`~/.local/bin` or `/usr/local/bin`) is on your `PATH`. Once installed either way, the examples below can be run as `lpod ...` instead of `vendor/bin/lpod ...`.
+
+Since `lpod` doesn't depend on the Composer package being installed, you can skip the symlink and copy the script itself instead — handy for a host that manages several projects, or for keeping your own copy in dotfiles:
+
+```bash
+cp vendor/bin/lpod ~/.local/bin/lpod
+```
+
+Or, on a host with no project checkout at all, fetch it straight from GitHub (swap `lpod` for `lpod-setup`/`lpod-secrets` to grab those too; pin to a tag instead of `main` for a reproducible version):
+
+```bash
+curl -fsSL -o ~/.local/bin/lpod https://raw.githubusercontent.com/foxws/laravel-podman/main/bin/lpod
+chmod +x ~/.local/bin/lpod
+
+# or with wget
+wget -qO ~/.local/bin/lpod https://raw.githubusercontent.com/foxws/laravel-podman/main/bin/lpod
+chmod +x ~/.local/bin/lpod
+```
 
 ## Quadlet management
 
@@ -137,6 +156,7 @@ lpod my-app run whoami   # Run an arbitrary command in the container
 ```bash
 lpod my-app open                     # Open the application URL in your browser
 lpod my-app artisan podman:publish   # Publish the Podman container runtime files
+lpod proxy export-cert               # Export the proxy's local CA certificate (default: ~/proxy.crt)
 lpod --help                          # Print the full list of commands
 ```
 

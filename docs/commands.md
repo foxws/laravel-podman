@@ -32,9 +32,12 @@ Renders a single preset's `.quadlets` files and runtime build files (substitutin
 
 ```bash
 php artisan podman:generate frankenphp-octane
+
+# Override the podman.working_path config value for this run
+php artisan podman:generate development --working-path=/srv/my-app
 ```
 
-See [Setting up without PHP on the host](host-setup.md) for running this somewhere PHP is convenient but Podman isn't.
+`--working-path` overrides the `podman.working_path` config value (normally set via `PODMAN_WORKING_PATH`) for this run only, without touching your `.env`. It only changes the host path baked into the `{{workingPath}}`/`{{runtimePath}}` placeholders — see [Setting up without PHP on the host](host-setup.md) for running this somewhere PHP is convenient but Podman isn't.
 
 ## Setup S3 Buckets
 

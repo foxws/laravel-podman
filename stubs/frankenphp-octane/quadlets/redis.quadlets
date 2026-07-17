@@ -1,0 +1,21 @@
+# FileName={{application}}-redis
+[Unit]
+Description=Redis container
+
+[Container]
+Image=docker.io/library/redis:latest
+AutoUpdate=registry
+Exec=redis-server --save --loglevel warning
+Volume={{application}}-redis:/data:rw,Z,U
+Network={{application}}.network
+ExposeHostPort=6379
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=120
+TimeoutStopSec=60
+---
+# FileName={{application}}-redis
+[Volume]
+Label={{application}}-redis

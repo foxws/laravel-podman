@@ -1,0 +1,26 @@
+# FileName={{application}}-mysql
+[Unit]
+Description=MySQL container
+
+[Container]
+Image=docker.io/library/mysql:latest
+AutoUpdate=registry
+Secret={{application}}-mysql-root-password,type=env,target=MYSQL_ROOT_PASSWORD
+Environment=MYSQL_ROOT_HOST=%
+Secret={{application}}-mysql-db,type=env,target=MYSQL_DATABASE
+Secret={{application}}-mysql-user,type=env,target=MYSQL_USER
+Secret={{application}}-mysql-password,type=env,target=MYSQL_PASSWORD
+ShmSize=256m
+Volume={{application}}-mysql:/var/lib/mysql:rw,Z,U
+Network={{application}}.network
+ExposeHostPort=3306
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=120
+TimeoutStopSec=60
+---
+# FileName={{application}}-mysql
+[Volume]
+Label={{application}}-mysql

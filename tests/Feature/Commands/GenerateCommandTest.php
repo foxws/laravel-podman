@@ -41,6 +41,16 @@ it('substitutes placeholders in the generated quadlets file', function () {
     expect(File::get("{$this->publishPath}/frankenphp-octane/app.quadlets"))->toContain('localhost/acme:latest');
 });
 
+it('overrides the working path for this run via --working-path', function () {
+    $this->artisan('podman:generate', [
+        'preset' => 'frankenphp-octane',
+        '--working-path' => '/srv/my-app',
+    ])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/frankenphp-octane/app.quadlets"))->toContain('/srv/my-app');
+    expect(config('podman.working_path'))->toBe('/srv/my-app');
+});
+
 it('refuses to run when podman is disabled', function () {
     config(['podman.enabled' => false]);
 

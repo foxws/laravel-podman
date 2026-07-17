@@ -75,7 +75,7 @@ For homelab or multi-device setups, use a local DNS resolver (for example [AdGua
 Local development uses Caddy's own certificate authority (`local_certs` in the bundled `Caddyfile`). Trust it once so your browser/OS stop warning:
 
 ```bash
-podman cp systemd-proxy:/data/caddy/pki/authorities/local/root.crt ~/proxy.crt
+lpod proxy export-cert   # writes ~/proxy.crt (pass a path to override)
 
 # macOS
 sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ~/proxy.crt

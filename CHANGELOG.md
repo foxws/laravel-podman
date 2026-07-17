@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 1.2.0 - 2026-07-17
+
+### What's Changed
+
+* feat: custom substitutions support by @francoism90 in https://github.com/foxws/laravel-podman/pull/6
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/1.1.0...1.2.0
+
 ## 1.1.0 - 2026-07-17
 
 ### What's Changed

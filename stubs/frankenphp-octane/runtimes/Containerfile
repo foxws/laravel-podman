@@ -1,4 +1,4 @@
-FROM docker.io/dunglas/frankenphp:latest AS base
+FROM docker.io/dunglas/frankenphp:latest
 
 ARG UID=1000
 ARG GID=1000

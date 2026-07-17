@@ -1,0 +1,21 @@
+# FileName={{application}}-meilisearch
+[Unit]
+Description=Meilisearch container
+
+[Container]
+Image=docker.io/getmeili/meilisearch:latest
+AutoUpdate=registry
+Environment=MEILI_NO_ANALYTICS=true
+Volume={{application}}-meilisearch:/meili_data:rw,Z,U
+Network={{application}}.network
+ExposeHostPort=7700
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=120
+TimeoutStopSec=60
+---
+# FileName={{application}}-meilisearch
+[Volume]
+Label={{application}}-meilisearch

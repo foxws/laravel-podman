@@ -1,0 +1,27 @@
+# FileName={{application}}-mariadb
+[Unit]
+Description=MariaDB container
+
+[Container]
+Image=docker.io/library/mariadb:latest
+AutoUpdate=registry
+Environment=MYSQL_ROOT_PASSWORD=password
+Environment=MYSQL_ROOT_HOST=%
+Environment=MYSQL_DATABASE=laravel
+Environment=MYSQL_USER=user
+Environment=MYSQL_PASSWORD=password
+Environment=MYSQL_ALLOW_EMPTY_PASSWORD=yes
+ShmSize=256m
+Volume={{application}}-mariadb:/var/lib/mysql:rw,Z,U
+Network={{application}}.network
+ExposeHostPort=3306
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=120
+TimeoutStopSec=60
+---
+# FileName={{application}}-mariadb
+[Volume]
+Label={{application}}-mariadb

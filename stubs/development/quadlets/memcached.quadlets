@@ -1,0 +1,16 @@
+# FileName={{application}}-memcached
+[Unit]
+Description=Memcached container
+
+[Container]
+Image=docker.io/memcached:latest
+AutoUpdate=registry
+Volume={{application}}-memcached:/data:rw,Z,U
+Network={{application}}.network
+ExposeHostPort=11211
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=120
+TimeoutStopSec=60

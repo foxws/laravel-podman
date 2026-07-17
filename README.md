@@ -29,7 +29,7 @@ See the [`docs/`](docs) folder for more: [Command Reference](docs/commands.md), 
 You can install the package via composer:
 
 ```bash
-composer require foxws/laravel-podman
+composer require foxws/laravel-podman --dev
 ```
 
 You can publish the config file with:
@@ -45,10 +45,10 @@ return [
     'enabled' => env('PODMAN_ENABLED', true),
 
     'presets' => env('PODMAN_DEFAULT_PRESETS', [
-        // 'development',
-        // 'devcontainer',
-        'frankenphp-octane',
+        'development',
+        'devcontainer',
         'proxy',
+        // 'frankenphp-octane',
     ]),
 
     's3_buckets' => env('PODMAN_S3_BUCKETS', [
@@ -83,17 +83,17 @@ return [
 
 `quadlet_prefix` is used to namespace the services installed for your application (for example `laravel-pgsql`), and defaults to your `APP_NAME`. `quadlet_uid`/`quadlet_gid` default to the UID/GID of the user running the Artisan command. `s3_buckets`/`s3_cors_buckets` are used by `podman:s3-setup` — see [S3 Buckets](docs/s3.md).
 
-`development` is commented out by default — enable it (or pass `--preset=development` to `podman:setup`/`podman:generate`) if you want your working copy live-mounted into the container instead of baked into the image.
+`development`/`devcontainer` are enabled by default, so your working copy is live-mounted into the container instead of baked into the image. `frankenphp-octane` is commented out by default — enable it (or pass `--preset=frankenphp-octane` to `podman:setup`/`podman:generate`) when you need a production-style image with the app code baked in.
 
 ## Presets
 
-| Preset              | Purpose                                                                                                                                                                                                 |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `frankenphp-octane` | Production-style app image (code baked in) plus its full set of sibling services — database, cache, queue worker, WebSockets, scheduler, SSR, search, S3-compatible storage, mail catcher.              |
-| `development`       | The same services, but with your working copy live-mounted into the container instead of baked in, for local editing. Commented out by default — see the config above.                                  |
-| `devcontainer`      | An image for the VS Code/JetBrains [Dev Containers](https://containers.dev/) workflow. Not Quadlet-managed — just a `Containerfile` and `devcontainer.json`, no `quadlets/`.                            |
-| `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy terminating HTTPS in front of the other services. See [Proxy](docs/proxy.md).                                                                           |
-| `s3`                | A `cors.json` policy applied by `podman:s3-setup` against your S3-compatible storage buckets. Not Quadlet-managed either — no `quadlets/`/`runtimes/`, just the one file. See [S3 Buckets](docs/s3.md). |
+| Preset              | Purpose                                                                                                                                                                                                                                     |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `frankenphp-octane` | Production-style app image (code baked in) plus its full set of sibling services — database, cache, queue worker, WebSockets, scheduler, SSR, search, S3-compatible storage, mail catcher. Commented out by default — see the config above. |
+| `development`       | The same services, but with your working copy live-mounted into the container instead of baked in, for local editing. Enabled by default.                                                                                                   |
+| `devcontainer`      | An image for the VS Code/JetBrains [Dev Containers](https://containers.dev/) workflow. Not Quadlet-managed — just a `Containerfile` and `devcontainer.json`, no `quadlets/`. Enabled by default.                                            |
+| `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy terminating HTTPS in front of the other services. See [Proxy](docs/proxy.md).                                                                                                               |
+| `s3`                | A `cors.json` policy applied by `podman:s3-setup` against your S3-compatible storage buckets. Not Quadlet-managed either — no `quadlets/`/`runtimes/`, just the one file. See [S3 Buckets](docs/s3.md).                                     |
 
 **Custom presets.** A preset is a folder containing a `quadlets/` directory of `*.quadlets` files and a `runtimes/` directory of container build files (the `devcontainer`/`s3` presets are exceptions — see the table above). `stubs_path` (default `containers/stubs`) is the lookup root for custom presets. For each preset name, the package uses `stubs_path/{preset}` if it exists; otherwise it falls back to the bundled vendor preset. Once a preset exists under `stubs_path`, that preset is fully overridden (no file-by-file merge). So you can publish one preset (`php artisan podman:publish frankenphp-octane`) without touching the others.
 
@@ -109,7 +109,7 @@ php artisan podman:setup
 >
 > Generated files in `publish_path` (default `podman/`) are build artifacts. Do not commit them. Add the path to `.gitignore` (default: `/podman`), and remove/re-generate it any time after `lpod install`.
 
-The presets it generates by default come from the `presets` config key (`frankenphp-octane`/`proxy` out of the box; `development`/`devcontainer` are opt-in — see [Presets](#presets)) — edit that, set `PODMAN_DEFAULT_PRESETS`, or override per run:
+The presets it generates by default come from the `presets` config key (`development`/`devcontainer`/`proxy` out of the box; `frankenphp-octane` is opt-in — see [Presets](#presets)) — edit that, set `PODMAN_DEFAULT_PRESETS`, or override per run:
 
 ```bash
 php artisan podman:setup --preset=frankenphp-octane
@@ -118,9 +118,9 @@ php artisan podman:setup --preset=frankenphp-octane
 Installing is a separate step, handled by [`lpod`](#the-lpod-utility) on the host (this is the one step that actually needs the `podman` binary):
 
 ```bash
-vendor/bin/lpod install frankenphp-octane/app.quadlets --replace
-vendor/bin/lpod install frankenphp-octane/pgsql.quadlets --replace
-vendor/bin/lpod install frankenphp-octane/valkey.quadlets --replace
+vendor/bin/lpod install development/app.quadlets --replace
+vendor/bin/lpod install development/pgsql.quadlets --replace
+vendor/bin/lpod install development/valkey.quadlets --replace
 vendor/bin/lpod install proxy/proxy.quadlets --replace
 # ...and so on for every service you need.
 ```
@@ -176,6 +176,8 @@ The package ships three Composer binaries that all run **on the host** — they 
 - **`vendor/bin/lpod-secrets`** — prompts for and stores the Podman secrets an installed Quadlet unit needs.
 
 `lpod setup` and `lpod secrets` are convenience aliases for the latter two — call `vendor/bin/lpod-setup`/`vendor/bin/lpod-secrets` directly if you'd rather skip the `lpod` wrapper.
+
+These are plain, self-contained bash scripts — they don't need Composer's autoloader or PHP to run (only `lpod-setup` shells out to PHP, and only inside a disposable container). Nothing requires calling them through `vendor/bin/`: copy `bin/lpod`, `bin/lpod-setup`, and `bin/lpod-secrets` anywhere on the host's `PATH` (or track them in your dotfiles) and run them standalone, even on a host where this Composer package was never installed at all — see [Installation](#installation) for making the package itself a dev-only dependency.
 
 ```bash
 vendor/bin/lpod SERVICE COMMAND [options] [arguments]

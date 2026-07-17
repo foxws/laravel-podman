@@ -1,0 +1,22 @@
+# FileName={{application}}-mongodb
+[Unit]
+Description=MongoDB container
+
+[Container]
+Image=docker.io/library/mongo:latest
+AutoUpdate=registry
+Environment=MONGODB_INITDB_ROOT_USERNAME=root
+Environment=MONGODB_INITDB_ROOT_PASSWORD=password
+Volume={{application}}-mongodb:/data:rw,Z,U
+Network={{application}}.network
+ExposeHostPort=11211
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=120
+TimeoutStopSec=60
+---
+# FileName={{application}}-mongodb
+[Volume]
+Label={{application}}-mongodb

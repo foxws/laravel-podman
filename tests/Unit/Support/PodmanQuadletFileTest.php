@@ -80,6 +80,56 @@ it('uses the configured working path for the workingPath and runtimePath placeho
     File::delete($target);
 });
 
+it('replaces the configPath placeholder, defaulting to the working path', function () {
+    $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
+    $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';
+    config(['podman.working_path' => '/home/francois/app']);
+    File::put($source, "Volume={{configPath}}/{{application}}:/etc/caddy:rw,z,U\n");
+
+    $this->file->prepareSource($source, $target, 'proxy');
+
+    expect(File::get($target))->toBe("Volume=/home/francois/app/laravel:/etc/caddy:rw,z,U\n");
+
+    File::delete($source);
+    File::delete($target);
+});
+
+it('uses the configured config path for the configPath placeholder, independent of the working path', function () {
+    $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
+    $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';
+    config(['podman.config_path' => '/etc/laravel-podman', 'podman.working_path' => '/home/francois/app']);
+    File::put($source, "Volume={{configPath}}/{{application}}:/etc/caddy:rw,z,U\n");
+
+    $this->file->prepareSource($source, $target, 'proxy');
+
+    expect(File::get($target))->toBe('Volume=/etc/laravel-podman/laravel:/etc/caddy:rw,z,U'."\n");
+
+    File::delete($source);
+    File::delete($target);
+});
+
+it('merges custom substitutions from config into the substitution map', function () {
+    $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
+    config(['podman.substitutions' => ['{{s3Endpoint}}' => 'https://s3.example.com']]);
+    File::put($source, "Environment=AWS_ENDPOINT={{s3Endpoint}}\n");
+
+    expect($this->file->renderSource($source, 'frankenphp-octane'))
+        ->toBe("Environment=AWS_ENDPOINT=https://s3.example.com\n");
+
+    File::delete($source);
+});
+
+it('lets a custom substitution override a built-in placeholder', function () {
+    $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
+    config(['podman.quadlet_prefix' => 'acme', 'podman.substitutions' => ['{{application}}' => 'overridden']]);
+    File::put($source, "Volume={{application}}-pgsql:/var/lib/postgresql:rw\n");
+
+    expect($this->file->renderSource($source, 'frankenphp-octane'))
+        ->toBe("Volume=overridden-pgsql:/var/lib/postgresql:rw\n");
+
+    File::delete($source);
+});
+
 it('scopes the runtimePath placeholder to the given preset', function () {
     $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
     $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';

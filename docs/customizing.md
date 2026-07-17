@@ -11,12 +11,14 @@ This package is driven by `config/podman.php` (publish it with `php artisan vend
 | `proxy_prefix`              | `PODMAN_PROXY_PREFIX`          | `proxy`                                                  | Namespace used for the `proxy` service/network                          |
 | `stubs_path`               | `PODMAN_STUBS_PATH`            | `containers/stubs`                                       | Where to look for preset folders before falling back to the vendor one, per preset |
 | `working_path`             | `PODMAN_WORKING_PATH`          | Laravel's `base_path()`                                  | Real host path baked into `{{workingPath}}`/`{{runtimePath}}`; doesn't affect where files are read/written. Override per run with `--working-path=` on `podman:generate` |
+| `config_path`              | `PODMAN_CONFIG_PATH`           | `working_path`                                           | Host path baked into `{{configPath}}`, for a service's config living outside the project (e.g. `{{configPath}}/{{proxy}}`) |
 | `quadlet_uid`/`quadlet_gid` | `PODMAN_QUADLET_UID`/`_GID`    | current user's UID/GID                                   | UID/GID baked into generated Quadlet files                              |
 | `publish_path`             | `PODMAN_PUBLISH_PATH`          | `podman`                                                 | Where `podman:generate` writes rendered presets. Generated artifact output only: don't commit this path; delete/re-generate as needed. See [Setting up without PHP on the host](host-setup.md) |
 | `selinux_volume_mapping`   | `PODMAN_SELINUX_VOLUME_MAPPING`| `true`                                                   | Keep `Z`/`z`/`U` volume flags; disable on non-SELinux hosts               |
 | `presets`                  | `PODMAN_DEFAULT_PRESETS`       | see `config/podman.php`                                  | Presets `podman:setup` publishes/generates when none are given           |
 | `s3_buckets`                | `PODMAN_S3_BUCKETS`            | see `config/podman.php`                                  | Buckets `podman:s3-setup` creates (see [S3 Buckets](s3.md))              |
 | `s3_cors_buckets`           | `PODMAN_S3_CORS_BUCKETS`       | see `config/podman.php`                                  | Which of `s3_buckets` get the CORS policy applied                        |
+| `substitutions`             | *(none)*                       | `[]`                                                     | Extra `{{placeholder}}` => value pairs merged into every template — see [Custom substitutions](#custom-substitutions) |
 
 `presets`/`s3_buckets`/`s3_cors_buckets` accept either a comma-separated string (handy for the env variable form) or a plain PHP array in the config file.
 
@@ -41,7 +43,30 @@ Template files can use the placeholders below, substituted at publish/generate t
 | `{{appHost}}`       | Host portion of `app.url`                                  |
 | `{{appUid}}`/`{{appGid}}` | Resolved `quadlet_uid`/`quadlet_gid`                   |
 | `{{workingPath}}`   | Resolved `working_path`                                     |
+| `{{configPath}}`    | Resolved `config_path` (defaults to `working_path`)          |
 | `{{runtimePath}}`   | The preset's generated `runtimes/` folder, against `working_path` (e.g. `podman/frankenphp-octane/runtimes`) |
+
+By default `{{configPath}}` equals `working_path`, so nothing changes unless you set it. Set `PODMAN_CONFIG_PATH` to keep a service's live config in a stable directory outside the project — for example, in your own custom preset's `proxy.quadlets`:
+
+```ini
+Volume={{configPath}}/{{proxy}}:/etc/caddy:rw,z,U
+```
+
+## Custom substitutions
+
+Set the `substitutions` config key to merge your own `{{placeholder}}` => value pairs into every rendered template. Values are plain PHP, so `env(...)` works here just like anywhere else in the config file:
+
+```php
+'substitutions' => [
+    '{{apiEndpoint}}' => env('API_ENDPOINT'),
+],
+```
+
+```ini
+Environment=API_ENDPOINT={{apiEndpoint}}
+```
+
+A substitution here can also override a built-in placeholder of the same name (for example, to compute `{{appHost}}` differently) — whatever you set in `substitutions` wins.
 
 ## Available services
 

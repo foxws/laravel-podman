@@ -112,6 +112,37 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Config Path
+    |--------------------------------------------------------------------------
+    |
+    | The host path baked into the "{{configPath}}" placeholder, for services
+    | that read their configuration from a host directory outside the project
+    | itself (for example a proxy Containerfile mounting "{{configPath}}/
+    | {{application}}" as "/etc/caddy"). Defaults to "working_path".
+    |
+    */
+
+    'config_path' => env('PODMAN_CONFIG_PATH'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Custom Substitutions
+    |--------------------------------------------------------------------------
+    |
+    | Extra "{{placeholder}}" => value pairs merged into every rendered
+    | template, on top of the built-in ones (see the "Customizing" docs). A
+    | substitution here overrides a built-in placeholder of the same name.
+    | Values are plain PHP, so "env(...)" works like anywhere else in this
+    | file, e.g. '{{apiEndpoint}}' => env('API_ENDPOINT').
+    |
+    */
+
+    'substitutions' => [
+        // '{{apiEndpoint}}' => env('API_ENDPOINT'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Service UID and GID
     |--------------------------------------------------------------------------
     |

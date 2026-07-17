@@ -90,6 +90,16 @@ class PodmanQuadletPath
         return Config::get('podman.working_path') ?: $this->basePath();
     }
 
+    /**
+     * The host path baked into the "{{configPath}}" placeholder, for
+     * services that keep their configuration outside the project itself.
+     * Falls back to workingPath() when unset.
+     */
+    public function configPath(): string
+    {
+        return Config::get('podman.config_path') ?: $this->workingPath();
+    }
+
     public function publishPath(): string
     {
         return $this->resolvePath(Config::get('podman.publish_path'), $this->basePath());
@@ -184,6 +194,17 @@ class PodmanQuadletPath
     public function s3CorsPolicyPath(): string
     {
         return "{$this->presetPath('s3')}/cors.json";
+    }
+
+    /**
+     * Extra "{{placeholder}}" => value pairs merged into every rendered
+     * template, on top of the built-in ones.
+     *
+     * @return array<string, string>
+     */
+    public function customSubstitutions(): array
+    {
+        return Config::array('podman.substitutions', []);
     }
 
     public function isEnabled(): bool

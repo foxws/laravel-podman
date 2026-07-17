@@ -5,8 +5,8 @@ Description=MongoDB container
 [Container]
 Image=docker.io/library/mongo:latest
 AutoUpdate=registry
-Environment=MONGO_INITDB_ROOT_USERNAME=root
-Environment=MONGO_INITDB_ROOT_PASSWORD=password
+Secret={{application}}-mongodb-user,type=env,target=MONGO_INITDB_ROOT_USERNAME
+Secret={{application}}-mongodb-password,type=env,target=MONGO_INITDB_ROOT_PASSWORD
 Volume={{application}}-mongodb:/data/db:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=27017

@@ -187,7 +187,7 @@ vendor/bin/lpod my-app artisan queue:work
 vendor/bin/lpod my-app shell
 
 # Installing, secrets, and other Quadlet management (see below)
-vendor/bin/lpod install frankenphp-octane/app.quadlets --replace
+vendor/bin/lpod install development/app.quadlets --replace
 vendor/bin/lpod secrets app
 ```
 

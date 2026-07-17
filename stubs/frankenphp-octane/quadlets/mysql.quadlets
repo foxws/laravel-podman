@@ -5,11 +5,11 @@ Description=MySQL container
 [Container]
 Image=docker.io/library/mysql:latest
 AutoUpdate=registry
-Environment=MYSQL_ROOT_PASSWORD=password
+Secret={{application}}-mysql-root-password,type=env,target=MYSQL_ROOT_PASSWORD
 Environment=MYSQL_ROOT_HOST=%
-Environment=MYSQL_DATABASE=laravel
-Environment=MYSQL_USER=user
-Environment=MYSQL_PASSWORD=password
+Secret={{application}}-mysql-db,type=env,target=MYSQL_DATABASE
+Secret={{application}}-mysql-user,type=env,target=MYSQL_USER
+Secret={{application}}-mysql-password,type=env,target=MYSQL_PASSWORD
 ShmSize=256m
 Volume={{application}}-mysql:/var/lib/mysql:rw,Z,U
 Network={{application}}.network

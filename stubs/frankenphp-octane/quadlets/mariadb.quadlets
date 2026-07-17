@@ -5,11 +5,11 @@ Description=MariaDB container
 [Container]
 Image=docker.io/library/mariadb:latest
 AutoUpdate=registry
-Environment=MYSQL_ROOT_PASSWORD=password
+Secret={{application}}-mariadb-root-password,type=env,target=MYSQL_ROOT_PASSWORD
 Environment=MYSQL_ROOT_HOST=%
-Environment=MYSQL_DATABASE=laravel
-Environment=MYSQL_USER=user
-Environment=MYSQL_PASSWORD=password
+Secret={{application}}-mariadb-db,type=env,target=MYSQL_DATABASE
+Secret={{application}}-mariadb-user,type=env,target=MYSQL_USER
+Secret={{application}}-mariadb-password,type=env,target=MYSQL_PASSWORD
 ShmSize=256m
 Volume={{application}}-mariadb:/var/lib/mysql:rw,Z,U
 Network={{application}}.network

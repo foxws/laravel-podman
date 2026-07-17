@@ -18,6 +18,7 @@ class GenerateCommand extends Command
 
     public $signature = 'podman:generate
         {preset? : The name of the preset to generate}
+        {--working-path= : Override the podman.working_path config value for this run}
     ';
 
     public $description = 'Render a preset\'s quadlets and runtime files, ready to install with "lpod install".';
@@ -26,6 +27,10 @@ class GenerateCommand extends Command
     {
         if (! $this->ensurePodmanIsEnabled()) {
             return self::FAILURE;
+        }
+
+        if ($workingPath = $this->option('working-path')) {
+            config(['podman.working_path' => $workingPath]);
         }
 
         $preset = $this->argument('preset') ?? select(

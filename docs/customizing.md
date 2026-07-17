@@ -43,6 +43,57 @@ Template files can use the placeholders below, substituted at publish/generate t
 | `{{workingPath}}`   | Resolved `working_path`                                     |
 | `{{runtimePath}}`   | The preset's generated `runtimes/` folder, against `working_path` (e.g. `podman/frankenphp-octane/runtimes`) |
 
+## Available services
+
+Each preset (except `devcontainer`/`s3`) bundles `app` plus these sibling services. Only one per category is meant to run at a time — they're alternatives, not additions:
+
+| Category       | Services (default first)               |
+| -------------- | ---------------------------------------- |
+| Database       | `pgsql`, `mariadb`, `mysql`, `mongodb`   |
+| Cache/queue    | `valkey`, `redis`, `memcached`           |
+| Search         | `typesense`, `meilisearch`               |
+| Object storage | `rustfs`                                 |
+| Mail catcher   | `mailpit`                                |
+
+`frankenphp-octane` additionally bundles `horizon`, `reverb`, `schedule`, and `inertia-ssr` — these run alongside `app`, not as alternatives to it.
+
+## Swapping a service
+
+The default database/cache (`pgsql`/`valkey`) are wired into `app.quadlets`' `[Unit]` section, not auto-detected — swapping to an alternative means editing that wiring too:
+
+```bash
+php artisan podman:publish frankenphp-octane   # or development
+```
+
+Edit `containers/stubs/frankenphp-octane/quadlets/app.quadlets`, replacing `pgsql`/`valkey` with your chosen services in `Requires=`/`After=`:
+
+```ini
+Requires={{application}}-mysql.container {{application}}-redis.container
+After={{application}}-mysql.container {{application}}-redis.container
+```
+
+Regenerate and reinstall both the new service and `app`:
+
+```bash
+php artisan podman:generate frankenphp-octane
+lpod install frankenphp-octane/mysql.quadlets --replace
+lpod install frankenphp-octane/app.quadlets --replace
+```
+
+Also update your app's own `.env` (`DB_CONNECTION`, `DB_HOST`, etc.) — Podman only wires the containers together, Laravel still needs to know which one to talk to.
+
+### `Requires=`, `After=`, `Wants=`, and friends
+
+These `[Unit]` directives control startup order and failure propagation between services. They don't start anything by themselves — that's still `lpod SERVICE up` (or whatever chain that triggers):
+
+| Directive   | Meaning                                                                       | Used for                                        |
+| ----------- | ------------------------------------------------------------------------------ | ------------------------------------------------- |
+| `Requires=` | Hard dependency — if the target fails, this unit stops too                     | `app` → its database + cache                      |
+| `After=`    | Ordering only, no failure propagation — start after the target                 | Paired with `Requires=`/`Wants=` above             |
+| `Wants=`    | Soft dependency — tries to start the target too, but doesn't fail if it can't  | `app` → `mailpit`/`horizon`/`reverb`/`schedule`    |
+| `BindsTo=`  | Like `Requires=`, but also stops this unit when the target *stops*, not just fails | `horizon`/`reverb`/`schedule`/`inertia-ssr` → `app` |
+| `PartOf=`   | Stop/restart of the target propagates here, one-directional                    | `typesense`/`mailpit` → `app`                      |
+
 ## Example: increasing a service's memory limit
 
 ```bash

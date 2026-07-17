@@ -156,6 +156,7 @@ lpod my-app run whoami   # Run an arbitrary command in the container
 ```bash
 lpod my-app open                     # Open the application URL in your browser
 lpod my-app artisan podman:publish   # Publish the Podman container runtime files
+lpod proxy export-cert               # Export the proxy's local CA certificate (default: ~/proxy.crt)
 lpod --help                          # Print the full list of commands
 ```
 

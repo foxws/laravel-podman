@@ -100,6 +100,7 @@ function display_help {
     echo "${YELLOW}Other:${NC}"
     echo "  ${GREEN}lpod my-app open${NC}                     Open the application URL in your browser"
     echo "  ${GREEN}lpod my-app artisan podman:publish${NC}   Publish the Podman container runtime files"
+    echo "  ${GREEN}lpod proxy export-cert [PATH]${NC}        Export the proxy's local CA certificate (default: ~/proxy.crt)"
     echo
     echo "${YELLOW}Quadlet Management:${NC}"
     echo "  ${GREEN}lpod setup ...${NC}                         Alias for 'lpod-setup' (render presets without PHP on the host)"
@@ -442,6 +443,12 @@ case "$COMMAND" in
         fi
 
         exec xdg-open "$FULL_URL"
+        ;;
+
+    # Export the proxy's local CA certificate for trusting on the host...
+    export-cert)
+        OUT="${1:-$HOME/${SERVICE}.crt}"
+        exec "${LPOD_PODMAN_BINARY}" cp "${CONTAINER}:/data/caddy/pki/authorities/local/root.crt" "$OUT"
         ;;
 
     # Unknown commands are passed through to the podman binary...

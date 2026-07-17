@@ -38,52 +38,7 @@ You can publish the config file with:
 php artisan vendor:publish --tag="podman-config"
 ```
 
-This is the contents of the published config file:
-
-```php
-return [
-    'enabled' => env('PODMAN_ENABLED', true),
-
-    'presets' => env('PODMAN_DEFAULT_PRESETS', [
-        'development',
-        'devcontainer',
-        'proxy',
-        // 'frankenphp-octane',
-    ]),
-
-    's3_buckets' => env('PODMAN_S3_BUCKETS', [
-        'local',
-        'assets',
-        'media',
-        'conversions',
-    ]),
-
-    's3_cors_buckets' => env('PODMAN_S3_CORS_BUCKETS', [
-        'conversions',
-        'assets',
-    ]),
-
-    'quadlet_prefix' => env('PODMAN_QUADLET_PREFIX', env('APP_NAME', 'laravel')),
-
-    'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),
-
-    'stubs_path' => env('PODMAN_STUBS_PATH', 'containers/stubs'),
-
-    'working_path' => env('PODMAN_WORKING_PATH'),
-
-    'quadlet_uid' => env('PODMAN_QUADLET_UID'),
-
-    'quadlet_gid' => env('PODMAN_QUADLET_GID'),
-
-    'publish_path' => env('PODMAN_PUBLISH_PATH', 'podman'),
-
-    'selinux_volume_mapping' => env('PODMAN_SELINUX_VOLUME_MAPPING', true),
-];
-```
-
-`quadlet_prefix` is used to namespace the services installed for your application (for example `laravel-pgsql`), and defaults to your `APP_NAME`. `quadlet_uid`/`quadlet_gid` default to the UID/GID of the user running the Artisan command. `s3_buckets`/`s3_cors_buckets` are used by `podman:s3-setup` — see [S3 Buckets](docs/s3.md).
-
-`development`/`devcontainer` are enabled by default, so your working copy is live-mounted into the container instead of baked into the image. `frankenphp-octane` is commented out by default — enable it (or pass `--preset=frankenphp-octane` to `podman:setup`/`podman:generate`) when you need a production-style image with the app code baked in.
+By default it enables `development`/`devcontainer`/`proxy` (your working copy live-mounted, for local editing) and comments out `frankenphp-octane` (a production-style image with the app baked in) — flip that in the `presets` key, or pass `--preset=frankenphp-octane` per run. See [Customizing](docs/customizing.md) for every config key.
 
 ## Presets
 
@@ -105,17 +60,15 @@ The fastest way to render an application's Quadlet units is `podman:setup`. It g
 php artisan podman:setup
 ```
 
-> **Note:** This step only renders files — it substitutes your app's config into the preset's templates and writes the result to the `publish_path` config key (`podman` by default, one subfolder per preset). It never touches the `podman` binary, so it works even without Podman installed (e.g. inside a disposable `php` container in CI). If you don't have PHP on the host at all, see [Setting up without PHP on the host](docs/host-setup.md).
->
-> Generated files in `publish_path` (default `podman/`) are build artifacts. Do not commit them. Add the path to `.gitignore` (default: `/podman`), and remove/re-generate it any time after `lpod install`.
+> Rendering only writes files under `publish_path` (`podman/`, one folder per preset) — it never touches the `podman` binary, so it works even without Podman installed (e.g. a disposable `php` container in CI). Generated output is a build artifact: don't commit it (add `/podman` to `.gitignore`), and delete/regenerate it any time.
 
-The presets it generates by default come from the `presets` config key (`development`/`devcontainer`/`proxy` out of the box; `frankenphp-octane` is opt-in — see [Presets](#presets)) — edit that, set `PODMAN_DEFAULT_PRESETS`, or override per run:
+Override the default presets per run, or edit the `presets` config key:
 
 ```bash
 php artisan podman:setup --preset=frankenphp-octane
 ```
 
-Installing is a separate step, handled by [`lpod`](#the-lpod-utility) on the host (this is the one step that actually needs the `podman` binary):
+Install each rendered service with `lpod` — the one step that needs the `podman` binary (`devcontainer`/`s3` aren't Quadlet-managed, so there's nothing to install for those two: build the devcontainer through your editor, and run `s3`'s CORS policy through `podman:s3-setup`):
 
 ```bash
 vendor/bin/lpod install development/app.quadlets --replace
@@ -125,32 +78,19 @@ vendor/bin/lpod install proxy/proxy.quadlets --replace
 # ...and so on for every service you need.
 ```
 
-> **Note:** `devcontainer` and `s3` aren't Quadlet-managed (see [Presets](#presets)), so there's nothing to `lpod install` for them — build the devcontainer image through your editor's Dev Containers extension, and run `s3`'s CORS policy through `podman:s3-setup` instead.
-
-Secrets a service needs (e.g. your application's `.env` file, database credentials) are prompted for and set once the service is installed, by unit name:
+Then set each service's secrets and start everything:
 
 ```bash
 vendor/bin/lpod secrets app
 vendor/bin/lpod secrets pgsql
-```
 
-Once installed, use `lpod` to start everything:
-
-```bash
 vendor/bin/lpod my-app up
 vendor/bin/lpod my-app open   # Opens the application URL in your browser
 ```
 
-The bundled `proxy` preset terminates HTTPS with a locally-trusted certificate — trust it once so your browser/OS stop flagging it, see [Trusting the local certificate](docs/proxy.md#trusting-the-local-certificate).
+The bundled `proxy` preset uses a locally-trusted certificate — trust it once, see [Trusting the local certificate](docs/proxy.md#trusting-the-local-certificate).
 
-Setting up somewhere PHP isn't installed (a disposable container, CI)? Once `lpod` itself is on the host, `vendor/bin/lpod setup` (a shortcut for the `lpod-setup` binary — see [The `lpod` utility](#the-lpod-utility)) renders the default presets the same way, without needing PHP:
-
-```bash
-vendor/bin/lpod setup
-vendor/bin/lpod setup --preset=frankenphp-octane
-```
-
-See [Setting up without PHP on the host](docs/host-setup.md) for the raw `podman run ...` equivalent (e.g. before `lpod` is available at all) and the details of what gets rendered where.
+No PHP on the host? `lpod setup` (once `lpod` itself is there) renders the default presets the same way, without it — see [Setting up without PHP on the host](docs/host-setup.md).
 
 ## Usage
 
@@ -175,9 +115,7 @@ The package ships three Composer binaries that all run **on the host** — they 
 - **`vendor/bin/lpod-setup`** — renders presets by running `php artisan podman:setup` inside a disposable container, for hosts that have Podman but not PHP. See [Setting up without PHP on the host](docs/host-setup.md).
 - **`vendor/bin/lpod-secrets`** — prompts for and stores the Podman secrets an installed Quadlet unit needs.
 
-`lpod setup` and `lpod secrets` are convenience aliases for the latter two — call `vendor/bin/lpod-setup`/`vendor/bin/lpod-secrets` directly if you'd rather skip the `lpod` wrapper.
-
-These are plain, self-contained bash scripts — they don't need Composer's autoloader or PHP to run (only `lpod-setup` shells out to PHP, and only inside a disposable container). Nothing requires calling them through `vendor/bin/`: copy `bin/lpod`, `bin/lpod-setup`, and `bin/lpod-secrets` anywhere on the host's `PATH` (or track them in your dotfiles) and run them standalone, even on a host where this Composer package was never installed at all — see [Installation](#installation) for making the package itself a dev-only dependency.
+`lpod setup`/`lpod secrets` are aliases for the latter two. All three are plain bash scripts with no Composer-autoloader dependency — copy `bin/lpod`, `bin/lpod-setup`, and `bin/lpod-secrets` anywhere on the host's `PATH` (or your dotfiles) and run them standalone, without `vendor/bin/` or even the package installed (see [Installation](#installation)).
 
 ```bash
 vendor/bin/lpod SERVICE COMMAND [options] [arguments]

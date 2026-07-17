@@ -196,6 +196,17 @@ class PodmanQuadletPath
         return "{$this->presetPath('s3')}/cors.json";
     }
 
+    /**
+     * Extra "{{placeholder}}" => value pairs merged into every rendered
+     * template, on top of the built-in ones.
+     *
+     * @return array<string, string>
+     */
+    public function customSubstitutions(): array
+    {
+        return Config::array('podman.substitutions', []);
+    }
+
     public function isEnabled(): bool
     {
         return Config::boolean('podman.enabled');

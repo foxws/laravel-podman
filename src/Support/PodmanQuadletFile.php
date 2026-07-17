@@ -31,6 +31,7 @@ class PodmanQuadletFile
             '{{workingPath}}' => $this->path->workingPath(),
             '{{configPath}}' => $this->path->configPath(),
             '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),
+            ...$this->path->customSubstitutions(),
         ];
     }
 

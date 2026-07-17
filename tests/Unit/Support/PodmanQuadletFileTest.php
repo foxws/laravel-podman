@@ -80,6 +80,34 @@ it('uses the configured working path for the workingPath and runtimePath placeho
     File::delete($target);
 });
 
+it('replaces the configPath placeholder, defaulting to the working path', function () {
+    $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
+    $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';
+    config(['podman.working_path' => '/home/francois/app']);
+    File::put($source, "Volume={{configPath}}/{{application}}:/etc/caddy:rw,z,U\n");
+
+    $this->file->prepareSource($source, $target, 'proxy');
+
+    expect(File::get($target))->toBe("Volume=/home/francois/app/laravel:/etc/caddy:rw,z,U\n");
+
+    File::delete($source);
+    File::delete($target);
+});
+
+it('uses the configured config path for the configPath placeholder, independent of the working path', function () {
+    $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
+    $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';
+    config(['podman.config_path' => '/etc/laravel-podman', 'podman.working_path' => '/home/francois/app']);
+    File::put($source, "Volume={{configPath}}/{{application}}:/etc/caddy:rw,z,U\n");
+
+    $this->file->prepareSource($source, $target, 'proxy');
+
+    expect(File::get($target))->toBe('Volume=/etc/laravel-podman/laravel:/etc/caddy:rw,z,U'."\n");
+
+    File::delete($source);
+    File::delete($target);
+});
+
 it('scopes the runtimePath placeholder to the given preset', function () {
     $source = sys_get_temp_dir().'/podman-source-'.uniqid().'.quadlets';
     $target = sys_get_temp_dir().'/podman-target-'.uniqid().'.quadlets';

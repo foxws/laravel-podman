@@ -29,6 +29,7 @@ class PodmanQuadletFile
             '{{application}}' => $this->path->prefix(),
             '{{proxy}}' => $this->path->proxy(),
             '{{workingPath}}' => $this->path->workingPath(),
+            '{{configPath}}' => $this->path->configPath(),
             '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),
         ];
     }

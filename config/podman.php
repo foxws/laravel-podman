@@ -112,6 +112,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Config Path
+    |--------------------------------------------------------------------------
+    |
+    | The host path baked into the "{{configPath}}" placeholder, for services
+    | that read their configuration from a host directory outside the project
+    | itself (for example a proxy Containerfile mounting "{{configPath}}/
+    | {{application}}" as "/etc/caddy"). Defaults to "working_path".
+    |
+    */
+
+    'config_path' => env('PODMAN_CONFIG_PATH'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Service UID and GID
     |--------------------------------------------------------------------------
     |

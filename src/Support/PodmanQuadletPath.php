@@ -90,6 +90,16 @@ class PodmanQuadletPath
         return Config::get('podman.working_path') ?: $this->basePath();
     }
 
+    /**
+     * The host path baked into the "{{configPath}}" placeholder, for
+     * services that keep their configuration outside the project itself.
+     * Falls back to workingPath() when unset.
+     */
+    public function configPath(): string
+    {
+        return Config::get('podman.config_path') ?: $this->workingPath();
+    }
+
     public function publishPath(): string
     {
         return $this->resolvePath(Config::get('podman.publish_path'), $this->basePath());

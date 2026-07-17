@@ -44,8 +44,8 @@ By default it enables `development`/`devcontainer`/`proxy` (your working copy li
 
 | Preset              | Purpose                                                                                                                                                                                                 |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `development`       | The same services, but with your working copy live-mounted into the container instead of baked in, for local editing.                                                                                   |
 | `frankenphp-octane` | Production-style app image (code baked in) plus its full set of sibling services — database, cache, queue worker, WebSockets, scheduler, SSR, search, S3-compatible storage, mail catcher.              |
+| `development`       | The same services, but with your working copy live-mounted into the container instead of baked in, for local editing.                                                                                   |
 | `devcontainer`      | An image for the VS Code/JetBrains [Dev Containers](https://containers.dev/) workflow. Not Quadlet-managed — just a `Containerfile` and `devcontainer.json`, no `quadlets/`. Enabled by default.        |
 | `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy terminating HTTPS in front of the other services. See [Proxy](docs/proxy.md).                                                                           |
 | `s3`                | A `cors.json` policy applied by `podman:s3-setup` against your S3-compatible storage buckets. Not Quadlet-managed either — no `quadlets/`/`runtimes/`, just the one file. See [S3 Buckets](docs/s3.md). |

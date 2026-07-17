@@ -1,8 +1,6 @@
 # FileName={{application}}
 [Build]
 ImageTag=localhost/{{application}}:latest
-Target={{appEnv}}
-Environment=APP_ENV={{appEnv}}
 Environment=UID={{appUid}}
 Environment=GID={{appGid}}
 File={{runtimePath}}/Containerfile

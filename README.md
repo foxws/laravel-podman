@@ -5,131 +5,112 @@
 [![GitHub Code Style Action Status](https://github.com/foxws/laravel-podman/actions/workflows/fix-php-code-style-issues.yml/badge.svg)](https://github.com/foxws/laravel-podman/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
 [![Total Downloads](https://img.shields.io/packagist/dt/foxws/laravel-podman.svg?style=flat-square)](https://packagist.org/packages/foxws/laravel-podman)
 
-Laravel Podman is a lightweight Laravel package that brings [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) support to your app. It generates services from presets and installs them as [systemd-managed](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) containers.
+Renders [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) units from your Laravel app's config, then installs them as [systemd-managed](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) containers on your host — no all-in-one runtime, no lock-in. Swap any bundled part (Caddy for Nginx, Postgres for MySQL) for your own.
 
-It relies on your host Podman/systemd setup (instead of an all-in-one runtime), so it gives you a more advanced and flexible setup. You can swap bundled parts like the default Caddy proxy for your own setup (for example Nginx).
-
-## Features
-
-- **Ready presets** — Use built-in presets for common needs: `frankenphp-octane`, `development`, `devcontainer`, and `proxy`. You can also add your own. See [Presets](#presets).
-- **Generate first, install later** — Artisan commands create Quadlet files from your app config. Then `lpod` installs and manages those services on the host.
-- **Simple daily commands with `lpod`** — Start and stop services, open a shell, run app commands, and manage installed units from one CLI.
-- **Setup without host PHP (`lpod-setup`)** — Render presets on machines that have Podman but not PHP installed.
-- **Safe secret handling (`lpod-secrets`)** — Store `.env` values and service passwords as Podman secrets instead of plain text files.
-
-See the [`docs/`](docs) folder for more: [Command Reference](docs/commands.md), [Setting up without PHP on the host](docs/host-setup.md), [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [The `lpod` CLI](docs/lpod.md), [Customizing](docs/customizing.md), [Comparison](docs/comparison.md).
+See [`docs/`](docs) for the full reference: [Commands](docs/commands.md), [Customizing](docs/customizing.md), [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [The `lpod` CLI](docs/lpod.md), [Setting up without PHP](docs/host-setup.md), [Comparison](docs/comparison.md).
 
 ## Requirements
 
-- Linux with systemd (rootless or system-wide); macOS and Windows, including WSL, are not supported
-- A recent version of Podman with the `quadlet` CLI plugin (`podman quadlet --help` should work)
+- **Linux with systemd** (rootless or system-wide) — macOS, Windows, and WSL are not supported
+- **Podman** with the `quadlet` CLI plugin (`podman quadlet --help` should work)
 
 ## Installation
-
-You can install the package via composer:
 
 ```bash
 composer require foxws/laravel-podman --dev
 ```
 
-You can publish the config file with:
-
 ```bash
 php artisan vendor:publish --tag="podman-config"
 ```
 
-By default it enables `development`/`devcontainer`/`proxy` (your working copy live-mounted, for local editing) and comments out `frankenphp-octane` (a production-style image with the app baked in) — flip that in the `presets` key, or pass `--preset=frankenphp-octane` per run. See [Customizing](docs/customizing.md) for every config key.
+Only needed to render Quadlet units — install as a dev dependency and skip it in production. See [Customizing](docs/customizing.md) for every config key.
 
 ## Presets
 
-| Preset              | Purpose                                                                                                                                                                                                 |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `frankenphp-octane` | Production-style app image (code baked in) plus its full set of sibling services — database, cache, queue worker, WebSockets, scheduler, SSR, search, S3-compatible storage, mail catcher.              |
-| `development`       | The same services, but with your working copy live-mounted into the container instead of baked in, for local editing.                                                                                   |
-| `devcontainer`      | An image for the VS Code/JetBrains [Dev Containers](https://containers.dev/) workflow. Not Quadlet-managed — just a `Containerfile` and `devcontainer.json`, no `quadlets/`. Enabled by default.        |
-| `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy terminating HTTPS in front of the other services. See [Proxy](docs/proxy.md).                                                                           |
-| `s3`                | A `cors.json` policy applied by `podman:s3-setup` against your S3-compatible storage buckets. Not Quadlet-managed either — no `quadlets/`/`runtimes/`, just the one file. See [S3 Buckets](docs/s3.md). |
+| Preset | What it is |
+| --- | --- |
+| `development` | App + services, working copy live-mounted for local editing. **Enabled by default.** |
+| `frankenphp-octane` | Production-style image, app code baked in. Commented out by default. |
+| `devcontainer` | VS Code/JetBrains [Dev Containers](https://containers.dev/) image. **Enabled by default.** |
+| `proxy` | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. |
+| `s3` | CORS policy for S3-compatible storage buckets. |
 
-**Custom presets.** A preset is a folder containing a `quadlets/` directory of `*.quadlets` files and a `runtimes/` directory of container build files (the `devcontainer`/`s3` presets are exceptions — see the table above). `stubs_path` (default `containers/stubs`) is the lookup root for custom presets. For each preset name, the package uses `stubs_path/{preset}` if it exists; otherwise it falls back to the bundled vendor preset. Once a preset exists under `stubs_path`, that preset is fully overridden (no file-by-file merge). So you can publish one preset (`php artisan podman:publish frankenphp-octane`) without touching the others.
+Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) without touching the others — see [Customizing](docs/customizing.md).
 
-## Quick Start
+## Quick start
 
-The fastest way to render an application's Quadlet units is `podman:setup`. It generates the default presets' `.quadlets`/runtime build files in one go, so you don't need to call `podman:generate` per preset:
+1. **Render** the default presets:
 
-```bash
-php artisan podman:setup
-```
+    ```bash
+    php artisan podman:setup
+    ```
 
-> Rendering only writes files under `publish_path` (`podman/`, one folder per preset) — it never touches the `podman` binary, so it works even without Podman installed (e.g. a disposable `php` container in CI). Generated output is a build artifact: don't commit it (add `/podman` to `.gitignore`), and delete/regenerate it any time.
+2. **Install [`lpod`](https://github.com/foxws/lpod)** once per host — a dependency-free script, no PHP/Composer needed:
 
-Override the default presets per run, or edit the `presets` config key:
+    ```bash
+    curl -fsSL -o ~/.local/bin/lpod https://github.com/foxws/lpod/releases/latest/download/lpod
+    chmod +x ~/.local/bin/lpod
+    ```
 
-```bash
-php artisan podman:setup --preset=frankenphp-octane
-```
+3. **Install** each rendered service (the only step that needs `podman` itself):
 
-Install each rendered service with `lpod` — the one step that needs the `podman` binary (`devcontainer`/`s3` aren't Quadlet-managed, so there's nothing to install for those two: build the devcontainer through your editor, and run `s3`'s CORS policy through `podman:s3-setup`):
+    ```bash
+    lpod install development/app.quadlets --replace
+    lpod install development/pgsql.quadlets --replace
+    lpod install development/valkey.quadlets --replace
+    lpod install proxy/proxy.quadlets --replace
+    ```
 
-```bash
-vendor/bin/lpod install development/app.quadlets --replace
-vendor/bin/lpod install development/pgsql.quadlets --replace
-vendor/bin/lpod install development/valkey.quadlets --replace
-vendor/bin/lpod install proxy/proxy.quadlets --replace
-# ...and so on for every service you need.
-```
+4. **Set secrets, then start:**
 
-Then set each service's secrets and start everything:
+    ```bash
+    lpod my-app secrets
+    lpod pgsql secrets
+    lpod my-app up
+    lpod my-app open
+    ```
 
-```bash
-vendor/bin/lpod secrets app
-vendor/bin/lpod secrets pgsql
+Trust the proxy's local certificate once — see [Proxy](docs/proxy.md#trusting-the-local-certificate).
 
-vendor/bin/lpod my-app up
-vendor/bin/lpod my-app open   # Opens the application URL in your browser
-```
+No PHP on the host? `lpod setup` renders the same way without it — see [Setting up without PHP](docs/host-setup.md).
 
-The bundled `proxy` preset uses a locally-trusted certificate — trust it once, see [Trusting the local certificate](docs/proxy.md#trusting-the-local-certificate).
+## Commands reference
 
-No PHP on the host? `lpod setup` (once `lpod` itself is there) renders the default presets the same way, without it — see [Setting up without PHP on the host](docs/host-setup.md).
+| Command | Description |
+| --- | --- |
+| `podman:setup` | Generate the default set of presets in one go |
+| `podman:publish PRESET` | Publish a preset for customization |
+| `podman:generate PRESET` | Render a single preset |
+| `podman:s3-setup` | Create S3 buckets and a CORS policy (requires `aws/aws-sdk-php`) |
 
-## Usage
+Installing, listing, removing, and setting secrets is [`lpod`](https://github.com/foxws/lpod)'s job, not Artisan's. Full flag reference: [Commands](docs/commands.md).
 
-The package discovers preset folders (each containing a `quadlets/` directory of `*.quadlets` files and a `runtimes/` directory of container build files) on disk, and exposes them through Artisan commands that only ever render — never install. Every command that needs a preset name will prompt you to select one interactively when it's omitted. Full flag reference and examples: [Command Reference](docs/commands.md).
-
-| Command                  | Description                                                                                    |
-| ------------------------ | ---------------------------------------------------------------------------------------------- |
-| `podman:setup`           | Generate the default set of presets in one go (see [Quick Start](#quick-start))                |
-| `podman:publish PRESET`  | Publish a preset (its quadlets and runtime files) for customization                            |
-| `podman:generate PRESET` | Render a single preset's quadlets and runtime files                                            |
-| `podman:s3-setup`        | Create S3 buckets and a CORS policy (requires `aws/aws-sdk-php`, see [S3 Buckets](docs/s3.md)) |
-
-Installing, listing, printing, removing, and setting secrets for the rendered services is `lpod`'s job, not Artisan's — see below.
-
-> **Warning:** `lpod remove`/`lpod uninstall` delete the Podman volumes owned by the services they remove (databases, uploaded files, search indexes), with no undo. Back up first — see [Backing up volumes](docs/commands.md#backing-up-volumes).
+> **Warning:** `lpod remove`/`lpod uninstall` delete the Podman volumes they own (databases, uploads, search indexes), with no undo — see [Backing up volumes](docs/commands.md#backing-up-volumes).
 
 ## The `lpod` utility
 
-The package ships three Composer binaries that all run **on the host** — they talk to the real `podman`/`systemctl` binaries, unlike the Artisan `podman:*` commands, which only render templates and can run anywhere PHP is available:
-
-- **`vendor/bin/lpod`** — a thin wrapper around `podman exec`, `podman quadlet`, and `systemctl` for the Quadlet services rendered by Artisan, similar in spirit to Laravel Sail's `sail` script.
-- **`vendor/bin/lpod-setup`** — renders presets by running `php artisan podman:setup` inside a disposable container, for hosts that have Podman but not PHP. See [Setting up without PHP on the host](docs/host-setup.md).
-- **`vendor/bin/lpod-secrets`** — prompts for and stores the Podman secrets an installed Quadlet unit needs.
-
-`lpod setup`/`lpod secrets` are aliases for the latter two. All three are plain bash scripts with no Composer-autoloader dependency — copy `bin/lpod`, `bin/lpod-setup`, and `bin/lpod-secrets` anywhere on the host's `PATH` (or your dotfiles) and run them standalone, without `vendor/bin/` or even the package installed (see [Installation](#installation)).
+[`lpod`](https://github.com/foxws/lpod) is a separate, dependency-free bash script — no PHP, Composer, or this package required to run it:
 
 ```bash
-vendor/bin/lpod SERVICE COMMAND [options] [arguments]
-
-vendor/bin/lpod my-app up
-vendor/bin/lpod my-app artisan queue:work
-vendor/bin/lpod my-app shell
-
-# Installing, secrets, and other Quadlet management (see below)
-vendor/bin/lpod install development/app.quadlets --replace
-vendor/bin/lpod secrets app
+curl -fsSL -o ~/.local/bin/lpod https://github.com/foxws/lpod/releases/latest/download/lpod
+chmod +x ~/.local/bin/lpod
 ```
 
-See [The `lpod` CLI](docs/lpod.md) for the full command reference (including `install`/`secrets`/`remove`/`list`/`print`/`uninstall`), shortening the call with an alias/`PATH` entry, and tips & tricks.
+```bash
+lpod SERVICE COMMAND [options] [arguments]
+
+lpod my-app up
+lpod my-app artisan queue:work
+lpod my-app shell
+
+lpod install development/app.quadlets --replace
+lpod my-app secrets
+```
+
+This package ships one Composer binary, **`vendor/bin/lpod-setup`**, which renders presets inside a disposable container for hosts with Podman but no PHP. `lpod setup` is a shortcut for it — copy `bin/lpod-setup` next to wherever `lpod` lives on your `PATH`.
+
+Full command reference, shortening the call, and tips & tricks: [foxws/lpod](https://github.com/foxws/lpod).
 
 ## Testing
 
@@ -137,23 +118,20 @@ See [The `lpod` CLI](docs/lpod.md) for the full command reference (including `in
 composer test
 ```
 
-## Changelog
+## Links
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
-
-## Security Vulnerabilities
-
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
+- [CHANGELOG](CHANGELOG.md)
+- [Security policy](../../security/policy)
+- [foxws/lpod](https://github.com/foxws/lpod) — the CLI this package pairs with
+- [Podman Quadlet reference](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html)
 
 ## Credits
 
 - [francoism90](https://github.com/foxws)
 - [All Contributors](../../contributors)
 
-## Disclaimer
-
 AI, specifically [Claude](https://claude.com/product/claude-code), was used to help build this package. All AI-assisted output is reviewed by me, and I retain final say over everything that is implemented and released.
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+MIT. See [License File](LICENSE.md).

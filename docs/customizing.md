@@ -11,12 +11,14 @@ Driven by `config/podman.php` (`php artisan vendor:publish --tag="podman-config"
 | `proxy_prefix` | `PODMAN_PROXY_PREFIX` | `proxy` | Namespace used for the `proxy` service/network |
 | `stubs_path` | `PODMAN_STUBS_PATH` | `containers/stubs` | Lookup root for custom presets |
 | `working_path` | `PODMAN_WORKING_PATH` | Laravel's `base_path()` | Host path baked into `{{workingPath}}`/`{{runtimePath}}`. Override per run with `--working-path=` on `podman:generate` |
+| `config_path` | `PODMAN_CONFIG_PATH` | `working_path` | Host path baked into `{{configPath}}`, for a service's config living outside the project |
 | `quadlet_uid`/`quadlet_gid` | `PODMAN_QUADLET_UID`/`_GID` | Current user's UID/GID | Baked into generated Quadlet files |
 | `publish_path` | `PODMAN_PUBLISH_PATH` | `podman` | Where `podman:generate` writes rendered presets. Build artifact — don't commit it |
 | `selinux_volume_mapping` | `PODMAN_SELINUX_VOLUME_MAPPING` | `true` | Keep `Z`/`z`/`U` volume flags; disable on non-SELinux hosts |
 | `presets` | `PODMAN_DEFAULT_PRESETS` | see `config/podman.php` | Presets `podman:setup` publishes/generates by default |
 | `s3_buckets` | `PODMAN_S3_BUCKETS` | see `config/podman.php` | Buckets `podman:s3-setup` creates — see [S3 Buckets](s3.md) |
 | `s3_cors_buckets` | `PODMAN_S3_CORS_BUCKETS` | see `config/podman.php` | Which of `s3_buckets` get the CORS policy |
+| `substitutions` | *(none)* | `[]` | Extra `{{placeholder}}` => value pairs merged into every template — see [Custom substitutions](#custom-substitutions) |
 
 `presets`/`s3_buckets`/`s3_cors_buckets` accept a comma-separated string or a plain PHP array.
 
@@ -41,7 +43,30 @@ Placeholders, substituted at publish/generate time:
 | `{{appHost}}` | Host portion of `app.url` |
 | `{{appUid}}`/`{{appGid}}` | Resolved `quadlet_uid`/`quadlet_gid` |
 | `{{workingPath}}` | Resolved `working_path` |
+| `{{configPath}}` | Resolved `config_path` (defaults to `working_path`) |
 | `{{runtimePath}}` | Preset's generated `runtimes/` folder, e.g. `podman/frankenphp-octane/runtimes` |
+
+Defaults to `working_path`, so nothing changes unless set. Handy for keeping a service's live config outside the project, e.g. in your own preset's `proxy.quadlets`:
+
+```ini
+Volume={{configPath}}/{{proxy}}:/etc/caddy:rw,z,U
+```
+
+## Custom substitutions
+
+Merge your own `{{placeholder}}` => value pairs into every template via `substitutions`. Values are plain PHP — `env(...)` works like anywhere else in the config:
+
+```php
+'substitutions' => [
+    '{{apiEndpoint}}' => env('API_ENDPOINT'),
+],
+```
+
+```ini
+Environment=API_ENDPOINT={{apiEndpoint}}
+```
+
+Can also override a built-in placeholder of the same name (e.g. `{{appHost}}`) — `substitutions` always wins.
 
 ## Available services
 

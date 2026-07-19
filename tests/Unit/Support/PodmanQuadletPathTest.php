@@ -40,6 +40,17 @@ it('uses the configured working path when set, without affecting the base path',
         ->and($this->path->basePath())->toBe(base_path());
 });
 
+it('resolves the config path to the working path by default', function () {
+    expect($this->path->configPath())->toBe($this->path->workingPath());
+});
+
+it('uses the configured config path when set, without affecting the working path', function () {
+    config(['podman.config_path' => '/etc/laravel-podman', 'podman.working_path' => '/home/francois/app']);
+
+    expect($this->path->configPath())->toBe('/etc/laravel-podman')
+        ->and($this->path->workingPath())->toBe('/home/francois/app');
+});
+
 it('resolves the vendor preset path for a preset that has not been published', function () {
     expect($this->path->presetPath('frankenphp-octane'))->toBe($this->path->vendorPresetPath('frankenphp-octane'))
         ->and($this->path->vendorPresetPath('frankenphp-octane'))->toBe("{$this->path->vendorPath()}/stubs/frankenphp-octane");

@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 1.3.0 - 2026-07-19
+
+### What's Changed
+
+* Remove bundled lpod and lpod-secrets by @francoism90 in https://github.com/foxws/laravel-podman/pull/7
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/1.2.0...1.3.0
+
 ## 1.2.0 - 2026-07-17
 
 ### What's Changed

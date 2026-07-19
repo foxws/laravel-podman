@@ -1,12 +1,12 @@
 # Command Reference
 
-The package finds preset folders on disk (`quadlets/` + `runtimes/`) and exposes them through the Artisan commands below. If you don't pass a preset name, the command prompts you to choose one.
+The package finds preset folders on disk (`quadlets/` + `runtimes/`) and exposes them through the Artisan commands below. Omit the preset name and it prompts you.
 
-These commands only render files. They never call the `podman` binary, so they work anywhere PHP runs (including inside a container without Podman). Installing, listing, printing, removing, and setting secrets is handled by the host-side `lpod`/`lpod-setup`/`lpod-secrets` binaries — see [The `lpod` CLI](lpod.md). Rendered output in `publish_path` (default `podman/`) is generated artifact output: do not commit it, and remove/regenerate it as needed.
+These commands only render files — never touch `podman`, so they work anywhere PHP runs. Installing, listing, removing, and secrets are [`lpod`](https://github.com/foxws/lpod)'s job — see [The `lpod` CLI](lpod.md). Rendered output (`publish_path`, default `podman/`) is a build artifact: don't commit it.
 
-## Setup Application
+## `podman:setup`
 
-Generates the default set of presets in one go — the quickest way to get an application's Quadlet units rendered (see [Quick Start](../README.md#quick-start)).
+Generates the default set of presets in one go — see [Quick Start](../README.md#quick-start).
 
 ```bash
 php artisan podman:setup
@@ -15,33 +15,33 @@ php artisan podman:setup
 php artisan podman:setup --preset=frankenphp-octane
 ```
 
-## Publish Preset
+## `podman:publish PRESET`
 
-Publishes a preset (its `quadlets/` and `runtimes/` files) so it can be customized before generating.
+Publishes a preset's `quadlets/` and `runtimes/` files for customization.
 
 ```bash
 php artisan podman:publish frankenphp-octane
 
-# Overwrite files that were already published
+# Overwrite already-published files
 php artisan podman:publish frankenphp-octane --force
 ```
 
-## Generate Preset
+## `podman:generate PRESET`
 
-Renders a single preset's `.quadlets` files and runtime build files (substituting the `{{...}}` placeholders described in [Customizing](customizing.md)) into the configured publish path (`podman/{preset}/` by default), ready for [`lpod install`](lpod.md).
+Renders a single preset (see [Customizing](customizing.md) for placeholders) into the publish path, ready for `lpod install`.
 
 ```bash
 php artisan podman:generate frankenphp-octane
 
-# Override the podman.working_path config value for this run
+# Override podman.working_path for this run
 php artisan podman:generate development --working-path=/srv/my-app
 ```
 
-`--working-path` overrides the `podman.working_path` config value (normally set via `PODMAN_WORKING_PATH`) for this run only, without touching your `.env`. It only changes the host path baked into the `{{workingPath}}`/`{{runtimePath}}` placeholders — see [Setting up without PHP on the host](host-setup.md) for running this somewhere PHP is convenient but Podman isn't.
+`--working-path` overrides `working_path` (normally `PODMAN_WORKING_PATH`) for one run, without touching `.env` — see [Setting up without PHP](host-setup.md).
 
-## Setup S3 Buckets
+## `podman:s3-setup`
 
-Creates the S3 buckets your app needs and applies a CORS policy to the ones browsers read directly. Requires `aws/aws-sdk-php` (`composer require aws/aws-sdk-php`), which is optional and not installed by default. See [S3 Buckets](s3.md) for details.
+Creates S3 buckets and applies a CORS policy to the ones browsers read directly. Requires `aws/aws-sdk-php` — see [S3 Buckets](s3.md).
 
 ```bash
 php artisan podman:s3-setup
@@ -49,14 +49,14 @@ php artisan podman:s3-setup
 
 ## Backing up volumes
 
-`lpod remove` and `lpod uninstall` delete the Podman volumes owned by the services they remove, along with their data — there's no undo. Before running either against a service holding data you care about (`pgsql`, `valkey`, `rustfs`, `typesense`, `mailpit`), back it up:
+`lpod remove`/`lpod uninstall` delete the Podman volumes they own, with no undo. Back up first for anything holding data (`pgsql`, `valkey`, `rustfs`, `typesense`, `mailpit`):
 
 ```bash
 # Generic: archive any named volume to a tarball
 podman volume export laravel-pgsql -o pgsql-backup.tar
 
-# Database-specific dumps are usually more portable than a raw volume export
+# Database dumps are usually more portable than a raw volume export
 lpod my-app run pg_dump -U postgres -d laravel > backup.sql
 ```
 
-Restore with `podman volume import laravel-pgsql pgsql-backup.tar` (before reinstalling the service), or replay the database dump if you used that method.
+Restore with `podman volume import laravel-pgsql pgsql-backup.tar`, or replay the dump.

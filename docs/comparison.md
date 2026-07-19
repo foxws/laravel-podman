@@ -1,11 +1,9 @@
 # Comparison
 
-This is a quick high-level comparison of Laravel Podman with common Laravel local tooling.
-
-Laravel Podman is a lightweight Laravel package, not a full desktop app. It generates services from presets and integrates with host Podman Quadlet/systemd. You can replace bundled parts (for example swap Caddy for Nginx), with a bit more host-level setup in exchange for more advanced control.
+Not a full desktop app — a Laravel package that renders presets into host-managed Podman Quadlet/systemd services. Swap bundled parts (Caddy for Nginx) for more host-level setup, in exchange for more control.
 
 | Tool | What it is | Main limits | How Laravel Podman differs |
 | --- | --- | --- | --- |
-| Laravel Sail | Docker Compose setup for Laravel development. | Mostly a development workflow with per-project Docker setup. | Laravel Podman uses preset-based generation and supports multiple presets/runtimes (for example `production`, `cloud`, `development`, etc.) with Podman Quadlet + systemd-managed services. |
-| Laravel Herd | Native local dev app from Laravel. | macOS and Windows only. | Laravel Podman targets Linux with Podman + systemd only (rootless or system-wide). |
-| Lerd ([docs](https://lerd.sh/getting-started/comparison)) | Open-source local dev tool with rootless Podman (Linux/macOS). | Different scope and architecture from this package. | Laravel Podman is a Laravel package that renders preset templates into Podman Quadlet units, and includes a Caddy-based `proxy` preset plus `lpod`/`lpod-setup`/`lpod-secrets` host tooling. |
+| Laravel Sail | Docker Compose setup for Laravel development. | Development-only, per-project Docker setup. | Multiple presets/runtimes (`development`, `frankenphp-octane`, etc.) with Podman Quadlet + systemd-managed services. |
+| Laravel Herd | Native local dev app from Laravel. | macOS and Windows only. | Linux with Podman + systemd only (rootless or system-wide). |
+| Lerd ([docs](https://lerd.sh/getting-started/comparison)) | Open-source local dev tool, rootless Podman (Linux/macOS). | Different scope and architecture. | Renders preset templates into Quadlet units, bundles a Caddy `proxy` preset and a `lpod-setup` binary, pairs with the standalone [`lpod`](https://github.com/foxws/lpod) host tool. |

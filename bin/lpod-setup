@@ -39,6 +39,14 @@ done
 
 LPOD_BINARY="${LPOD_BINARY:-lpod}"
 
+# Fail fast, before rendering/installing anything, if "--secrets" was
+# requested but the "lpod" binary it shells out to isn't on PATH...
+if [ "$SECRETS" -eq 1 ] && ! command -v "$LPOD_BINARY" >/dev/null 2>&1; then
+    echo "The '${LPOD_BINARY}' binary is required to set secrets with --secrets. Install it from https://github.com/foxws/lpod, or point LPOD_BINARY at it." >&2
+
+    exit 1
+fi
+
 # Render every requested preset's ".quadlets"/runtime files into
 # "$PUBLISH_PATH/{preset}", running as the host user so nothing ends up
 # owned by root. This only renders — it doesn't install anything unless

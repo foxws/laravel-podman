@@ -31,6 +31,12 @@ A preset is a folder with a `quadlets/` directory (`*.quadlets` files) and a `ru
 - **Customize build files** — same rule for `runtimes/` (`Containerfile`, `entrypoint.sh`, php ini, Caddy templates).
 - **Add a new preset** — create `containers/stubs/my-preset/quadlets/` and `.../runtimes/` directly.
 
+### The app pod
+
+In `development` and `frankenphp-octane`, `app`, `horizon`, `reverb`, `schedule`, `mailpit` (and `inertia-ssr` on `frankenphp-octane`) all join a shared `{{application}}.pod` (defined alongside the app container in `app.quadlets`). Pod members share one network namespace, so they reach each other over `localhost` and only need their ports published once, at the pod — that's why those services' `.quadlets` files carry `Pod={{application}}.pod` instead of their own `Network=`/`ExposeHostPort=` lines. `pgsql`/`mariadb`/`valkey`/etc. stay outside the pod on the plain `{{application}}.network`, reachable from pod members the same way as before.
+
+Adding your own service that needs to join the pod: put `Pod={{application}}.pod` in its `[Container]` section, drop any `Network=`/`ExposeHostPort=` lines, and add its host port as `PublishPort=` on the `[Pod]` block in `app.quadlets` — `ExposeHostPort=`/per-container `Network=` are ignored once a container has `Pod=`. Since pod networking is shared, any pod member is reachable from every other pod member and from `{{proxy}}.network`, regardless of which container's `.quadlets` file declares the port.
+
 Placeholders, substituted at publish/generate time:
 
 | Placeholder | Value |

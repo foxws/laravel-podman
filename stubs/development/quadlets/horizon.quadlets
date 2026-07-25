@@ -13,7 +13,7 @@ UserNS=keep-id
 ShmSize=128m
 Volume={{workingPath}}:/app:rw,z
 Volume={{application}}-cache:/cache:rw,z
-Network={{application}}.network
+Pod={{application}}.pod
 
 [Service]
 Restart=always

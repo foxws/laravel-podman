@@ -8,6 +8,25 @@ IgnoreFile={{runtimePath}}/dockerignore
 SetWorkingDirectory={{workingPath}}
 ---
 # FileName={{application}}
+[Pod]
+PodName={{application}}
+Network={{application}}.network
+Network={{proxy}}.network
+PublishPort=8000:8000
+PublishPort=5173:5173
+PublishPort=6001:6001
+PublishPort=13714:13714
+PublishPort=1025:1025
+PublishPort=1110:1110
+PublishPort=8025:8025
+
+[Service]
+Restart=always
+RestartSec=5
+TimeoutStartSec=300
+TimeoutStopSec=30
+---
+# FileName={{application}}
 [Unit]
 Description=Laravel App (Octane) container
 Requires={{application}}-pgsql.container {{application}}-valkey.container
@@ -23,10 +42,7 @@ Secret={{application}}-env,target=/app/.env,mode=0400,uid={{appUid}},gid={{appGi
 Volume={{application}}-config:/config:rw,z,U
 Volume={{application}}-data:/data:rw,z,U
 Volume={{application}}-cache:/cache:rw,z,U
-Network={{application}}.network
-Network={{proxy}}.network
-ExposeHostPort=8000
-ExposeHostPort=5173
+Pod={{application}}.pod
 
 [Service]
 Restart=always

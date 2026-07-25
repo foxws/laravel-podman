@@ -2,6 +2,10 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 1.5.0 - 2026-07-25
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/1.4.0...1.5.0
+
 ## 1.4.0 - 2026-07-25
 
 ### What's Changed

@@ -2,7 +2,7 @@
 
 The package finds preset folders on disk (`quadlets/` + `runtimes/`) and exposes them through the Artisan commands below. Omit the preset name and it prompts you.
 
-These commands only render files — never touch `podman`, so they work anywhere PHP runs. Installing, listing, removing, and secrets are [`lpod`](https://github.com/foxws/lpod)'s job — see [The `lpod` CLI](lpod.md). Rendered output (`publish_path`, default `podman/`) is a build artifact: don't commit it.
+These commands only render files — never touch `podman`, so they work anywhere PHP runs. Installing, listing, removing, and secrets are [`lpod`](https://github.com/foxws/lpod)'s job — see [`lpod` CLI](lpod.md). Rendered output (`publish_path`, default `podman/`) is a build artifact: don't commit it.
 
 ## `podman:setup`
 

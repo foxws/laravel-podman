@@ -7,7 +7,7 @@
 
 Renders [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) units from your Laravel app's config, then installs them as [systemd-managed](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) containers on your host — no all-in-one runtime, no lock-in. Swap any bundled part (Caddy for Nginx, Postgres for MySQL) for your own.
 
-See [`docs/`](docs) for the full reference: [Commands](docs/commands.md), [Customizing](docs/customizing.md), [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [The `lpod` CLI](docs/lpod.md), [Setting up without PHP](docs/host-setup.md), [Comparison](docs/comparison.md).
+See [`docs/`](docs) for the full reference: [Commands](docs/commands.md), [Customizing](docs/customizing.md), [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [`lpod` CLI](docs/lpod.md), [Setting up without PHP](docs/host-setup.md), [Comparison](docs/comparison.md), [CI: Building a Container Image](docs/ci-build.md).
 
 ## Requirements
 

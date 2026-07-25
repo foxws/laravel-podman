@@ -140,5 +140,6 @@ Pass `--application=` to `lpod install` (requires Podman 6+) so each app gets it
 - [Setting up without PHP](host-setup.md)
 - [Proxy](proxy.md)
 - [S3 Buckets](s3.md)
-- [The `lpod` CLI](lpod.md)
+- [`lpod` CLI](lpod.md)
+- [CI: Building a Container Image](ci-build.md)
 - [README](../README.md)

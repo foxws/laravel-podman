@@ -1,4 +1,4 @@
-# The `lpod` CLI
+# `lpod` CLI
 
 `lpod` lives in its own repo: **[foxws/lpod](https://github.com/foxws/lpod)**. A single, dependency-free bash script — no PHP, Composer, or this package required. See that repo for installation, the full command reference, and tips & tricks.
 

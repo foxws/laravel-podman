@@ -23,7 +23,7 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezo
 
 # Main dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg curl ca-certificates libcap2-bin unzip \
+    gnupg curl ca-certificates libcap2-bin unzip gosu \
     libavif-bin jpegoptim optipng pngquant gifsicle \
     && apt-get -y autoremove \
     && apt-get clean \
@@ -121,6 +121,10 @@ RUN pnpm build && pnpm build:ssr && pnpm prune --prod
 
 # Remove .env file if it exists
 RUN rm -f .env
+
+# Run as root so the entrypoint can renumber the "docker" user to the
+# runtime PUID/PGID before dropping privileges
+USER root
 
 EXPOSE 6001 8000 13714
 

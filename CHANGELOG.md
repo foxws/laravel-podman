@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 1.4.0 - 2026-07-25
+
+### What's Changed
+
+* Set UID and GID for user permissions by @francoism90 in https://github.com/foxws/laravel-podman/pull/8
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/1.3.0...1.4.0
+
 ## 1.3.0 - 2026-07-19
 
 ### What's Changed

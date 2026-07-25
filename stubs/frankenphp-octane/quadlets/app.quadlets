@@ -22,9 +22,9 @@ Environment=PGID={{appGid}}
 UserNS=keep-id
 ShmSize=128m
 Secret={{application}}-env,target=/app/.env,mode=0400,uid={{appUid}},gid={{appGid}}
-Volume={{application}}-config:/config:rw,z,U
-Volume={{application}}-data:/data:rw,z,U
-Volume={{application}}-cache:/cache:rw,z,U
+Volume={{application}}-config:/config:rw,z
+Volume={{application}}-data:/data:rw,z
+Volume={{application}}-cache:/cache:rw,z
 Network={{application}}.network
 Network={{proxy}}.network
 ExposeHostPort=8000

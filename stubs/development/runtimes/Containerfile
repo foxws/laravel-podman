@@ -76,7 +76,7 @@ fi
 RUN setcap -r /usr/local/bin/frankenphp
 
 # Custom PHP configuration for development
-COPY podman/frankenphp-octane/runtimes/php-development.ini /usr/local/etc/php/conf.d/xx-php-user.ini
+COPY podman/development/runtimes/php-development.ini /usr/local/etc/php/conf.d/xx-php-user.ini
 
 # Node.js Configuration
 RUN npm install -g npm@latest corepack@latest svgo@latest \

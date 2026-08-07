@@ -65,14 +65,6 @@ if ! grep -q '^APP_KEY=.' /app/.env && [ -z "${APP_KEY:-}" ]; then
     exit 1
 fi
 
-# Clear any stale caches
-log "INFO" "Clearing stale caches..."
-${FRANKEN_CLI} optimize:clear
-
-# Create storage symlinks
-log "INFO" "Creating storage symlinks..."
-${FRANKEN_CLI} storage:link
-
 # Ensure all caches are warmed up
 log "INFO" "Optimizing application..."
 ${FRANKEN_CLI} optimize

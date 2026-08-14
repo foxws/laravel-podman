@@ -6,19 +6,19 @@
         "--security-opt=label=disable",
         "--network=systemd-{{application}}",
         "--userns=keep-id:uid={{appUid}},gid={{appGid}}",
-        "--init",
+        "--init"
     ],
     "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,Z",
     "workspaceFolder": "/workspace",
     "mounts": [
-        "source=${localEnv:HOME}/.ssh,target=/home/docker/.ssh,type=bind,ro=true",
+        "source=${localEnv:HOME}/.ssh,target=/home/docker/.ssh,type=bind,ro=true"
     ],
     "build": {
         "context": "./../",
         "dockerfile": "./../podman/devcontainer/runtimes/Containerfile",
         "args": {
             "UID": "{{appUid}}",
-            "GID": "{{appGid}}",
-        },
-    },
+            "GID": "{{appGid}}"
+        }
+    }
 }

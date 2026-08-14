@@ -13,7 +13,7 @@ Environment=MYSQL_PASSWORD=password
 ShmSize=256m
 Volume={{application}}-mysql:/var/lib/mysql:rw,Z,U
 Network={{application}}.network
-ExposeHostPort=3306
+PublishPort=3306:3306
 
 [Service]
 Restart=always

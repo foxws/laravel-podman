@@ -6,7 +6,7 @@ Description=Memcached container
 Image=docker.io/library/memcached:latest
 AutoUpdate=registry
 Network={{application}}.network
-ExposeHostPort=11211
+PublishPort=11211:11211
 
 [Service]
 Restart=always

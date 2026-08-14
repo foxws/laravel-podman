@@ -12,7 +12,7 @@ SetWorkingDirectory={{workingPath}}
 Description=Laravel App (Octane) container
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
-Wants={{application}}-mailpit.container {{application}}-horizon.container {{application}}-reverb.container {{application}}-schedule.container
+Wants={{application}}-mailpit.container {{application}}-horizon.container {{application}}-reverb.container {{application}}-schedule.container {{application}}-rustfs.container {{application}}-typesense.container
 
 [Container]
 Image={{application}}.build
@@ -24,9 +24,8 @@ Volume={{application}}-config:/config:rw,z,U
 Volume={{application}}-data:/data:rw,z,U
 Volume={{application}}-cache:/cache:rw,z,U
 Network={{application}}.network
-Network={{proxy}}.network
-ExposeHostPort=8000
-ExposeHostPort=5173
+PublishPort=8000:8000
+PublishPort=5173:5173
 
 [Service]
 Restart=always

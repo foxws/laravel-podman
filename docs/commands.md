@@ -6,7 +6,7 @@ These commands only render files — never touch `podman`, so they work anywhere
 
 ## `podman:setup`
 
-Generates the default set of presets in one go — see [Quick Start](../README.md#quick-start).
+Generates the default set of presets in one go — see [Quick Start](index.md#quick-start).
 
 ```bash
 php artisan podman:setup

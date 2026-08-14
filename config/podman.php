@@ -30,10 +30,10 @@ return [
     */
 
     'presets' => env('PODMAN_DEFAULT_PRESETS', [
-        'development',
         'devcontainer',
-        'proxy',
+        'development',
         // 'frankenphp-octane',
+        // 'proxy',
     ]),
 
     /*
@@ -50,15 +50,15 @@ return [
     */
 
     's3_buckets' => env('PODMAN_S3_BUCKETS', [
-        'local',
-        'assets',
-        'media',
-        'conversions',
+        // 'local',
+        // 'assets',
+        // 'media',
+        // 'conversions',
     ]),
 
     's3_cors_buckets' => env('PODMAN_S3_CORS_BUCKETS', [
-        'conversions',
-        'assets',
+        // 'conversions',
+        // 'assets',
     ]),
 
     /*

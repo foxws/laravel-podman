@@ -142,4 +142,4 @@ Pass `--application=` to `lpod install` (requires Podman 6+) so each app gets it
 - [S3 Buckets](s3.md)
 - [`lpod` CLI](lpod.md)
 - [CI: Building a Container Image](ci-build.md)
-- [README](../README.md)
+- [Introduction](index.md)

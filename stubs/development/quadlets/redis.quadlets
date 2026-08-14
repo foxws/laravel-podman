@@ -8,7 +8,7 @@ AutoUpdate=registry
 Exec=redis-server --save --loglevel warning
 Volume={{application}}-redis:/data:rw,Z,U
 Network={{application}}.network
-PublishPort=6379:6379
+ExposeHostPort=6379
 
 [Service]
 Restart=always

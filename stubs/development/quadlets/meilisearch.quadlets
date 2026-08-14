@@ -9,7 +9,7 @@ Environment=MEILI_NO_ANALYTICS=true
 Environment=MEILI_MASTER_KEY=masterKeyDevelopment
 Volume={{application}}-meilisearch:/meili_data:rw,Z,U
 Network={{application}}.network
-PublishPort=7700:7700
+ExposeHostPort=7700
 
 [Service]
 Restart=always

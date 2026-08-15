@@ -15,8 +15,8 @@ importers:
         specifier: ^3.6.3
         version: 3.10.2(@algolia/client-search@5.56.0)(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(@types/react@19.2.18)(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(search-insights@2.17.3)
       '@easyops-cn/docusaurus-search-local':
-        specifier: ^0.44.5
-        version: 0.44.6(@docusaurus/theme-common@3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^0.55.3
+        version: 0.55.3(@docusaurus/theme-common@3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@mdx-js/react':
         specifier: ^3.0.0
         version: 3.1.1(@types/react@19.2.18)(react@18.3.1)
@@ -1214,13 +1214,17 @@ packages:
   '@easyops-cn/autocomplete.js@0.38.1':
     resolution: {integrity: sha512-drg76jS6syilOUmVNkyo1c7ZEBPcPuK+aJA7AksM5ZIIbV57DMHCywiCr+uHyv8BE5jUTU98j/H7gVrkHrWW3Q==}
 
-  '@easyops-cn/docusaurus-search-local@0.44.6':
-    resolution: {integrity: sha512-DiCz6Ag7Xbj27NFaKzvJEfMCW5o7/Ad9ZYuJ7TShwk8XmMnyr1nxJYLn1WpmJ2pzvR20Wt0zcn4u5MfpiLuFLw==}
+  '@easyops-cn/docusaurus-search-local@0.55.3':
+    resolution: {integrity: sha512-PlMKmxuonvZ1C+/zJS1hJaF1xaxD1TsUvOMzpP6DdQMtZqmTaYjcLGM12ePzl0m1rp3AgfTBeDbFNHQhwnH/dA==}
     engines: {node: '>=12'}
     peerDependencies:
       '@docusaurus/theme-common': ^2 || ^3
-      react: ^16.14.0 || ^17 || ^18
-      react-dom: ^16.14.0 || 17 || ^18
+      open-ask-ai: ^0.7.3
+      react: ^16.14.0 || ^17 || ^18 || ^19
+      react-dom: ^16.14.0 || 17 || ^18 || ^19
+    peerDependenciesMeta:
+      open-ask-ai:
+        optional: true
 
   '@emnapi/core@1.11.3':
     resolution: {integrity: sha512-zLpS5asjEb7lq8jYLq37N6XKaE41DIexlY1rF/z4/tIl3wo13Sqm28fRyfIsKZD+NZ8mM5RoKkpW/rBcuoSZSg==}
@@ -2184,10 +2188,6 @@ packages:
     resolution: {integrity: sha512-neHB9xuzh/wk0dIHweyAXv2aPGZIVk3pLMe+/RNzINf17fe0OG96QroktYAUm7SM1PBnzTabaLboqqxDyMU+SQ==}
     engines: {node: '>=6'}
 
-  clsx@1.2.1:
-    resolution: {integrity: sha512-EcR6r5a8bj6pu3ycsa/E/cKVGuTgZJZdsyUYHOksG/UHIiKfjxzRxYJpyVBwYaQeOvghal9fcc4PidlgzugAQg==}
-    engines: {node: '>=6'}
-
   clsx@2.1.1:
     resolution: {integrity: sha512-eYm0QWBtUrBWZWG0d386OGAw16Z995PiOVo2B7bjWSbHedGl5e0ZWaq65kOGgUSNesEIDkB9ISbTg/JK9dhCZA==}
     engines: {node: '>=6'}
@@ -2211,6 +2211,9 @@ packages:
   combine-promises@1.2.0:
     resolution: {integrity: sha512-VcQB1ziGD0NXrhKxiwyNbCDmRzs/OShMs2GqW2DlU2A/Sd0nQxE1oWDAE5O0ygSx5mgQOn9eIFh7yKPgFRVkPQ==}
     engines: {node: '>=10'}
+
+  comlink@4.4.2:
+    resolution: {integrity: sha512-OxGdvBmJuNKSCMO4NTl1L47VRp6xn2wG4F/2hYzB6tiCb709otOxtEYCSvK80PtjODfXXZu8ds+Nw5kVCjqd2g==}
 
   comma-separated-tokens@2.0.3:
     resolution: {integrity: sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==}
@@ -7389,7 +7392,7 @@ snapshots:
       cssesc: 3.0.0
       immediate: 3.3.0
 
-  '@easyops-cn/docusaurus-search-local@0.44.6(@docusaurus/theme-common@3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@easyops-cn/docusaurus-search-local@0.55.3(@docusaurus/theme-common@3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@docusaurus/plugin-content-docs': 3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(debug@4.4.3)(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@docusaurus/theme-common': 3.10.2(@docusaurus/plugin-content-docs@3.10.2(@mdx-js/react@3.1.1(@types/react@19.2.18)(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(postcss@8.5.26)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -7400,7 +7403,8 @@ snapshots:
       '@easyops-cn/autocomplete.js': 0.38.1
       '@node-rs/jieba': 1.10.4
       cheerio: 1.2.0
-      clsx: 1.2.1
+      clsx: 2.1.1
+      comlink: 4.4.2
       debug: 4.4.3
       fs-extra: 10.1.0
       klaw-sync: 6.0.0
@@ -8604,8 +8608,6 @@ snapshots:
       kind-of: 6.0.3
       shallow-clone: 3.0.1
 
-  clsx@1.2.1: {}
-
   clsx@2.1.1: {}
 
   collapse-white-space@2.1.0: {}
@@ -8621,6 +8623,8 @@ snapshots:
   colorette@2.0.20: {}
 
   combine-promises@1.2.0: {}
+
+  comlink@4.4.2: {}
 
   comma-separated-tokens@2.0.3: {}
 

@@ -2,6 +2,24 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 1.7.2 - 2026-08-22
+
+### What's Changed
+
+* feat: docs by @francoism90 in https://github.com/foxws/laravel-podman/pull/9
+* Bump actions/deploy-pages from 4 to 5 by @dependabot[bot] in https://github.com/foxws/laravel-podman/pull/14
+* Bump actions/upload-pages-artifact from 3 to 5 by @dependabot[bot] in https://github.com/foxws/laravel-podman/pull/13
+* Bump pnpm/action-setup from 4 to 6 by @dependabot[bot] in https://github.com/foxws/laravel-podman/pull/12
+* Bump actions/checkout from 4 to 7 by @dependabot[bot] in https://github.com/foxws/laravel-podman/pull/11
+* Bump actions/setup-node from 4 to 7 by @dependabot[bot] in https://github.com/foxws/laravel-podman/pull/10
+* Bump @easyops-cn/docusaurus-search-local from 0.44.6 to 0.55.3 in /website by @dependabot[bot] in https://github.com/foxws/laravel-podman/pull/16
+
+### New Contributors
+
+* @dependabot[bot] made their first contribution in https://github.com/foxws/laravel-podman/pull/14
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/1.7.1...1.7.2
+
 ## 1.7.1 - 2026-08-07
 
 **Full Changelog**: https://github.com/foxws/laravel-podman/compare/1.7.0...1.7.1

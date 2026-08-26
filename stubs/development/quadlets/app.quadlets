@@ -26,7 +26,6 @@ Volume={{application}}-cache:/cache:rw,z,U
 Network={{application}}.network
 Network={{proxy}}.network
 ExposeHostPort=8000
-ExposeHostPort=5173
 
 [Service]
 Restart=always

@@ -72,7 +72,7 @@ ${FRANKEN_CLI} optimize:clear
 # Start Vite's dev server in the background, tied to this container's own
 # lifecycle instead of a shell session -- the proxy's Caddyfile already
 # expects it on this container's own port 5173.
-if [ "${WITH_VITE:-0}" = '1' ] && [ -f /app/package.json ]; then
+if [ "${VITE_DEV:-0}" = '1' ] && [ -f /app/package.json ]; then
     log "INFO" "Starting Vite dev server..."
     pnpm run dev -- --host=0.0.0.0 &
 fi

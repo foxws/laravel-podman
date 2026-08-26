@@ -7,9 +7,7 @@
         "--security-opt=label=disable",
         "--network=systemd-{{application}}",
         "--userns=keep-id:uid={{appUid}},gid={{appGid}}",
-        "--init",
-        "-p",
-        "5173:5173"
+        "--init"
     ],
     "containerEnv": {
         "PUID": "{{appUid}}",
@@ -19,9 +17,5 @@
     "workspaceFolder": "/workspace",
     "mounts": [
         "source=${localEnv:HOME}/.ssh,target=/home/docker/.ssh,type=bind,ro=true"
-    ],
-    "forwardPorts": [5173],
-    "portsAttributes": {
-        "5173": { "label": "Vite", "onAutoForward": "notify" }
-    }
+    ]
 }

@@ -6,9 +6,7 @@
         "--security-opt=label=disable",
         "--network=systemd-{{application}}",
         "--userns=keep-id:uid={{appUid}},gid={{appGid}}",
-        "--init",
-        "-p",
-        "5173:5173"
+        "--init"
     ],
     "containerEnv": {
         "PUID": "{{appUid}}",
@@ -26,9 +24,5 @@
             "UID": "{{appUid}}",
             "GID": "{{appGid}}"
         }
-    },
-    "forwardPorts": [5173],
-    "portsAttributes": {
-        "5173": { "label": "Vite", "onAutoForward": "notify" }
     }
 }

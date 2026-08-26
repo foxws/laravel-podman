@@ -30,8 +30,8 @@ Only needed to render Quadlet units — install as a dev dependency and skip it 
 | --- | --- |
 | `development` | App + services, working copy live-mounted for local editing. **Enabled by default.** |
 | `frankenphp-octane` | Production-style image, app code baked in. Commented out by default. |
-| `devcontainer` | VS Code/JetBrains [Dev Containers](https://containers.dev/) image. **Enabled by default.** |
-| `proxy` | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. |
+| `devcontainer` | VS Code/JetBrains [Dev Containers](https://containers.dev/) image. Commented out by default. Ships two configs: `devcontainer.json` pulls the prebuilt `ghcr.io/foxws/laravel-podman-devcontainer:php-8.5`; `devcontainer-local.json` builds the Containerfile locally instead, for when you've customized it. See [CI: Building a Container Image](ci-build.md). |
+| `proxy` | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. **Enabled by default.** |
 | `s3` | CORS policy for S3-compatible storage buckets. |
 
 Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) without touching the others — see [Customizing](customizing.md).

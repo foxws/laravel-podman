@@ -30,10 +30,10 @@ return [
     */
 
     'presets' => env('PODMAN_DEFAULT_PRESETS', [
-        'devcontainer',
+        // 'devcontainer',
+        // 'frankenphp-octane',
         'development',
         'proxy',
-        // 'frankenphp-octane',
     ]),
 
     /*

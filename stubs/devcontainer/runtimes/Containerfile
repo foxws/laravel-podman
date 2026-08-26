@@ -22,7 +22,7 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezo
 
 # Main dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg curl ca-certificates unzip \
+    gnupg curl ca-certificates unzip gosu \
     git nano openssh-client gh awscli \
     default-mysql-client sqlite3 \
     && apt-get -y autoremove \
@@ -50,7 +50,7 @@ RUN mkdir -p /etc/apt/keyrings \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-    # Create non-root user
+# Create non-root user
 RUN groupadd --force -g ${GID} docker \
     && useradd -u ${UID} -g docker -d /home/docker -s /bin/bash -m docker
 
@@ -81,11 +81,16 @@ RUN npm install -g npm@latest corepack@latest svgo@latest bun@latest \
     && corepack prepare yarn@stable --activate \
     && pnpm config set store-dir ${PNPM_HOME}/store
 
+# Entrypoint
+COPY --chmod=0755 podman/devcontainer/runtimes/entrypoint.sh /usr/local/bin/entrypoint.sh
+
 # Clean up unnecessary files and caches to reduce image size
 RUN apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-USER docker
+# Run as root so the entrypoint can renumber the "docker" user to the
+# runtime PUID/PGID before dropping privileges
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 CMD ["/usr/bin/env", "bash"]

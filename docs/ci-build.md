@@ -4,6 +4,8 @@ An example GitHub Actions workflow that renders a preset's `Containerfile` via `
 
 The `devcontainer` preset is the exception: it ships no template placeholders and copies no app source, so it builds as-is straight from this repo. This repo's own [`.github/workflows/build-devcontainer.yml`](../.github/workflows/build-devcontainer.yml) does exactly that — no rendering step needed — and publishes the result to `ghcr.io/foxws/laravel-podman-devcontainer` so you can `FROM` it directly instead of building your own. Every build is tagged by PHP version (`php-8.5`, ...), and the version marked `default: true` in the workflow's matrix additionally gets the floating `main`/commit-sha/`latest` tags. Add another entry to that `php:` matrix array to build/tag additional versions (e.g. `8.4`, `8.6`).
 
+That prebuilt image is also what `devcontainer.json` uses by default (`"image": "ghcr.io/foxws/laravel-podman-devcontainer:php-8.5"`) — fast to start, but it won't reflect any local edits to the Containerfile. If you've run `podman:publish devcontainer` and customized it, point your editor at `devcontainer-local.json` instead, which builds from that Containerfile directly.
+
 ## Prerequisites
 
 - A committed `.env` (or one written in CI, e.g. from an `.env.ci` template) with `APP_KEY` generated before `podman:generate` runs — the preset's `Containerfile`/templates may read app config at render time.

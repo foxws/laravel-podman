@@ -71,6 +71,13 @@ Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) wit
 
 Trust the proxy's local certificate once — see [Proxy](proxy.md#trusting-the-local-certificate).
 
+Working on frontend assets? Vite's dev server is opt-in, not part of the default bundle (it needs `pnpm install` run first, or it'll crash-loop):
+
+```bash
+lpod install development/vite.quadlets --replace
+lpod vite up
+```
+
 No PHP on the host? `lpod setup` renders the same way without it — see [Setting up without PHP](host-setup.md).
 
 ## Commands reference

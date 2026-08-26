@@ -4,6 +4,7 @@ const sidebars = {
     'index',
     'commands',
     'customizing',
+    'devcontainer',
     'proxy',
     's3',
     'lpod',

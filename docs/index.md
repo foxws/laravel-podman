@@ -30,8 +30,8 @@ Only needed to render Quadlet units — install as a dev dependency and skip it 
 | --- | --- |
 | `development` | App + services, working copy live-mounted for local editing. **Enabled by default.** |
 | `frankenphp-octane` | Production-style image, app code baked in. Commented out by default. |
-| `devcontainer` | VS Code/JetBrains [Dev Containers](https://containers.dev/) image. **Enabled by default.** |
-| `proxy` | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. |
+| `devcontainer` | VS Code/JetBrains [Dev Containers](https://containers.dev/) image. Commented out by default. See [Devcontainer](devcontainer.md). |
+| `proxy` | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. **Enabled by default.** |
 | `s3` | CORS policy for S3-compatible storage buckets. |
 
 Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) without touching the others — see [Customizing](customizing.md).
@@ -70,6 +70,13 @@ Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) wit
     ```
 
 Trust the proxy's local certificate once — see [Proxy](proxy.md#trusting-the-local-certificate).
+
+Working on frontend assets? Vite's dev server is opt-in, not part of the default bundle (it needs `pnpm install` run first, or it'll crash-loop):
+
+```bash
+lpod install development/vite.quadlets --replace
+lpod vite up
+```
 
 No PHP on the host? `lpod setup` renders the same way without it — see [Setting up without PHP](host-setup.md).
 

@@ -5,7 +5,7 @@
 
 vite.{{appHost}} {
 	import compress
-	reverse_proxy systemd-{{application}}:5173
+	reverse_proxy systemd-{{application}}-vite:5173
 }
 
 ws.{{appHost}} {

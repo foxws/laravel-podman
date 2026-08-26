@@ -7,7 +7,7 @@
 
 Renders [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) units from your Laravel app's config, then installs them as [systemd-managed](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) containers on your host — no all-in-one runtime, no lock-in. Swap any bundled part (Caddy for Nginx, Postgres for MySQL) for your own.
 
-See the [full documentation](https://foxws.github.io/laravel-podman/) (or browse [`docs/`](docs) directly): [Commands](docs/commands.md), [Customizing](docs/customizing.md), [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [`lpod` CLI](docs/lpod.md), [Setting up without PHP](docs/host-setup.md), [Comparison](docs/comparison.md), [CI: Building a Container Image](docs/ci-build.md).
+See the [full documentation](https://foxws.github.io/laravel-podman/) (or browse [`docs/`](docs) directly): [Commands](docs/commands.md), [Customizing](docs/customizing.md), [Devcontainer](docs/devcontainer.md), [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [`lpod` CLI](docs/lpod.md), [Setting up without PHP](docs/host-setup.md), [Comparison](docs/comparison.md), [CI: Building a Container Image](docs/ci-build.md).
 
 ## Requirements
 
@@ -32,8 +32,8 @@ Only needed to render Quadlet units — install as a dev dependency and skip it 
 | --- | --- |
 | `development` | App + services, working copy live-mounted for local editing. **Enabled by default.** |
 | `frankenphp-octane` | Production-style image, app code baked in. Commented out by default. |
-| `devcontainer` | VS Code/JetBrains [Dev Containers](https://containers.dev/) image. **Enabled by default.** |
-| `proxy` | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. |
+| `devcontainer` | VS Code/JetBrains [Dev Containers](https://containers.dev/) image. Commented out by default. See [Devcontainer](docs/devcontainer.md). |
+| `proxy` | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. **Enabled by default.** |
 | `s3` | CORS policy for S3-compatible storage buckets. |
 
 Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) without touching the others — see [Customizing](docs/customizing.md).
@@ -72,6 +72,13 @@ Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) wit
     ```
 
 Trust the proxy's local certificate once — see [Proxy](docs/proxy.md#trusting-the-local-certificate).
+
+Working on frontend assets? Vite's dev server is opt-in, not part of the default bundle (it needs `pnpm install` run first, or it'll crash-loop):
+
+```bash
+lpod install development/vite.quadlets --replace
+lpod vite up
+```
 
 No PHP on the host? `lpod setup` renders the same way without it — see [Setting up without PHP](docs/host-setup.md).
 

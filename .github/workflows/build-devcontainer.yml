@@ -1,0 +1,174 @@
+name: Build Devcontainer
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'stubs/devcontainer/**'
+      - '.github/workflows/build-devcontainer.yml'
+  pull_request:
+    paths:
+      - 'stubs/devcontainer/**'
+      - '.github/workflows/build-devcontainer.yml'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+concurrency:
+  group: devcontainer-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.event.repository.name }}-devcontainer
+  IMAGE: ghcr.io/${{ github.repository }}-devcontainer
+  CACHE_IMAGE: ghcr.io/${{ github.repository }}-devcontainer-cache
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (php-${{ matrix.php }}, ${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Add another PHP version here to build/tag it too, e.g. ['8.6', '8.5', '8.4'].
+        php: ['8.5']
+        platform: [linux/amd64, linux/arm64]
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+          # Mark exactly one PHP version as default: it alone gets the
+          # floating branch/sha/semver/latest tags in the merge job below.
+          - php: '8.5'
+            default: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set platform pair
+        id: platform
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: echo "pair=${PLATFORM//\//-}" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GitHub Container Registry
+        if: ${{ github.event_name != 'pull_request' }}
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Determine build args
+        id: buildargs
+        env:
+          CACHE_TAG: ${{ env.CACHE_IMAGE }}:php-${{ matrix.php }}
+        run: |
+          {
+            echo "args<<EOF"
+            echo "--cache-from=${CACHE_TAG}"
+            if [ "${{ github.event_name }}" != "pull_request" ]; then
+              echo "--cache-to=${CACHE_TAG}"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build image
+        id: build
+        uses: redhat-actions/buildah-build@v3
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: ci-php${{ matrix.php }}-${{ steps.platform.outputs.pair }}-${{ github.sha }}
+          containerfiles: stubs/devcontainer/runtimes/Containerfile
+          context: .
+          platform: ${{ matrix.platform }}
+          build-args: |
+            PHP_VERSION=${{ matrix.php }}
+          layers: true
+          squash: false
+          extra-args: ${{ steps.buildargs.outputs.args }}
+
+      - name: Push image by tag
+        if: ${{ github.event_name != 'pull_request' }}
+        id: push
+        uses: redhat-actions/push-to-registry@v3
+        with:
+          image: ${{ steps.build.outputs.image }}
+          tags: ${{ steps.build.outputs.tags }}
+          registry: ${{ env.REGISTRY }}/${{ github.repository_owner }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          digestfile: /tmp/digest.txt
+
+      - name: Upload digest
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: digests-php${{ matrix.php }}-${{ steps.platform.outputs.pair }}
+          path: /tmp/digest.txt
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: Merge & push manifest (php-${{ matrix.php }})
+    needs: build
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.5']
+        include:
+          - php: '8.5'
+            default: true
+
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: /tmp/digests
+          pattern: digests-php${{ matrix.php }}-*
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Generate image tags
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE }}
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=php-${{ matrix.php }}
+            type=ref,event=branch,enable=${{ matrix.default == true }}
+            type=sha,format=long,prefix=commit-,enable=${{ matrix.default == true }}
+            type=semver,pattern={{version}},enable=${{ matrix.default == true }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ matrix.default == true }}
+            type=raw,value=latest,enable=${{ matrix.default == true && github.event_name == 'release' && !github.event.release.prerelease }}
+
+      - name: Create and push manifest list
+        run: |
+          podman manifest create manifest-list
+
+          for digest_file in /tmp/digests/*/digest.txt; do
+            digest=$(tr -d '[:space:]' < "$digest_file")
+            podman manifest add manifest-list "docker://${IMAGE}@${digest}"
+          done
+
+          while IFS= read -r tag; do
+            [ -z "$tag" ] && continue
+            podman manifest push --all manifest-list "docker://${tag}"
+          done <<< "${{ steps.meta.outputs.tags }}"

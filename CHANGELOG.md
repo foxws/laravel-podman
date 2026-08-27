@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 1.8.0 - 2026-08-27
+
+### What's Changed
+
+* Enhance Devcontainer setup with workflow, configuration, and documentation by @francoism90 in https://github.com/foxws/laravel-podman/pull/17
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/1.7.2...1.8.0
+
 ## 1.7.2 - 2026-08-22
 
 ### What's Changed

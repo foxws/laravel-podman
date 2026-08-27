@@ -57,6 +57,15 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
+      - name: Stage stubs as rendered output
+        # The Containerfile's COPY paths assume "podman:generate devcontainer"
+        # already rendered stubs/devcontainer -> podman/devcontainer (as it
+        # would in a real consuming app). devcontainer has no template
+        # placeholders to substitute, so a plain copy reproduces that here.
+        run: |
+          mkdir -p podman
+          cp -r stubs/devcontainer podman/devcontainer
+
       - name: Set platform pair
         id: platform
         env:
@@ -90,7 +99,7 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAME }}
           tags: ci-php${{ matrix.php }}-${{ steps.platform.outputs.pair }}-${{ github.sha }}
-          containerfiles: stubs/devcontainer/runtimes/Containerfile
+          containerfiles: podman/devcontainer/runtimes/Containerfile
           context: .
           platform: ${{ matrix.platform }}
           build-args: |

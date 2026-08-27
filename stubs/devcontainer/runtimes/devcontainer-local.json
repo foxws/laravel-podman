@@ -1,5 +1,6 @@
 {
     "name": "{{application}}-devcontainer",
+    "initializeCommand": "podman network create --ignore systemd-{{application}}",
     "remoteUser": "docker",
     "containerUser": "docker",
     "runArgs": [

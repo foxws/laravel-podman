@@ -81,9 +81,7 @@ RUN npm install -g npm@latest corepack@latest svgo@latest \
     && corepack prepare yarn@stable --activate \
     && pnpm config set store-dir ${PNPM_HOME}/store
 
-# Install Bun via its own installer -- the "bun" npm package only works via a
-# postinstall script, which recent npm versions block by default for global
-# installs unless explicitly allowlisted.
+# Install Bun -- the npm package needs a postinstall script npm blocks by default
 RUN curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash
 
 # Entrypoint
@@ -94,8 +92,7 @@ RUN apt-get autoremove -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-# Run as root so the entrypoint can renumber the "docker" user to the
-# runtime PUID/PGID before dropping privileges
+# Runs as root; entrypoint drops to "docker" after renumbering to PUID/PGID
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 
 CMD ["/usr/bin/env", "bash"]

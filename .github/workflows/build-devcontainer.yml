@@ -58,10 +58,9 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Stage stubs as rendered output
-        # The Containerfile's COPY paths assume "podman:generate devcontainer"
-        # already rendered stubs/devcontainer -> podman/devcontainer (as it
-        # would in a real consuming app). devcontainer has no template
-        # placeholders to substitute, so a plain copy reproduces that here.
+        # Mimics "podman:generate devcontainer" (a plain copy suffices here --
+        # no template placeholders), since the Containerfile's COPY paths
+        # expect podman/devcontainer to already exist.
         run: |
           mkdir -p podman
           cp -r stubs/devcontainer podman/devcontainer
@@ -79,9 +78,8 @@ jobs:
       - name: Determine build args
         id: buildargs
         env:
-          # buildah's --cache-from/--cache-to reject a :tag or @digest suffix
-          # entirely (must be a bare repository), so the PHP version goes into
-          # the repo name itself rather than a tag.
+          # buildah rejects a :tag on --cache-from/--cache-to, so the PHP
+          # version goes in the repo name instead.
           CACHE_REPO: ${{ env.CACHE_IMAGE }}-php-${{ matrix.php }}
         run: |
           {

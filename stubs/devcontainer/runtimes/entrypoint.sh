@@ -1,10 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Renumber the "docker" user/group to match the host's PUID/PGID, then drop
-# from root down to it. The image itself is always built with UID/GID 1000;
-# this is what lets one shared, prebuilt image still write correctly-owned
-# files on hosts where the deploying user isn't 1000.
+# Renumber "docker" to the host's PUID/PGID before dropping from root --
+# lets the same prebuilt (UID/GID 1000) image work on any host UID.
 if [ "$(id -u)" = '0' ]; then
     PUID=${PUID:-1000}
     PGID=${PGID:-1000}
@@ -17,8 +15,7 @@ if [ "$(id -u)" = '0' ]; then
         usermod -o -u "${PUID}" docker
     fi
 
-    # Non-recursive: /home/docker/.ssh is a read-only host bind mount that
-    # already lines up via UserNS=keep-id, so recursing into it would fail.
+    # Non-recursive: .ssh is a read-only bind mount; chown -R would fail on it
     chown docker:docker /home/docker
     chown -R docker:docker "${PNPM_HOME}"
 

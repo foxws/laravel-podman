@@ -70,13 +70,16 @@ jobs:
       - name: Determine build args
         id: buildargs
         env:
-          CACHE_TAG: ${{ env.CACHE_IMAGE }}:php-${{ matrix.php }}
+          # buildah's --cache-from/--cache-to reject a :tag or @digest suffix
+          # entirely (must be a bare repository), so the PHP version goes into
+          # the repo name itself rather than a tag.
+          CACHE_REPO: ${{ env.CACHE_IMAGE }}-php-${{ matrix.php }}
         run: |
           {
             echo "args<<EOF"
-            echo "--cache-from=${CACHE_TAG}"
+            echo "--cache-from=${CACHE_REPO}"
             if [ "${{ github.event_name }}" != "pull_request" ]; then
-              echo "--cache-to=${CACHE_TAG}"
+              echo "--cache-to=${CACHE_REPO}"
             fi
             echo "EOF"
           } >> "$GITHUB_OUTPUT"

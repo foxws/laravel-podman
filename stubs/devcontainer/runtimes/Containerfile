@@ -73,13 +73,18 @@ RUN COMPOSER_HOME=/usr/local/share/composer composer global require cpx/cpx:^2.0
     && ln -s /usr/local/share/composer/vendor/bin/cpx /usr/local/bin/cpx
 
 # Node.js Configuration
-RUN npm install -g npm@latest corepack@latest svgo@latest bun@latest \
+RUN npm install -g npm@latest corepack@latest svgo@latest \
     && mkdir -p ${PNPM_HOME}/store \
     && chown -R docker:docker ${PNPM_HOME} \
     && corepack enable \
     && corepack prepare pnpm@latest --activate \
     && corepack prepare yarn@stable --activate \
     && pnpm config set store-dir ${PNPM_HOME}/store
+
+# Install Bun via its own installer -- the "bun" npm package only works via a
+# postinstall script, which recent npm versions block by default for global
+# installs unless explicitly allowlisted.
+RUN curl -fsSL https://bun.sh/install | BUN_INSTALL=/usr/local bash
 
 # Entrypoint
 COPY --chmod=0755 podman/devcontainer/runtimes/entrypoint.sh /usr/local/bin/entrypoint.sh

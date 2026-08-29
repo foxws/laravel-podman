@@ -51,7 +51,7 @@ lpod install frankenphp-octane/valkey.quadlets --replace
 
 - `PODMAN_WORKING_PATH`/`--working-path=` only change host paths *baked into* the rendered files — rendering itself always happens from `/var/www/html` here.
 - `--userns=keep-id -u "$(id -u):$(id -g)"` keeps generated files owned by you, not root. Keep `:Z` on SELinux hosts.
-- `lpod setup` wraps the `podman run` command above, once [`lpod`](https://github.com/foxws/lpod) and this package's `lpod-setup` (copied next to it) are both on the host. Add `--install` to install immediately, or `--secrets` to also set secrets.
+- `lpod setup` wraps the `podman run` command above, once [`lpod`](https://github.com/foxws/lpod) (which also ships `lpod-setup`) is on the host. Add `--install` to install immediately, or `--secrets` to also set secrets.
 - `lpod` needs nothing from this project once services are installed — that's what makes production install truly standalone. `lpod-setup` still shells out to `php artisan podman:setup`, needing this project's `vendor/` — why copying already-rendered output is the normal path for production.
 
 See [`lpod` CLI](lpod.md) for the full command reference.

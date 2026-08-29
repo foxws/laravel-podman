@@ -95,7 +95,7 @@ Installing, listing, removing, and setting secrets is [`lpod`](https://github.co
 
 ## The `lpod` utility
 
-[`lpod`](https://github.com/foxws/lpod) is a separate, dependency-free bash script — no PHP, Composer, or this package required to run it. This package ships one Composer binary, **`vendor/bin/lpod-setup`**, which renders presets inside a disposable container for hosts with Podman but no PHP. `lpod setup` is a shortcut for it. See [`lpod` CLI](lpod.md).
+[`lpod`](https://github.com/foxws/lpod) is a separate, dependency-free bash script — no PHP, Composer, or this package required to run it. [`lpod-setup`](https://github.com/foxws/lpod), which ships alongside it, renders presets inside a disposable container for hosts with Podman but no PHP. `lpod setup` is a shortcut for it. See [`lpod` CLI](lpod.md).
 
 ## Links
 

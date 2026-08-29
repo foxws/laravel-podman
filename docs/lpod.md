@@ -17,6 +17,6 @@ lpod my-app secrets
 
 (Previously `lpod secrets my-app`, or `vendor/bin/lpod-secrets my-app`.)
 
-## `lpod-setup` still ships here
+## `lpod-setup`
 
-`vendor/bin/lpod-setup` renders presets inside a disposable container, for hosts with Podman but no PHP — see [Setting up without PHP](host-setup.md). `lpod setup` is a shortcut for it; copy `bin/lpod-setup` next to wherever `lpod` lives on your `PATH`.
+`lpod-setup` renders presets inside a disposable container, for hosts with Podman but no PHP — see [Setting up without PHP](host-setup.md). It now ships alongside `lpod` in [foxws/lpod](https://github.com/foxws/lpod) rather than with this package; `lpod setup` is a shortcut for it.

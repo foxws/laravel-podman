@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 1.9.0 - 2026-08-29
+
+### What's Changed
+
+* Move lpod-setup to foxws/lpod and update documentation by @francoism90 in https://github.com/foxws/laravel-podman/pull/18
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/1.8.0...1.9.0
+
 ## 1.8.0 - 2026-08-27
 
 ### What's Changed

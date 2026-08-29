@@ -6,9 +6,14 @@
 
 ## No PHP anywhere
 
-No PHP on the rendering machine either? Render inside a disposable container, using the same `php:8.5-cli` image `lpod-setup` defaults to:
+No PHP on the rendering machine either? Install dependencies and render inside disposable containers, using the same `composer`/`php:8.5-cli` images `lpod-setup` defaults to:
 
 ```bash
+# vendor/ has to exist before "podman:setup" can boot at all
+podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
+    -v "$PWD":/app:Z -w /app docker.io/library/composer:2 \
+    install --no-dev --optimize-autoloader --no-interaction
+
 podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
     -e PODMAN_WORKING_PATH="$PWD" \
     -v "$PWD":/var/www/html:Z -w /var/www/html docker.io/library/php:8.5-cli \
@@ -51,7 +56,7 @@ lpod install frankenphp-octane/valkey.quadlets --replace
 
 - `PODMAN_WORKING_PATH`/`--working-path=` only change host paths *baked into* the rendered files — rendering itself always happens from `/var/www/html` here.
 - `--userns=keep-id -u "$(id -u):$(id -g)"` keeps generated files owned by you, not root. Keep `:Z` on SELinux hosts.
-- `lpod setup` wraps the `podman run` command above, once [`lpod`](https://github.com/foxws/lpod) and this package's `lpod-setup` (copied next to it) are both on the host. Add `--install` to install immediately, or `--secrets` to also set secrets.
+- `lpod setup` wraps the `podman run` command above, once [`lpod`](https://github.com/foxws/lpod) (which also ships `lpod-setup`) is on the host. Add `--install` to install immediately, or `--secrets` to also set secrets.
 - `lpod` needs nothing from this project once services are installed — that's what makes production install truly standalone. `lpod-setup` still shells out to `php artisan podman:setup`, needing this project's `vendor/` — why copying already-rendered output is the normal path for production.
 
 See [`lpod` CLI](lpod.md) for the full command reference.

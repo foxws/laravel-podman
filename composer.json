@@ -46,9 +46,6 @@
     "suggest": {
         "aws/aws-sdk-php": "Required to use the \"podman:s3-setup\" command (^3.322)."
     },
-    "bin": [
-        "bin/lpod-setup"
-    ],
     "autoload": {
         "psr-4": {
             "Foxws\\Podman\\": "src/"

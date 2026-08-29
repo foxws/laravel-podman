@@ -115,7 +115,7 @@ lpod install development/app.quadlets --replace
 lpod my-app secrets
 ```
 
-This package ships one Composer binary, **`vendor/bin/lpod-setup`**, which renders presets inside a disposable container for hosts with Podman but no PHP. `lpod setup` is a shortcut for it — copy `bin/lpod-setup` next to wherever `lpod` lives on your `PATH`.
+[`lpod-setup`](https://github.com/foxws/lpod) renders presets inside a disposable container for hosts with Podman but no PHP. `lpod setup` is a shortcut for it — see [Setting up without PHP](docs/host-setup.md).
 
 Full command reference, shortening the call, and tips & tricks: [foxws/lpod](https://github.com/foxws/lpod).
 

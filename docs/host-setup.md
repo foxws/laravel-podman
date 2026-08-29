@@ -6,9 +6,14 @@
 
 ## No PHP anywhere
 
-No PHP on the rendering machine either? Render inside a disposable container, using the same `php:8.5-cli` image `lpod-setup` defaults to:
+No PHP on the rendering machine either? Install dependencies and render inside disposable containers, using the same `composer`/`php:8.5-cli` images `lpod-setup` defaults to:
 
 ```bash
+# vendor/ has to exist before "podman:setup" can boot at all
+podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
+    -v "$PWD":/app:Z -w /app docker.io/library/composer:2 \
+    install --no-dev --optimize-autoloader --no-interaction
+
 podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
     -e PODMAN_WORKING_PATH="$PWD" \
     -v "$PWD":/var/www/html:Z -w /var/www/html docker.io/library/php:8.5-cli \

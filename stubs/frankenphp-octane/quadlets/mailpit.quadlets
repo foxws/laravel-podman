@@ -26,3 +26,4 @@ TimeoutStopSec=60
 # FileName={{application}}-mailpit
 [Volume]
 Label={{application}}-mailpit
+VolumeName=systemd-{{application}}-mailpit

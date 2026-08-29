@@ -24,3 +24,4 @@ TimeoutStopSec=60
 # FileName={{application}}-mysql
 [Volume]
 Label={{application}}-mysql
+VolumeName=systemd-{{application}}-mysql

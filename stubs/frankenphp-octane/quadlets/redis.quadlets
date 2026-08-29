@@ -19,3 +19,4 @@ TimeoutStopSec=60
 # FileName={{application}}-redis
 [Volume]
 Label={{application}}-redis
+VolumeName=systemd-{{application}}-redis

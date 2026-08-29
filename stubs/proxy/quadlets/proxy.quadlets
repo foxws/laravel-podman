@@ -26,10 +26,12 @@ WantedBy=default.target
 # FileName={{proxy}}-config
 [Volume]
 Label={{proxy}}-config
+VolumeName=systemd-{{proxy}}-config
 ---
 # FileName={{proxy}}-data
 [Volume]
 Label={{proxy}}-data
+VolumeName=systemd-{{proxy}}-data
 ---
 # FileName={{proxy}}
 [Network]

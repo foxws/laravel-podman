@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 2.0.0 - 2026-08-30
+
+### What's Changed
+
+* fix: append .volume to quadlets by @francoism90 in https://github.com/foxws/laravel-podman/pull/19
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/1.9.0...2.0.0
+
 ## 1.9.0 - 2026-08-29
 
 ### What's Changed

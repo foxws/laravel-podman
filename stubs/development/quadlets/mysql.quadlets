@@ -11,7 +11,7 @@ Environment=MYSQL_DATABASE=laravel
 Environment=MYSQL_USER=user
 Environment=MYSQL_PASSWORD=password
 ShmSize=256m
-Volume={{application}}-mysql:/var/lib/mysql:rw,Z,U
+Volume={{application}}-mysql.volume:/var/lib/mysql:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=3306
 
@@ -24,3 +24,4 @@ TimeoutStopSec=60
 # FileName={{application}}-mysql
 [Volume]
 Label={{application}}-mysql
+VolumeName=systemd-{{application}}-mysql

@@ -20,9 +20,9 @@ AutoUpdate=local
 UserNS=keep-id
 ShmSize=128m
 Volume={{workingPath}}:/app:rw,z,U
-Volume={{application}}-config:/config:rw,z,U
-Volume={{application}}-data:/data:rw,z,U
-Volume={{application}}-cache:/cache:rw,z,U
+Volume={{application}}-config.volume:/config:rw,z,U
+Volume={{application}}-data.volume:/data:rw,z,U
+Volume={{application}}-cache.volume:/cache:rw,z,U
 Network={{application}}.network
 Network={{proxy}}.network
 ExposeHostPort=8000
@@ -36,14 +36,17 @@ TimeoutStopSec=30
 # FileName={{application}}-config
 [Volume]
 Label={{application}}-config
+VolumeName=systemd-{{application}}-config
 ---
 # FileName={{application}}-data
 [Volume]
 Label={{application}}-data
+VolumeName=systemd-{{application}}-data
 ---
 # FileName={{application}}-cache
 [Volume]
 Label={{application}}-cache
+VolumeName=systemd-{{application}}-cache
 ---
 # FileName={{application}}
 [Network]

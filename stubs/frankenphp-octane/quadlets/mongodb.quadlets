@@ -7,7 +7,7 @@ Image=docker.io/library/mongo:latest
 AutoUpdate=registry
 Secret={{application}}-mongodb-user,type=env,target=MONGO_INITDB_ROOT_USERNAME
 Secret={{application}}-mongodb-password,type=env,target=MONGO_INITDB_ROOT_PASSWORD
-Volume={{application}}-mongodb:/data/db:rw,Z,U
+Volume={{application}}-mongodb.volume:/data/db:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=27017
 
@@ -20,3 +20,4 @@ TimeoutStopSec=60
 # FileName={{application}}-mongodb
 [Volume]
 Label={{application}}-mongodb
+VolumeName=systemd-{{application}}-mongodb

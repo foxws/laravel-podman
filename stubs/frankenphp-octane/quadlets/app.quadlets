@@ -22,9 +22,9 @@ Environment=PGID={{appGid}}
 UserNS=keep-id
 ShmSize=128m
 Secret={{application}}-env,target=/app/.env,mode=0400,uid={{appUid}},gid={{appGid}}
-Volume={{application}}-config:/config:rw,z
-Volume={{application}}-data:/data:rw,z
-Volume={{application}}-cache:/cache:rw,z
+Volume={{application}}-config.volume:/config:rw,z
+Volume={{application}}-data.volume:/data:rw,z
+Volume={{application}}-cache.volume:/cache:rw,z
 Network={{application}}.network
 Network={{proxy}}.network
 ExposeHostPort=8000
@@ -39,14 +39,17 @@ TimeoutStopSec=30
 # FileName={{application}}-config
 [Volume]
 Label={{application}}-config
+VolumeName=systemd-{{application}}-config
 ---
 # FileName={{application}}-data
 [Volume]
 Label={{application}}-data
+VolumeName=systemd-{{application}}-data
 ---
 # FileName={{application}}-cache
 [Volume]
 Label={{application}}-cache
+VolumeName=systemd-{{application}}-cache
 ---
 # FileName={{application}}
 [Network]

@@ -7,7 +7,7 @@ Image=docker.io/library/mongo:latest
 AutoUpdate=registry
 Environment=MONGO_INITDB_ROOT_USERNAME=root
 Environment=MONGO_INITDB_ROOT_PASSWORD=password
-Volume={{application}}-mongodb:/data/db:rw,Z,U
+Volume={{application}}-mongodb.volume:/data/db:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=27017
 

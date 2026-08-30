@@ -10,7 +10,7 @@ Secret={{application}}-pgsql-user,type=env,target=POSTGRES_USER
 Secret={{application}}-pgsql-password,type=env,target=POSTGRES_PASSWORD
 Secret={{application}}-pgsql-password,type=env,target=PGPASSWORD
 ShmSize=256m
-Volume={{application}}-pgsql:/var/lib/postgresql:rw,Z,U
+Volume={{application}}-pgsql.volume:/var/lib/postgresql:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=5432
 

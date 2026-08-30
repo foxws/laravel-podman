@@ -6,7 +6,7 @@ Description=Redis container
 Image=docker.io/library/redis:latest
 AutoUpdate=registry
 Exec=redis-server --save --loglevel warning
-Volume={{application}}-redis:/data:rw,Z,U
+Volume={{application}}-redis.volume:/data:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=6379
 

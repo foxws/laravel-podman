@@ -11,7 +11,7 @@ Secret={{application}}-mysql-db,type=env,target=MYSQL_DATABASE
 Secret={{application}}-mysql-user,type=env,target=MYSQL_USER
 Secret={{application}}-mysql-password,type=env,target=MYSQL_PASSWORD
 ShmSize=256m
-Volume={{application}}-mysql:/var/lib/mysql:rw,Z,U
+Volume={{application}}-mysql.volume:/var/lib/mysql:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=3306
 

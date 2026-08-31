@@ -5,6 +5,7 @@ const sidebars = {
     'commands',
     'customizing',
     'devcontainer',
+    'flatpak',
     'proxy',
     's3',
     'lpod',

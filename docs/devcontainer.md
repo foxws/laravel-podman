@@ -63,4 +63,5 @@ The container starts as root; `entrypoint.sh` renumbers the `docker` user to `PU
 
 - [CI: Building a Container Image](ci-build.md)
 - [Customizing](customizing.md)
+- [Flatpak-packaged editors](flatpak.md) — if VS Code/JetBrains itself runs sandboxed
 - [Introduction](index.md)

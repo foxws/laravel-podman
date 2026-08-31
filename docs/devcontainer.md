@@ -39,6 +39,14 @@ Debian-based (`php:8.5-cli`), with:
 
 The `ai` variant (`devcontainer-ai.json`/`devcontainer-local-ai.json`) adds `@anthropic-ai/claude-code` and `@openai/codex` on top of the above.
 
+## AI variant: login persistence
+
+The `ai` configs bind-mount `~/.claude`, `~/.claude.json`, and `~/.codex` from the host into the container (read-write, unlike the read-only `.ssh` mount), so `claude`/`codex` stay logged in across container rebuilds instead of asking you to authenticate every time.
+
+`~/.claude.json` is a file, not a directory — if it doesn't exist yet on your host, create it before first launching the container (`touch ~/.claude.json`), otherwise Podman will create an empty *directory* in its place and Claude Code won't be able to use it. `~/.claude` and `~/.codex` don't have this problem; Podman creates them as directories automatically if missing.
+
+If you'd rather not share host credentials with the container at all, drop the `.claude`/`.codex` mounts from your copy of the config and set `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` in `containerEnv` instead. Note this isn't just a simpler login: it's a different product with separate billing — a Claude.ai/ChatGPT consumer subscription can't be used as an API key, so this route requires a pay-per-token account at [console.anthropic.com](https://console.anthropic.com)/[platform.openai.com](https://platform.openai.com) in addition to (or instead of) your regular subscription.
+
 ## UID/GID handling
 
 The container starts as root; `entrypoint.sh` renumbers the `docker` user to `PUID`/`PGID` (from `containerEnv`, which `podman:generate` fills in from your actual host UID/GID) before dropping privileges via `gosu`. Combined with `--userns=keep-id:uid=...,gid=...` in `runArgs`, this keeps the container's `docker` user aligned with your host user's file ownership on the bind-mounted workspace — whether you're running the locally-built image or the prebuilt one from GHCR (which is always built with UID/GID 1000, regardless of your actual host UID).

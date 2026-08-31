@@ -13,8 +13,8 @@ WORKDIR /tmp
 ENV DEBIAN_FRONTEND=noninteractive
 ENV TZ=UTC
 ENV LANG=C.UTF-8
-ENV PNPM_HOME="/pnpm"
-ENV PATH="${PATH}:${PNPM_HOME}"
+ENV PNPM_HOME="/home/docker/.local/share/pnpm"
+ENV PATH="${PATH}:${PNPM_HOME}:/home/docker/.local/bin"
 ENV APP_USER="docker"
 
 # Set timezone
@@ -75,7 +75,6 @@ RUN COMPOSER_HOME=/usr/local/share/composer composer global require cpx/cpx:^2.0
 # Node.js Configuration
 RUN npm install -g npm@latest corepack@latest svgo@latest \
     && mkdir -p ${PNPM_HOME}/store \
-    && chown -R docker:docker ${PNPM_HOME} \
     && corepack enable \
     && corepack prepare pnpm@latest --activate \
     && corepack prepare yarn@stable --activate \
@@ -102,10 +101,11 @@ FROM base AS ai
 
 ARG AI_NPM_PACKAGES=""
 
-# Install Claude Code and OpenAI Codex CLIs
-RUN npm install -g @anthropic-ai/claude-code @openai/codex
+# Install Claude Code and OpenAI Codex CLIs into the docker user's home --
+# their self-updating postinstall needs to write here after entrypoint drops root
+RUN npm install -g --prefix=/home/docker/.local @anthropic-ai/claude-code @openai/codex
 
 # Install additional AI CLI packages if specified
 RUN if [ -n "$AI_NPM_PACKAGES" ]; then \
-    npm install -g $AI_NPM_PACKAGES; \
+    npm install -g --prefix=/home/docker/.local $AI_NPM_PACKAGES; \
 fi

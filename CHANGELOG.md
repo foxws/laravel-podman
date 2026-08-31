@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 2.1.0 - 2026-08-31
+
+### What's Changed
+
+* feat: add AI tooling support to devcontainer setup by @francoism90 in https://github.com/foxws/laravel-podman/pull/20
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/2.0.0...2.1.0
+
 ## 2.0.0 - 2026-08-30
 
 ### What's Changed

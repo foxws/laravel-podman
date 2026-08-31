@@ -39,7 +39,7 @@ Debian-based (`php:8.5-cli`), with:
 
 ## AI variant
 
-`devcontainer-ai.json`/`devcontainer-local-ai.json` add `@anthropic-ai/claude-code` and `@openai/codex` on top of everything in [What's inside](#whats-inside), plus whatever npm-installable agent CLI you pass via the `AI_NPM_PACKAGES` build arg (e.g. `@google/gemini-cli`) — only relevant if you're building locally, since it only takes effect on the `ai` target.
+`devcontainer-ai.json`/`devcontainer-local-ai.json` add Claude Code and OpenAI Codex CLI on top of everything in [What's inside](#whats-inside), plus whatever npm-installable agent CLI you pass via the `AI_NPM_PACKAGES` build arg (e.g. `@google/gemini-cli`) — only relevant if you're building locally, since it only takes effect on the `ai` target. Each CLI has its own build arg, `CLAUDE_CLI`/`CODEX_CLI`, defaulting to `latest`: set it to `false` to skip that CLI, or to a version/channel (e.g. `stable`, `2.1.89`) to pin it.
 
 ### Laravel-specific context
 

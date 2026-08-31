@@ -99,11 +99,26 @@ CMD ["/usr/bin/env", "bash"]
 # AI-tooling variant -- build with --target=ai to include it
 FROM base AS ai
 
+ARG CLAUDE_CLI="latest"
+ARG CODEX_CLI="latest"
 ARG AI_NPM_PACKAGES=""
 
-# Install Claude Code and OpenAI Codex CLIs into the docker user's home --
-# their self-updating postinstall needs to write here after entrypoint drops root
-RUN npm install -g --prefix=/home/docker/.local @anthropic-ai/claude-code @openai/codex
+# Install Claude Code via its native installer -- self-updating, and the
+# actual binary lives under .local/share so it survives the ~/.claude bind
+# mount (devcontainer-ai.json) untouched. Set CLAUDE_CLI=false to skip it,
+# or to a channel/version (stable, 2.1.89) to pin it.
+RUN if [ "$CLAUDE_CLI" != "false" ]; then \
+    HOME=/home/docker curl -fsSL https://claude.ai/install.sh | HOME=/home/docker bash -s "$CLAUDE_CLI"; \
+fi
+
+# Install OpenAI Codex CLI via npm rather than its native installer -- that
+# installer stages the actual binary under $CODEX_HOME/packages/standalone
+# (~/.codex by default), which devcontainer-ai.json bind-mounts from the
+# host at runtime, masking whatever the build installed there. Set
+# CODEX_CLI=false to skip it, or to a version to pin it.
+RUN if [ "$CODEX_CLI" != "false" ]; then \
+    npm install -g --prefix=/home/docker/.local @openai/codex@$CODEX_CLI; \
+fi
 
 # Install additional AI CLI packages if specified
 RUN if [ -n "$AI_NPM_PACKAGES" ]; then \

@@ -100,5 +100,12 @@ CMD ["/usr/bin/env", "bash"]
 # AI-tooling variant -- build with --target=ai to include it
 FROM base AS ai
 
+ARG AI_NPM_PACKAGES=""
+
 # Install Claude Code and OpenAI Codex CLIs
 RUN npm install -g @anthropic-ai/claude-code @openai/codex
+
+# Install additional AI CLI packages if specified
+RUN if [ -n "$AI_NPM_PACKAGES" ]; then \
+    npm install -g $AI_NPM_PACKAGES; \
+fi

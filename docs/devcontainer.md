@@ -37,13 +37,21 @@ Debian-based (`php:8.5-cli`), with:
 - Node.js (version-pinned via `NODE_VERSION`) with `pnpm`/`yarn` via Corepack, and `bun`
 - `cpx` (Composer's `npx` equivalent), `gh`, `awscli`
 
-The `ai` variant (`devcontainer-ai.json`/`devcontainer-local-ai.json`) adds `@anthropic-ai/claude-code` and `@openai/codex` on top of the above.
+## AI variant
 
-## AI variant: login persistence
+`devcontainer-ai.json`/`devcontainer-local-ai.json` add `@anthropic-ai/claude-code` and `@openai/codex` on top of everything in [What's inside](#whats-inside), plus whatever npm-installable agent CLI you pass via the `AI_NPM_PACKAGES` build arg (e.g. `@google/gemini-cli`) — only relevant if you're building locally, since it only takes effect on the `ai` target.
+
+### Laravel-specific context
+
+For Laravel-specific context (routes, DB schema, config, Tinker) rather than a generic filesystem view, pair either CLI with [`laravel/boost`](https://github.com/laravel/boost) in your app itself — it's a per-project Composer package (`composer require laravel/boost --dev && php artisan boost:install`), not something this Containerfile installs.
+
+### Login persistence
 
 The `ai` configs bind-mount `~/.claude`, `~/.claude.json`, and `~/.codex` from the host into the container (read-write, unlike the read-only `.ssh` mount), so `claude`/`codex` stay logged in across container rebuilds instead of asking you to authenticate every time.
 
 `~/.claude.json` is a file, not a directory — if it doesn't exist yet on your host, create it before first launching the container (`touch ~/.claude.json`), otherwise Podman will create an empty *directory* in its place and Claude Code won't be able to use it. `~/.claude` and `~/.codex` don't have this problem; Podman creates them as directories automatically if missing.
+
+### Using API keys instead
 
 If you'd rather not share host credentials with the container at all, drop the `.claude`/`.codex` mounts from your copy of the config and set `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` in `containerEnv` instead. Note this isn't just a simpler login: it's a different product with separate billing — a Claude.ai/ChatGPT consumer subscription can't be used as an API key, so this route requires a pay-per-token account at [console.anthropic.com](https://console.anthropic.com)/[platform.openai.com](https://platform.openai.com) in addition to (or instead of) your regular subscription.
 

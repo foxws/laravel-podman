@@ -21,7 +21,7 @@
     "build": {
         "context": "./../",
         "dockerfile": "./../podman/devcontainer/runtimes/Containerfile",
-        "target": "base",
+        "target": "ai",
         "args": {
             "UID": "{{appUid}}",
             "GID": "{{appGid}}"

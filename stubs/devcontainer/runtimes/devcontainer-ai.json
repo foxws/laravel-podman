@@ -1,6 +1,7 @@
 {
     "name": "{{application}}-devcontainer",
     "initializeCommand": "podman network create --ignore systemd-{{application}}",
+    "image": "ghcr.io/foxws/laravel-podman-devcontainer:php-8.5-ai",
     "remoteUser": "docker",
     "containerUser": "docker",
     "runArgs": [
@@ -17,14 +18,5 @@
     "workspaceFolder": "/workspace",
     "mounts": [
         "source=${localEnv:HOME}/.ssh,target=/home/docker/.ssh,type=bind,ro=true"
-    ],
-    "build": {
-        "context": "./../",
-        "dockerfile": "./../podman/devcontainer/runtimes/Containerfile",
-        "target": "base",
-        "args": {
-            "UID": "{{appUid}}",
-            "GID": "{{appGid}}"
-        }
-    }
+    ]
 }

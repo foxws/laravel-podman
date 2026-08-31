@@ -30,7 +30,7 @@ permissions:
 
 jobs:
   build:
-    name: Build (php-${{ matrix.php }}, ${{ matrix.platform }})
+    name: Build (php-${{ matrix.php }}${{ matrix.variant == 'ai' && '-ai' || '' }}, ${{ matrix.platform }})
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
@@ -42,6 +42,9 @@ jobs:
       matrix:
         # Add another PHP version here to build/tag it too, e.g. ['8.6', '8.5', '8.4'].
         php: ['8.5']
+        # 'default' builds the lean image (--target=base); 'ai' adds
+        # Claude Code and the OpenAI Codex CLI (--target=ai).
+        variant: [default, ai]
         platform: [linux/amd64, linux/arm64]
         include:
           - platform: linux/amd64
@@ -79,11 +82,15 @@ jobs:
         id: buildargs
         env:
           # buildah rejects a :tag on --cache-from/--cache-to, so the PHP
-          # version goes in the repo name instead.
-          CACHE_REPO: ${{ env.CACHE_IMAGE }}-php-${{ matrix.php }}
+          # version/variant go in the repo name instead.
+          CACHE_REPO: ${{ env.CACHE_IMAGE }}-php-${{ matrix.php }}-${{ matrix.variant }}
+          # The Containerfile's stage names are "base" and "ai"; the "default"
+          # matrix variant maps to the "base" stage.
+          TARGET: ${{ matrix.variant == 'ai' && 'ai' || 'base' }}
         run: |
           {
             echo "args<<EOF"
+            echo "--target=${TARGET}"
             echo "--cache-from=${CACHE_REPO}"
             if [ "${{ github.event_name }}" != "pull_request" ]; then
               echo "--cache-to=${CACHE_REPO}"
@@ -96,7 +103,7 @@ jobs:
         uses: redhat-actions/buildah-build@v3
         with:
           image: ${{ env.IMAGE_NAME }}
-          tags: ci-php${{ matrix.php }}-${{ steps.platform.outputs.pair }}-${{ github.sha }}
+          tags: ci-php${{ matrix.php }}-${{ matrix.variant }}-${{ steps.platform.outputs.pair }}-${{ github.sha }}
           containerfiles: podman/devcontainer/runtimes/Containerfile
           context: .
           platform: ${{ matrix.platform }}
@@ -126,13 +133,13 @@ jobs:
         if: ${{ github.event_name != 'pull_request' }}
         uses: actions/upload-artifact@v7
         with:
-          name: digests-php${{ matrix.php }}-${{ steps.platform.outputs.pair }}
+          name: digests-php${{ matrix.php }}-${{ matrix.variant }}-${{ steps.platform.outputs.pair }}
           path: /tmp/digest.txt
           if-no-files-found: error
           retention-days: 1
 
   merge:
-    name: Merge & push manifest (php-${{ matrix.php }})
+    name: Merge & push manifest (php-${{ matrix.php }}${{ matrix.variant == 'ai' && '-ai' || '' }})
     needs: build
     if: ${{ github.event_name != 'pull_request' }}
     runs-on: ubuntu-latest
@@ -144,8 +151,12 @@ jobs:
       fail-fast: false
       matrix:
         php: ['8.5']
+        variant: [default, ai]
         include:
+          # Only the default php/variant combo gets the floating
+          # branch/sha/semver/latest tags below.
           - php: '8.5'
+            variant: default
             default: true
 
     steps:
@@ -153,7 +164,7 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           path: /tmp/digests
-          pattern: digests-php${{ matrix.php }}-*
+          pattern: digests-php${{ matrix.php }}-${{ matrix.variant }}-*
 
       - name: Login to GitHub Container Registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
@@ -166,7 +177,7 @@ jobs:
           flavor: |
             latest=false
           tags: |
-            type=raw,value=php-${{ matrix.php }}
+            type=raw,value=php-${{ matrix.php }}${{ matrix.variant == 'ai' && '-ai' || '' }}
             type=ref,event=branch,enable=${{ matrix.default == true }}
             type=sha,format=long,prefix=commit-,enable=${{ matrix.default == true }}
             type=semver,pattern={{version}},enable=${{ matrix.default == true }}

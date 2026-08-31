@@ -25,6 +25,17 @@ it('publishes the selected preset to the stubs path, creating it if needed', fun
         ->and(File::exists("{$this->stubsPath}/frankenphp-octane/quadlets/app.quadlets"))->toBeTrue();
 });
 
+it('keeps "{{placeholder}}" tokens intact instead of substituting them', function () {
+    config(['podman.quadlet_prefix' => 'acme']);
+
+    $this->artisan('podman:publish', ['preset' => 'frankenphp-octane'])
+        ->assertExitCode(0);
+
+    expect(File::get("{$this->stubsPath}/frankenphp-octane/quadlets/app.quadlets"))
+        ->toContain('{{application}}')
+        ->not->toContain('acme');
+});
+
 it('accepts the preset name as an argument, skipping the prompt', function () {
     $this->artisan('podman:publish', ['preset' => 'frankenphp-octane'])
         ->expectsOutputToContain("Preset frankenphp-octane published to {$this->stubsPath}/frankenphp-octane")

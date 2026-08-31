@@ -31,7 +31,7 @@ A preset is a folder with a `quadlets/` directory (`*.quadlets` files) and a `ru
 - **Customize build files** — same rule for `runtimes/` (`Containerfile`, `entrypoint.sh`, php ini, Caddy templates).
 - **Add a new preset** — create `containers/stubs/my-preset/quadlets/` and `.../runtimes/` directly.
 
-Placeholders, substituted at publish/generate time:
+Placeholders, kept intact by `podman:publish` and substituted by `podman:generate`:
 
 | Placeholder | Value |
 | --- | --- |

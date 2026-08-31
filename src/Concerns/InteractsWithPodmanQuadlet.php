@@ -40,7 +40,8 @@ trait InteractsWithPodmanQuadlet
 
     /**
      * Copy a preset's vendor-provided "quadlets/"/"runtimes/" files into the
-     * configured stubs path for customization.
+     * configured stubs path for customization, keeping "{{placeholder}}"
+     * tokens intact so "podman:generate" can still substitute them later.
      */
     protected function publishPodmanPreset(string $preset, ?bool $force = null): bool
     {
@@ -54,7 +55,7 @@ trait InteractsWithPodmanQuadlet
             return false;
         }
 
-        $this->podmanQuadletFile()->publishDirectory($source, $target, $preset);
+        File::copyDirectory($source, $target);
 
         return true;
     }

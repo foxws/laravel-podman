@@ -2,7 +2,7 @@
   "name": "laravel-podman-docs",
   "version": "0.0.0",
   "private": true,
-  "packageManager": "pnpm@9.15.4",
+  "packageManager": "pnpm@11.24.0",
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "docusaurus start",
@@ -21,8 +21,8 @@
     "@mdx-js/react": "^3.0.0",
     "clsx": "^2.0.0",
     "prism-react-renderer": "^2.3.0",
-    "react": "^18.0.0",
-    "react-dom": "^18.0.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "browserslist": {
     "production": [
@@ -37,6 +37,6 @@
     ]
   },
   "engines": {
-    "node": ">=18.0"
+    "node": ">=22.13"
   }
 }

@@ -26,13 +26,13 @@ Only needed to render Quadlet units — install as a dev dependency and skip it 
 
 ## Presets
 
-| Preset | What it is |
-| --- | --- |
-| `development` | App + services, working copy live-mounted for local editing. **Enabled by default.** |
-| `frankenphp-octane` | Production-style image, app code baked in. Commented out by default. |
-| `devcontainer` | VS Code/JetBrains [Dev Containers](https://containers.dev/) image. Commented out by default. See [Devcontainer](devcontainer.md). |
-| `proxy` | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. **Enabled by default.** |
-| `s3` | CORS policy for S3-compatible storage buckets. |
+| Preset              | What it is                                                                                                                        |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `development`       | App + services, working copy live-mounted for local editing. **Enabled by default.**                                              |
+| `frankenphp-octane` | Production-style image, app code baked in. Commented out by default.                                                              |
+| `devcontainer`      | VS Code/JetBrains [Dev Containers](https://containers.dev/) image. Commented out by default. See [Devcontainer](devcontainer.md). |
+| `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. **Enabled by default.**                           |
+| `s3`                | CORS policy for S3-compatible storage buckets.                                                                                    |
 
 Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) without touching the others — see [Customizing](customizing.md).
 
@@ -82,12 +82,12 @@ No PHP on the host? `lpod setup` renders the same way without it — see [Settin
 
 ## Commands reference
 
-| Command | Description |
-| --- | --- |
-| `podman:setup` | Generate the default set of presets in one go |
-| `podman:publish PRESET` | Publish a preset for customization |
-| `podman:generate PRESET` | Render a single preset |
-| `podman:s3-setup` | Create S3 buckets and a CORS policy (requires `aws/aws-sdk-php`) |
+| Command                  | Description                                                      |
+| ------------------------ | ---------------------------------------------------------------- |
+| `podman:setup`           | Generate the default set of presets in one go                    |
+| `podman:publish PRESET`  | Publish a preset for customization                               |
+| `podman:generate PRESET` | Render a single preset                                           |
+| `podman:s3-setup`        | Create S3 buckets and a CORS policy (requires `aws/aws-sdk-php`) |
 
 Installing, listing, removing, and setting secrets is [`lpod`](https://github.com/foxws/lpod)'s job, not Artisan's. Full flag reference: [Commands](commands.md).
 
@@ -102,3 +102,4 @@ Installing, listing, removing, and setting secrets is [`lpod`](https://github.co
 - [CHANGELOG](https://github.com/foxws/laravel-podman/blob/main/CHANGELOG.md)
 - [foxws/lpod](https://github.com/foxws/lpod) — the CLI this package pairs with
 - [Podman Quadlet reference](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html)
+- [Flatpak-packaged editors](flatpak.md) — running Podman-based workflows from a sandboxed VSCode/JetBrains/Zed

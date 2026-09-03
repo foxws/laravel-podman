@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 2.1.3 - 2026-09-03
+
+### What's Changed
+
+* fix: prevent stry-vite from aborting on pnpm's non-interactive TTY check by @francoism90 in https://github.com/foxws/laravel-podman/pull/21
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/2.1.2...2.1.3
+
 ## 2.1.2 - 2026-08-31
 
 **Full Changelog**: https://github.com/foxws/laravel-podman/compare/2.1.1...2.1.2

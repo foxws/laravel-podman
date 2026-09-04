@@ -5,7 +5,7 @@ Description=Redis container
 [Container]
 Image=docker.io/library/redis:latest
 AutoUpdate=registry
-Exec=redis-server --save 60 1 --appendonly yes --loglevel warning
+Exec=redis-server --save 60 1 --maxmemory-policy noeviction --loglevel warning
 Volume={{application}}-redis.volume:/data:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=6379

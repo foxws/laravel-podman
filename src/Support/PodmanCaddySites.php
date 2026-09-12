@@ -15,15 +15,17 @@ class PodmanCaddySites
      * upstream can reach every subdomain without opening a host port or
      * adding an entry per service.
      *
-     * Each block is pinned to "http://host:port", matching the app's own
-     * site block -- a bare hostname makes Caddy attempt automatic HTTPS
-     * (binding :443), which fails and crashes the server whenever the
-     * embedded Caddy binary has had CAP_NET_BIND_SERVICE stripped and
-     * runs as a non-root user, as the "frankenphp-octane" preset does.
+     * Each block is pinned to a scheme ("http://host:port" by default),
+     * matching the app's own site block -- a bare hostname makes Caddy
+     * attempt automatic HTTPS (binding :443), which fails and crashes the
+     * server whenever the embedded Caddy binary has had
+     * CAP_NET_BIND_SERVICE stripped and runs as a non-root user, as the
+     * "frankenphp-octane" preset does. Only pass a different `$scheme` if
+     * the embedded Caddy is allowed to bind privileged ports itself.
      *
      * @param  array<string, string>  $sites  Public hostname => internal "host:port" upstream.
      */
-    public static function render(array $sites, int $port): string
+    public static function render(array $sites, int $port, string $scheme = 'http'): string
     {
         $blocks = [];
 
@@ -32,7 +34,7 @@ class PodmanCaddySites
                 continue;
             }
 
-            $blocks[] = "http://{$host}:{$port} {\n\treverse_proxy {$upstream}\n}";
+            $blocks[] = "{$scheme}://{$host}:{$port} {\n\treverse_proxy {$upstream}\n}";
         }
 
         return implode("\n\n", $blocks);

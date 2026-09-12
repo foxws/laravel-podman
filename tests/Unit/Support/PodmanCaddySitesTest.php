@@ -35,6 +35,18 @@ it('returns an empty string when no sites are given', function () {
     expect(PodmanCaddySites::render([], 8000))->toBe('');
 });
 
+it('defaults to the http scheme', function () {
+    $config = PodmanCaddySites::render(['ws.example.test' => 'systemd-app-reverb:6001'], 8000);
+
+    expect($config)->toStartWith('http://ws.example.test:8000');
+});
+
+it('accepts a custom scheme', function () {
+    $config = PodmanCaddySites::render(['ws.example.test' => 'systemd-app-reverb:6001'], 8000, 'https');
+
+    expect($config)->toBe("https://ws.example.test:8000 {\n\treverse_proxy systemd-app-reverb:6001\n}");
+});
+
 it('extracts the host from a url', function () {
     expect(PodmanCaddySites::hostFromUrl('https://s3.example.test/bucket'))->toBe('s3.example.test');
 });

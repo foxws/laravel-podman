@@ -134,6 +134,31 @@ lpod install frankenphp-octane/pgsql.quadlets --replace
 
 Pass `--application=` to `lpod install` (requires Podman 6+) so each app gets its own install subdirectory.
 
+## Reverse proxying sibling services without the `proxy` preset
+
+`frankenphp-octane` runs [Octane's FrankenPHP server](https://laravel.com/docs/octane#frankenphp), which embeds its own Caddy — separate from the bundled `proxy` preset's Caddy container (see [Proxy](proxy.md)). When you're not running that preset (an external load balancer, Laravel Cloud, or any host that only exposes the app container), the embedded Caddy can still reverse proxy sibling services — Reverb, a mail catcher, S3-compatible storage — directly, via Octane's `CADDY_EXTRA_CONFIG` environment variable.
+
+`Foxws\Podman\Support\PodmanCaddySites` builds that value from plain env vars, for use in `config/octane.php`:
+
+```php
+use Foxws\Podman\Support\PodmanCaddySites;
+
+'caddy' => [
+    'env' => [
+        // Port must match the "--port" passed to "octane:frankenphp" in APP_COMMAND.
+        'CADDY_EXTRA_CONFIG' => PodmanCaddySites::render([
+            PodmanCaddySites::hostFromUrl((string) env('AWS_URL')) => PodmanCaddySites::hostPortFromUrl((string) env('AWS_ENDPOINT')),
+            (string) env('VITE_REVERB_HOST', env('REVERB_HOST')) => PodmanCaddySites::hostPort(env('REVERB_HOST'), env('REVERB_PORT', 6001)),
+            (string) env('MAILPIT_UI_HOST') => PodmanCaddySites::hostPort(env('MAIL_HOST'), 8025),
+        ], (int) env('OCTANE_PORT', 8000)),
+    ],
+],
+```
+
+This must read raw `env()` rather than `config()`, since config files cannot safely depend on each other's load order. An empty hostname or upstream (an unset env var) is skipped, so services you haven't configured are simply left out.
+
+`render()` pins each block to `http://` by default — a bare hostname makes Caddy attempt automatic HTTPS (binding `:443`), which crashes the server once `CAP_NET_BIND_SERVICE` is stripped from the FrankenPHP binary and it runs as a non-root user, as the `frankenphp-octane` image does. Pass a third `$scheme` argument only if your embedded Caddy is allowed to bind privileged ports itself.
+
 ## Links
 
 - [Command Reference](commands.md)

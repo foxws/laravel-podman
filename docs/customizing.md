@@ -155,6 +155,14 @@ use Foxws\Podman\Support\PodmanCaddySites;
 ],
 ```
 
+| Public hostname | Upstream | Env vars used |
+| --- | --- | --- |
+| Host portion of `AWS_URL` | Host:port of `AWS_ENDPOINT` | `AWS_URL`, `AWS_ENDPOINT` |
+| `VITE_REVERB_HOST` (falls back to `REVERB_HOST`) | `REVERB_HOST`:`REVERB_PORT` (default `6001`) | `VITE_REVERB_HOST`, `REVERB_HOST`, `REVERB_PORT` |
+| `MAILPIT_UI_HOST` | `MAIL_HOST`:`8025` | `MAILPIT_UI_HOST`, `MAIL_HOST` |
+
+Add or drop rows to match the sibling services your own app actually proxies — nothing here is fixed by the package.
+
 This must read raw `env()` rather than `config()`, since config files cannot safely depend on each other's load order. An empty hostname or upstream (an unset env var) is skipped, so services you haven't configured are simply left out.
 
 `render()` pins each block to `http://` by default — a bare hostname makes Caddy attempt automatic HTTPS (binding `:443`), which crashes the server once `CAP_NET_BIND_SERVICE` is stripped from the FrankenPHP binary and it runs as a non-root user, as the `frankenphp-octane` image does. Pass a third `$scheme` argument only if your embedded Caddy is allowed to bind privileged ports itself.

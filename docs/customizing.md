@@ -155,11 +155,13 @@ use Foxws\Podman\Support\PodmanCaddySites;
 ],
 ```
 
+Assuming `.env` sets `AWS_URL=https://s3.laravel.test`, `VITE_REVERB_HOST=ws.laravel.test`, and `MAILPIT_UI_HOST=mail.laravel.test` — the same `s3.`/`ws.`/`mail.` subdomain convention the bundled `sites/laravel.Caddyfile` uses for the `proxy` preset (see [Proxy](proxy.md)) — this resolves to:
+
 | Public hostname | Upstream | Env vars used |
 | --- | --- | --- |
-| Host portion of `AWS_URL` | Host:port of `AWS_ENDPOINT` | `AWS_URL`, `AWS_ENDPOINT` |
-| `VITE_REVERB_HOST` (falls back to `REVERB_HOST`) | `REVERB_HOST`:`REVERB_PORT` (default `6001`) | `VITE_REVERB_HOST`, `REVERB_HOST`, `REVERB_PORT` |
-| `MAILPIT_UI_HOST` | `MAIL_HOST`:`8025` | `MAILPIT_UI_HOST`, `MAIL_HOST` |
+| `s3.laravel.test` | e.g. `minio:9000` | `AWS_URL`, `AWS_ENDPOINT` |
+| `ws.laravel.test` | e.g. `reverb:6001` | `VITE_REVERB_HOST` (falls back to `REVERB_HOST`), `REVERB_HOST`, `REVERB_PORT` |
+| `mail.laravel.test` | e.g. `mailpit:8025` | `MAILPIT_UI_HOST`, `MAIL_HOST` |
 
 Add or drop rows to match the sibling services your own app actually proxies — nothing here is fixed by the package.
 

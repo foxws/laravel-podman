@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 2.1.6 - 2026-09-12
+
+### What's Changed
+
+* Bump react from 19.2.8 to 19.3.0 in /website by @dependabot[bot] in https://github.com/foxws/laravel-podman/pull/23
+* Add PodmanCaddySites support class by @francoism90 in https://github.com/foxws/laravel-podman/pull/24
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/2.1.5...2.1.6
+
 ## 2.1.5 - 2026-09-04
 
 ### What's Changed

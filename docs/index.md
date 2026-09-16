@@ -1,11 +1,18 @@
 ---
-slug: /
-sidebar_position: 1
+title: Introduction
+metadata:
+  role: Containers
+  eyebrow: "Containers · Podman Quadlet · systemd"
+  desc: "Turn your Laravel app's config into Podman Quadlet containers systemd can manage."
+  requires: "PHP ^8.4"
+  laravel: "11.x / 12.x / 13.x"
+  runtime: "Podman 5"
+  licence: MIT
 ---
 
 # Introduction
 
-Renders [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) units from your Laravel app's config, then installs them as [systemd-managed](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) containers on your host — no all-in-one runtime, no lock-in. Swap any bundled part (Caddy for Nginx, Postgres for MySQL) for your own.
+This package turns your Laravel app's config into [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) units, which [systemd then manages](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) as containers on your host. There's no all-in-one runtime and no lock-in — swap any bundled part for your own, like Caddy for Nginx or Postgres for MySQL.
 
 ## Requirements
 
@@ -22,7 +29,7 @@ composer require foxws/laravel-podman --dev
 php artisan vendor:publish --tag="podman-config"
 ```
 
-Only needed to render Quadlet units — install as a dev dependency and skip it in production. See [Customizing](customizing.md) for every config key.
+You only need this package to render Quadlet units, so install it as a dev dependency and skip it in production. See [Customizing](customizing.md) for the full list of config keys.
 
 ## Presets
 
@@ -34,7 +41,7 @@ Only needed to render Quadlet units — install as a dev dependency and skip it 
 | `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. **Enabled by default.**                           |
 | `s3`                | CORS policy for S3-compatible storage buckets.                                                                                    |
 
-Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) without touching the others — see [Customizing](customizing.md).
+Want a custom preset? Publish one (`php artisan podman:publish frankenphp-octane`) without touching the others — see [Customizing](customizing.md).
 
 ## Quick start
 
@@ -44,14 +51,14 @@ Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) wit
     php artisan podman:setup
     ```
 
-2. **Install [`lpod`](https://github.com/foxws/lpod)** once per host — a dependency-free script, no PHP/Composer needed:
+2. **Install [`lpod`](https://github.com/foxws/lpod)** once per host. It's a small script with no dependencies — no PHP or Composer needed:
 
     ```bash
     curl -fsSL -o ~/.local/bin/lpod https://github.com/foxws/lpod/releases/latest/download/lpod
     chmod +x ~/.local/bin/lpod
     ```
 
-3. **Install** each rendered service (the only step that needs `podman` itself):
+3. **Install** each rendered service. This is the only step that needs `podman` itself:
 
     ```bash
     lpod install development/app.quadlets --replace
@@ -71,7 +78,7 @@ Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) wit
 
 Trust the proxy's local certificate once — see [Proxy](proxy.md#trusting-the-local-certificate).
 
-Working on frontend assets? Vite's dev server is opt-in, not part of the default bundle (it needs `pnpm install` run first, or it'll crash-loop):
+Working on frontend assets? Vite's dev server isn't part of the default setup — it's opt-in. Run `pnpm install` first, or it will crash-loop:
 
 ```bash
 lpod install development/vite.quadlets --replace
@@ -89,13 +96,13 @@ No PHP on the host? `lpod setup` renders the same way without it — see [Settin
 | `podman:generate PRESET` | Render a single preset                                           |
 | `podman:s3-setup`        | Create S3 buckets and a CORS policy (requires `aws/aws-sdk-php`) |
 
-Installing, listing, removing, and setting secrets is [`lpod`](https://github.com/foxws/lpod)'s job, not Artisan's. Full flag reference: [Commands](commands.md).
+`lpod` handles installing, listing, removing, and setting secrets — not Artisan. See [Commands](commands.md) for the full flag reference.
 
 > **Warning:** `lpod remove`/`lpod uninstall` delete the Podman volumes they own (databases, uploads, search indexes), with no undo — see [Backing up volumes](commands.md#backing-up-volumes).
 
 ## The `lpod` utility
 
-[`lpod`](https://github.com/foxws/lpod) is a separate, dependency-free bash script — no PHP, Composer, or this package required to run it. [`lpod-setup`](https://github.com/foxws/lpod), which ships alongside it, renders presets inside a disposable container for hosts with Podman but no PHP. `lpod setup` is a shortcut for it. See [`lpod` CLI](lpod.md).
+[`lpod`](https://github.com/foxws/lpod) is a separate, dependency-free bash script — no PHP, Composer, or this package required to run it. [`lpod-setup`](https://github.com/foxws/lpod), which ships alongside it, renders presets inside a disposable container for hosts that have Podman but no PHP. `lpod setup` is a shortcut for it. See [`lpod` CLI](lpod.md).
 
 ## Links
 

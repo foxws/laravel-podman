@@ -1,12 +1,17 @@
+---
+section: Advanced
+order: 1
+---
+
 # Setting up without PHP on the host
 
-`podman:generate`/`podman:setup` only render files — they never touch the `podman` binary, so they run anywhere PHP does. Output is a build artifact: don't commit it, delete/regenerate it any time.
+`podman:generate`/`podman:setup` only render files — they never touch the `podman` binary, so they run anywhere PHP does. The output is a build artifact: don't commit it, and feel free to delete and regenerate it any time.
 
-**Normal workflow:** render on your dev machine as usual (`php artisan podman:setup`), copy the generated `podman/` folder to production, install it there with [`lpod`](https://github.com/foxws/lpod). No PHP needed on production, and `lpod` doesn't need this package installed either.
+**Normal workflow:** render on your dev machine as usual (`php artisan podman:setup`), then copy the generated `podman/` folder to production and install it there with [`lpod`](https://github.com/foxws/lpod). Production needs no PHP, and `lpod` doesn't need this package installed either.
 
 ## No PHP anywhere
 
-No PHP on the rendering machine either? Install dependencies and render inside disposable containers, using the same `composer`/`php:8.5-cli` images `lpod-setup` defaults to:
+What if there's no PHP on the rendering machine either? Install dependencies and render inside disposable containers, using the same `composer`/`php:8.5-cli` images `lpod-setup` defaults to:
 
 ```bash
 # vendor/ has to exist before "podman:setup" can boot at all
@@ -55,9 +60,11 @@ VolumeName=systemd-acme-valkey
 lpod install frankenphp-octane/valkey.quadlets --replace
 ```
 
-- `PODMAN_WORKING_PATH`/`--working-path=` only change host paths *baked into* the rendered files — rendering itself always happens from `/var/www/html` here.
-- `--userns=keep-id -u "$(id -u):$(id -g)"` keeps generated files owned by you, not root. Keep `:Z` on SELinux hosts.
+A few things worth knowing about this approach:
+
+- `PODMAN_WORKING_PATH`/`--working-path=` only change the host paths *baked into* the rendered files — rendering itself always happens from `/var/www/html` here.
+- `--userns=keep-id -u "$(id -u):$(id -g)"` keeps the generated files owned by you, not root. Keep `:Z` on SELinux hosts.
 - `lpod setup` wraps the `podman run` command above, once [`lpod`](https://github.com/foxws/lpod) (which also ships `lpod-setup`) is on the host. Add `--install` to install immediately, or `--secrets` to also set secrets.
-- `lpod` needs nothing from this project once services are installed — that's what makes production install truly standalone. `lpod-setup` still shells out to `php artisan podman:setup`, needing this project's `vendor/` — why copying already-rendered output is the normal path for production.
+- Once services are installed, `lpod` needs nothing else from this project — that's what makes a production install truly standalone. `lpod-setup` itself still shells out to `php artisan podman:setup`, which needs this project's `vendor/`. That's why copying already-rendered output is the normal path for production.
 
 See [`lpod` CLI](lpod.md) for the full command reference.

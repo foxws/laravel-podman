@@ -1,6 +1,11 @@
+---
+section: Configuration
+order: 1
+---
+
 # Customizing
 
-Driven by `config/podman.php` (`php artisan vendor:publish --tag="podman-config"`) and preset template files on disk.
+Behavior is driven by `config/podman.php` (`php artisan vendor:publish --tag="podman-config"`) and by the preset template files on disk.
 
 ## Config keys
 
@@ -13,25 +18,25 @@ Driven by `config/podman.php` (`php artisan vendor:publish --tag="podman-config"
 | `working_path` | `PODMAN_WORKING_PATH` | Laravel's `base_path()` | Host path baked into `{{workingPath}}`/`{{runtimePath}}`. Override per run with `--working-path=` on `podman:generate` |
 | `config_path` | `PODMAN_CONFIG_PATH` | `working_path` | Host path baked into `{{configPath}}`, for a service's config living outside the project |
 | `quadlet_uid`/`quadlet_gid` | `PODMAN_QUADLET_UID`/`_GID` | Current user's UID/GID | Baked into generated Quadlet files |
-| `publish_path` | `PODMAN_PUBLISH_PATH` | `podman` | Where `podman:generate` writes rendered presets. Build artifact — don't commit it |
-| `selinux_volume_mapping` | `PODMAN_SELINUX_VOLUME_MAPPING` | `true` | Keep `Z`/`z`/`U` volume flags; disable on non-SELinux hosts |
+| `publish_path` | `PODMAN_PUBLISH_PATH` | `podman` | Where `podman:generate` writes rendered presets. This is a build artifact, so don't commit it |
+| `selinux_volume_mapping` | `PODMAN_SELINUX_VOLUME_MAPPING` | `true` | Keeps `Z`/`z`/`U` volume flags; disable on non-SELinux hosts |
 | `presets` | `PODMAN_DEFAULT_PRESETS` | see `config/podman.php` | Presets `podman:setup` publishes/generates by default |
 | `s3_buckets` | `PODMAN_S3_BUCKETS` | see `config/podman.php` | Buckets `podman:s3-setup` creates — see [S3 Buckets](s3.md) |
 | `s3_cors_buckets` | `PODMAN_S3_CORS_BUCKETS` | see `config/podman.php` | Which of `s3_buckets` get the CORS policy |
 | `substitutions` | *(none)* | `[]` | Extra `{{placeholder}}` => value pairs merged into every template — see [Custom substitutions](#custom-substitutions) |
 
-`presets`/`s3_buckets`/`s3_cors_buckets` accept a comma-separated string or a plain PHP array.
+`presets`/`s3_buckets`/`s3_cors_buckets` each accept a comma-separated string or a plain PHP array.
 
 ## Custom presets
 
-A preset is a folder with a `quadlets/` directory (`*.quadlets` files) and a `runtimes/` directory (container build files). `stubs_path` is the lookup root — `stubs_path/{preset}` is used if it exists, otherwise the bundled vendor preset. It's a full replacement, not a file-by-file merge.
+A preset is a folder with a `quadlets/` directory (`*.quadlets` files) and a `runtimes/` directory (container build files). `stubs_path` is the lookup root: `stubs_path/{preset}` is used if it exists, otherwise the package falls back to its own bundled preset. A custom preset fully replaces the bundled one — it isn't merged file by file.
 
-- **Tweak an existing service** — publish first (`php artisan podman:publish frankenphp-octane`), then edit `containers/stubs/frankenphp-octane/quadlets/pgsql.quadlets`.
-- **Add a service to a preset** — create `containers/stubs/frankenphp-octane/quadlets/my-service.quadlets` (same `# FileName=...` + `---` format), then `php artisan podman:generate frankenphp-octane` and `lpod install frankenphp-octane/my-service.quadlets`.
-- **Customize build files** — same rule for `runtimes/` (`Containerfile`, `entrypoint.sh`, php ini, Caddy templates).
+- **Tweak an existing service** — publish it first (`php artisan podman:publish frankenphp-octane`), then edit `containers/stubs/frankenphp-octane/quadlets/pgsql.quadlets`.
+- **Add a service to a preset** — create `containers/stubs/frankenphp-octane/quadlets/my-service.quadlets` (same `# FileName=...` + `---` format), then run `php artisan podman:generate frankenphp-octane` and `lpod install frankenphp-octane/my-service.quadlets`.
+- **Customize build files** — the same rule applies to `runtimes/` (`Containerfile`, `entrypoint.sh`, php ini, Caddy templates).
 - **Add a new preset** — create `containers/stubs/my-preset/quadlets/` and `.../runtimes/` directly.
 
-Placeholders, kept intact by `podman:publish` and substituted by `podman:generate`:
+Placeholders are kept intact by `podman:publish` and filled in by `podman:generate`:
 
 | Placeholder | Value |
 | --- | --- |
@@ -46,7 +51,7 @@ Placeholders, kept intact by `podman:publish` and substituted by `podman:generat
 | `{{configPath}}` | Resolved `config_path` (defaults to `working_path`) |
 | `{{runtimePath}}` | Preset's generated `runtimes/` folder, e.g. `podman/frankenphp-octane/runtimes` |
 
-Defaults to `working_path`, so nothing changes unless set. Handy for keeping a service's live config outside the project, e.g. in your own preset's `proxy.quadlets`:
+`{{configPath}}` defaults to `working_path`, so nothing changes unless you set it. It's handy for keeping a service's live config outside the project, e.g. in your own preset's `proxy.quadlets`:
 
 ```ini
 Volume={{configPath}}/{{proxy}}:/etc/caddy:rw,z,U
@@ -54,7 +59,7 @@ Volume={{configPath}}/{{proxy}}:/etc/caddy:rw,z,U
 
 ## Custom substitutions
 
-Merge your own `{{placeholder}}` => value pairs into every template via `substitutions`. Values are plain PHP — `env(...)` works like anywhere else in the config:
+Merge your own `{{placeholder}}` => value pairs into every template via `substitutions`. Values are plain PHP, so `env(...)` works just like anywhere else in the config:
 
 ```php
 'substitutions' => [
@@ -66,11 +71,11 @@ Merge your own `{{placeholder}}` => value pairs into every template via `substit
 Environment=API_ENDPOINT={{apiEndpoint}}
 ```
 
-Can also override a built-in placeholder of the same name (e.g. `{{appHost}}`) — `substitutions` always wins.
+This can also override a built-in placeholder of the same name (e.g. `{{appHost}}`) — `substitutions` always wins.
 
 ## Available services
 
-Each preset (except `devcontainer`/`s3`) bundles `app` plus these siblings. One per category runs at a time — alternatives, not additions:
+Each preset (except `devcontainer`/`s3`) bundles `app` plus the services below. Only one service per category runs at a time — they're alternatives, not additions.
 
 | Category | Services (default first) |
 | --- | --- |
@@ -80,11 +85,11 @@ Each preset (except `devcontainer`/`s3`) bundles `app` plus these siblings. One 
 | Object storage | `rustfs` |
 | Mail catcher | `mailpit` |
 
-`frankenphp-octane` also bundles `horizon`, `reverb`, `schedule`, and `inertia-ssr` — always-on, not alternatives.
+`frankenphp-octane` also bundles `horizon`, `reverb`, `schedule`, and `inertia-ssr`. These are always on, not alternatives.
 
 ## Swapping a service
 
-`pgsql`/`valkey` are wired into `app.quadlets`' `[Unit]` section, not auto-detected:
+`pgsql`/`valkey` are wired directly into `app.quadlets`' `[Unit]` section, not auto-detected:
 
 ```bash
 php artisan podman:publish frankenphp-octane   # or development
@@ -97,7 +102,7 @@ Requires={{application}}-mysql.container {{application}}-redis.container
 After={{application}}-mysql.container {{application}}-redis.container
 ```
 
-Regenerate and reinstall both:
+Then regenerate and reinstall both:
 
 ```bash
 php artisan podman:generate frankenphp-octane
@@ -105,17 +110,17 @@ lpod install frankenphp-octane/mysql.quadlets --replace
 lpod install frankenphp-octane/app.quadlets --replace
 ```
 
-Also update `.env` (`DB_CONNECTION`, `DB_HOST`, etc.) — Podman wires the containers, Laravel still needs to know which one to talk to.
+Also update `.env` (`DB_CONNECTION`, `DB_HOST`, etc.) — Podman wires the containers together, but Laravel still needs to know which one to talk to.
 
 ### `[Unit]` directives
 
 | Directive | Meaning | Used for |
 | --- | --- | --- |
-| `Requires=` | Hard dependency — target fails, this unit stops too | `app` → its database + cache |
-| `After=` | Ordering only, no failure propagation | Paired with `Requires=`/`Wants=` |
-| `Wants=` | Soft dependency — tries to start the target, doesn't fail if it can't | `app` → `mailpit`/`horizon`/`reverb`/`schedule` |
+| `Requires=` | Hard dependency — if the target fails, this unit stops too | `app` → its database + cache |
+| `After=` | Ordering only, doesn't propagate failures | Paired with `Requires=`/`Wants=` |
+| `Wants=` | Soft dependency — tries to start the target, but doesn't fail if it can't | `app` → `mailpit`/`horizon`/`reverb`/`schedule` |
 | `BindsTo=` | Like `Requires=`, but also stops this unit when the target *stops* | `horizon`/`reverb`/`schedule`/`inertia-ssr` → `app` |
-| `PartOf=` | Stop/restart of the target propagates here, one-directional | `typesense`/`mailpit` → `app` |
+| `PartOf=` | A stop/restart of the target propagates here, one-directional | `typesense`/`mailpit` → `app` |
 
 ## Increasing a service's memory limit
 
@@ -136,7 +141,7 @@ Pass `--application=` to `lpod install` (requires Podman 6+) so each app gets it
 
 ## Reverse proxying sibling services without the `proxy` preset
 
-`frankenphp-octane` runs [Octane's FrankenPHP server](https://laravel.com/docs/octane#frankenphp), which embeds its own Caddy — separate from the bundled `proxy` preset's Caddy container (see [Proxy](proxy.md)). When you're not running that preset (an external load balancer, Laravel Cloud, or any host that only exposes the app container), the embedded Caddy can still reverse proxy sibling services — Reverb, a mail catcher, S3-compatible storage — directly, via Octane's `CADDY_EXTRA_CONFIG` environment variable.
+`frankenphp-octane` runs [Octane's FrankenPHP server](https://laravel.com/docs/octane#frankenphp), which embeds its own Caddy — separate from the bundled `proxy` preset's Caddy container (see [Proxy](proxy.md)). If you're not running that preset — say, you use an external load balancer, Laravel Cloud, or any host that only exposes the app container — the embedded Caddy can still reverse proxy sibling services (Reverb, a mail catcher, S3-compatible storage) directly, via Octane's `CADDY_EXTRA_CONFIG` environment variable.
 
 `Foxws\Podman\Support\PodmanCaddySites` builds that value from plain env vars, for use in `config/octane.php`:
 
@@ -155,7 +160,7 @@ use Foxws\Podman\Support\PodmanCaddySites;
 ],
 ```
 
-Assuming `.env` sets `AWS_URL=https://s3.laravel.test`, `VITE_REVERB_HOST=ws.laravel.test`, and `MAILPIT_UI_HOST=mail.laravel.test` — the same `s3.`/`ws.`/`mail.` subdomain convention the bundled `sites/laravel.Caddyfile` uses for the `proxy` preset (see [Proxy](proxy.md)) — this resolves to:
+Say your `.env` sets `AWS_URL=https://s3.laravel.test`, `VITE_REVERB_HOST=ws.laravel.test`, and `MAILPIT_UI_HOST=mail.laravel.test` — the same `s3.`/`ws.`/`mail.` subdomain convention the bundled `sites/laravel.Caddyfile` uses for the `proxy` preset (see [Proxy](proxy.md)). That resolves to:
 
 | Public hostname | Upstream | Env vars used |
 | --- | --- | --- |
@@ -163,11 +168,11 @@ Assuming `.env` sets `AWS_URL=https://s3.laravel.test`, `VITE_REVERB_HOST=ws.lar
 | `ws.laravel.test` | e.g. `reverb:6001` | `VITE_REVERB_HOST` (falls back to `REVERB_HOST`), `REVERB_HOST`, `REVERB_PORT` |
 | `mail.laravel.test` | e.g. `mailpit:8025` | `MAILPIT_UI_HOST`, `MAIL_HOST` |
 
-Add or drop rows to match the sibling services your own app actually proxies — nothing here is fixed by the package.
+Add or drop rows to match whichever sibling services your own app actually proxies — none of this is fixed by the package.
 
-This must read raw `env()` rather than `config()`, since config files cannot safely depend on each other's load order. An empty hostname or upstream (an unset env var) is skipped, so services you haven't configured are simply left out.
+This has to read raw `env()` rather than `config()`, since config files can't safely depend on each other's load order. An empty hostname or upstream (an unset env var) is skipped, so any service you haven't configured is simply left out.
 
-`render()` pins each block to `http://` by default — a bare hostname makes Caddy attempt automatic HTTPS (binding `:443`), which crashes the server once `CAP_NET_BIND_SERVICE` is stripped from the FrankenPHP binary and it runs as a non-root user, as the `frankenphp-octane` image does. Pass a third `$scheme` argument only if your embedded Caddy is allowed to bind privileged ports itself.
+`render()` pins each block to `http://` by default. A bare hostname would make Caddy attempt automatic HTTPS (binding `:443`), which crashes the server once `CAP_NET_BIND_SERVICE` is stripped from the FrankenPHP binary and it runs as a non-root user, as the `frankenphp-octane` image does. Pass a third `$scheme` argument only if your embedded Caddy is allowed to bind privileged ports itself.
 
 ## Links
 

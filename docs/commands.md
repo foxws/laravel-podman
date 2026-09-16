@@ -1,8 +1,13 @@
+---
+section: Getting Started
+order: 1
+---
+
 # Command Reference
 
-The package finds preset folders on disk (`quadlets/` + `runtimes/`) and exposes them through the Artisan commands below. Omit the preset name and it prompts you.
+The package looks for preset folders on disk (`quadlets/` + `runtimes/`) and exposes them through the Artisan commands below. Leave out the preset name and it will ask you to pick one.
 
-These commands only render files — never touch `podman`, so they work anywhere PHP runs. Installing, listing, removing, and secrets are [`lpod`](https://github.com/foxws/lpod)'s job — see [`lpod` CLI](lpod.md). Rendered output (`publish_path`, default `podman/`) is a build artifact: don't commit it.
+These commands only render files. They never touch `podman`, so they work anywhere PHP runs. Installing, listing, removing, and setting secrets is [`lpod`](https://github.com/foxws/lpod)'s job instead — see [`lpod` CLI](lpod.md). The rendered output (`publish_path`, `podman/` by default) is a build artifact, so don't commit it.
 
 ## `podman:setup`
 
@@ -17,7 +22,7 @@ php artisan podman:setup --preset=frankenphp-octane
 
 ## `podman:publish PRESET`
 
-Publishes a preset's `quadlets/` and `runtimes/` files for customization.
+Publishes a preset's `quadlets/` and `runtimes/` files so you can customize them.
 
 ```bash
 php artisan podman:publish frankenphp-octane
@@ -28,7 +33,7 @@ php artisan podman:publish frankenphp-octane --force
 
 ## `podman:generate PRESET`
 
-Renders a single preset (see [Customizing](customizing.md) for placeholders) into the publish path, ready for `lpod install`.
+Renders a single preset (see [Customizing](customizing.md) for the available placeholders) into the publish path, ready for `lpod install`.
 
 ```bash
 php artisan podman:generate frankenphp-octane
@@ -37,7 +42,7 @@ php artisan podman:generate frankenphp-octane
 php artisan podman:generate development --working-path=/srv/my-app
 ```
 
-`--working-path` overrides `working_path` (normally `PODMAN_WORKING_PATH`) for one run, without touching `.env` — see [Setting up without PHP](host-setup.md).
+`--working-path` overrides `working_path` (normally set via `PODMAN_WORKING_PATH`) for one run only, without touching `.env` — see [Setting up without PHP](host-setup.md).
 
 ## `podman:s3-setup`
 
@@ -49,7 +54,7 @@ php artisan podman:s3-setup
 
 ## Backing up volumes
 
-`lpod remove`/`lpod uninstall` delete the Podman volumes they own, with no undo. Back up first for anything holding data (`pgsql`, `valkey`, `rustfs`, `typesense`, `mailpit`):
+`lpod remove`/`lpod uninstall` delete the Podman volumes they own, with no undo. Back these up first if they hold data you care about (`pgsql`, `valkey`, `rustfs`, `typesense`, `mailpit`):
 
 ```bash
 # Generic: archive any named volume to a tarball

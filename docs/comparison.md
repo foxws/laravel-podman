@@ -1,6 +1,11 @@
+---
+section: Reference
+order: 1
+---
+
 # Comparison
 
-Not a full desktop app — a Laravel package that renders presets into host-managed Podman Quadlet/systemd services. Swap bundled parts (Caddy for Nginx) for more host-level setup, in exchange for more control.
+This isn't a full desktop app — it's a Laravel package that renders presets into host-managed Podman Quadlet/systemd services. Swapping a bundled part, like Caddy for Nginx, means more host-level setup in exchange for more control.
 
 | Tool | What it is | Main limits | How Laravel Podman differs |
 | --- | --- | --- | --- |

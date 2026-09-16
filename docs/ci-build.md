@@ -1,13 +1,20 @@
+---
+section: Advanced
+order: 2
+---
+
 # CI: Building a Container Image
 
-An example GitHub Actions workflow that renders a preset's `Containerfile` via `podman:generate` and builds/pushes a multi-arch image with `buildah`. Copy it into your own app's `.github/workflows/` and adjust the preset name/paths.
+This is an example GitHub Actions workflow that renders a preset's `Containerfile` via `podman:generate` and builds/pushes a multi-arch image with `buildah`. Copy it into your own app's `.github/workflows/` and adjust the preset name/paths for your setup.
 
-The `devcontainer` preset is the exception: it ships no template placeholders and copies no app source, so it builds as-is straight from this repo. This repo's own [`.github/workflows/build-devcontainer.yml`](../.github/workflows/build-devcontainer.yml) does exactly that — no rendering step needed — and publishes the result to `ghcr.io/foxws/laravel-podman-devcontainer` for `devcontainer.json` to pull directly (see [Devcontainer](devcontainer.md)). Every build is tagged by PHP version and variant (`php-8.5`, `php-8.5-ai`, ...) — the workflow's `variant` matrix axis maps to the Containerfile's `base`/`ai` stages via `--target` — and the PHP version marked `default: true` additionally gets the floating `main`/commit-sha/`latest` tags on its `default` variant. Add another entry to the `php:` matrix array to build/tag additional versions (e.g. `8.4`, `8.6`).
+The `devcontainer` preset is the exception: it ships no template placeholders and copies no app source, so it builds as-is straight from this repo, with no rendering step needed. This repo's own [`.github/workflows/build-devcontainer.yml`](../.github/workflows/build-devcontainer.yml) does exactly that, and publishes the result to `ghcr.io/foxws/laravel-podman-devcontainer` for `devcontainer.json` to pull directly (see [Devcontainer](devcontainer.md)). Every build is tagged by PHP version and variant (`php-8.5`, `php-8.5-ai`, ...) — the workflow's `variant` matrix axis maps to the Containerfile's `base`/`ai` stages via `--target`. The PHP version marked `default: true` additionally gets the floating `main`/commit-sha/`latest` tags on its `default` variant. To build/tag additional versions (e.g. `8.4`, `8.6`), add another entry to the `php:` matrix array.
 
 ## Prerequisites
 
-- A committed `.env` (or one written in CI, e.g. from an `.env.ci` template) with `APP_KEY` generated before `podman:generate` runs — the preset's `Containerfile`/templates may read app config at render time.
-- The preset you're building must ship a `runtimes/Containerfile` (bundled `frankenphp-octane` does; custom presets need their own, see [Customizing](customizing.md)).
+| Requirement | Why |
+| --- | --- |
+| A committed `.env` (or one written in CI, e.g. from an `.env.ci` template), with `APP_KEY` generated before `podman:generate` runs | The preset's `Containerfile`/templates may read app config at render time |
+| The preset you're building must ship a `runtimes/Containerfile` | The bundled `frankenphp-octane` does; custom presets need their own — see [Customizing](customizing.md) |
 
 ## Example: `.github/workflows/build.yml`
 
@@ -179,9 +186,11 @@ jobs:
 
 ## Adapting it
 
-- **Different preset** — swap `frankenphp-octane` in both the `podman:generate` call and `containerfiles:` path for your own (see [Customizing](customizing.md#custom-presets)).
-- **Single-arch only** — drop the matrix and the `merge` job; push straight from `build` instead of uploading digests.
-- **Registry other than GHCR** — swap the login step and `REGISTRY`/`IMAGE` env vars; `buildah`/`podman` work with any OCI registry.
+| Change | What to do |
+| --- | --- |
+| Different preset | Swap `frankenphp-octane` in both the `podman:generate` call and the `containerfiles:` path for your own (see [Customizing](customizing.md#custom-presets)) |
+| Single-arch only | Drop the matrix and the `merge` job; push straight from `build` instead of uploading digests |
+| Registry other than GHCR | Swap the login step and the `REGISTRY`/`IMAGE` env vars — `buildah`/`podman` work with any OCI registry |
 
 ## Links
 

@@ -6,7 +6,7 @@ metadata:
   desc: "Turn your Laravel app's config into Podman Quadlet containers systemd can manage."
   requires: "PHP ^8.4"
   laravel: "11.x / 12.x / 13.x"
-  runtime: "Podman 5"
+  runtime: "Podman (Quadlet)"
   licence: MIT
 ---
 

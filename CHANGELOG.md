@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 2.1.7 - 2026-09-16
+
+### What's Changed
+
+* Docs/laravel docs metadata by @francoism90 in https://github.com/foxws/laravel-podman/pull/25
+* fix: re-chown /config and /data after corepack so pnpm works as non-root by @francoism90 in https://github.com/foxws/laravel-podman/pull/26
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/2.1.6...2.1.7
+
 ## 2.1.6 - 2026-09-12
 
 ### What's Changed

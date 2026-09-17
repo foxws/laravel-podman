@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 2.1.8 - 2026-09-17
+
+### What's Changed
+
+* docs: merge lpod CLI reference from foxws/lpod by @francoism90 in https://github.com/foxws/laravel-podman/pull/27
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/2.1.7...2.1.8
+
 ## 2.1.7 - 2026-09-16
 
 ### What's Changed

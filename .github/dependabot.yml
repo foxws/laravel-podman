@@ -21,12 +21,3 @@ updates:
       - "dependencies"
     cooldown:
       default-days: 1
-
-  - package-ecosystem: "npm"
-    directory: "/website"
-    schedule:
-      interval: "weekly"
-    labels:
-      - "dependencies"
-    cooldown:
-      default-days: 1

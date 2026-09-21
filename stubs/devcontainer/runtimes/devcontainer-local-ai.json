@@ -13,8 +13,8 @@
         "PUID": "{{appUid}}",
         "PGID": "{{appGid}}"
     },
-    "workspaceMount": "source=${localWorkspaceFolder},target=/workspace,type=bind,Z",
-    "workspaceFolder": "/workspace",
+    "workspaceMount": "source=${localWorkspaceFolder},target=/app,type=bind,Z",
+    "workspaceFolder": "/app",
     "mounts": [
         "source=${localEnv:HOME}/.ssh,target=/home/docker/.ssh,type=bind,ro=true",
         "source=${localEnv:HOME}/.claude,target=/home/docker/.claude,type=bind",

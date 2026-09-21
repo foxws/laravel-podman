@@ -22,7 +22,7 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezo
 
 # Main dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg curl ca-certificates unzip gosu \
+    jq procps gosu gnupg curl ca-certificates unzip \
     git nano openssh-client gh awscli \
     default-mysql-client sqlite3 \
     && apt-get -y autoremove \

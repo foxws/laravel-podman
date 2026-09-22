@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 2.1.10 - 2026-09-22
+
+### What's Changed
+
+* fix(stubs): stop build-only apt packages and devDependencies from persisting in image layers by @francoism90 in https://github.com/foxws/laravel-podman/pull/29
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/2.1.9...2.1.10
+
 ## 2.1.9 - 2026-09-21
 
 ### What's Changed

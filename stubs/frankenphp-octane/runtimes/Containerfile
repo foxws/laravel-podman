@@ -23,7 +23,7 @@ RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezo
 
 # Main dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg curl ca-certificates libcap2-bin unzip gosu \
+    gnupg curl ca-certificates gosu \
     libavif-bin jpegoptim optipng pngquant gifsicle \
     && apt-get -y autoremove \
     && apt-get clean \
@@ -72,8 +72,14 @@ RUN if [ -n "$PHP_EXTENSIONS" ]; then \
     install-php-extensions $PHP_EXTENSIONS; \
 fi
 
-# Strip file capabilities from frankenphp
-RUN setcap -r /usr/local/bin/frankenphp
+# Strip file capabilities from frankenphp. libcap2-bin is only needed to run
+# setcap, so install and purge it within this single layer.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libcap2-bin \
+    && setcap -r /usr/local/bin/frankenphp \
+    && apt-get purge -y --auto-remove libcap2-bin \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Custom PHP configuration
 COPY podman/frankenphp-octane/runtimes/php-production.ini /usr/local/etc/php/conf.d/xx-php-user.ini
@@ -111,10 +117,6 @@ RUN cp .env.example .env
 RUN --mount=type=cache,target=/home/docker/.composer/cache,uid=${UID},gid=${GID} \
     composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction --no-scripts
 
-# Install Node.js dependencies
-RUN --mount=type=cache,target=/home/docker/.local/share/pnpm/store,uid=${UID},gid=${GID} \
-    pnpm install --frozen-lockfile
-
 # Complete composer setup
 RUN composer dump-autoload --optimize
 
@@ -124,8 +126,13 @@ RUN ${PHP_CLI} key:generate
 # Create storage symlink
 RUN ${PHP_CLI} storage:link
 
-# Build frontend assets
-RUN pnpm build && pnpm build:ssr && pnpm prune --prod
+# Install Node.js dependencies, build frontend assets, then prune
+# devDependencies -- all in one layer, since Docker layers are additive and
+# pruning in a later layer wouldn't remove devDependencies from the image.
+RUN --mount=type=cache,target=/home/docker/.local/share/pnpm/store,uid=${UID},gid=${GID} \
+    pnpm install --frozen-lockfile \
+    && pnpm build && pnpm build:ssr \
+    && pnpm prune --prod
 
 # Remove .env file if it exists
 RUN rm -f .env

@@ -31,6 +31,8 @@ php artisan vendor:publish --tag="podman-config"
 
 The package only renders files, so a dev dependency is enough. See [Customizing](customizing.md) for all config keys.
 
+Using [Laravel Boost](https://github.com/laravel/boost)? Run `php artisan boost:install` (or `boost:update`) after installing, and your AI agent gets skills for `lpod`, presets and S3 setup.
+
 ## Presets
 
 | Preset              | What it is                                                                                                                            |

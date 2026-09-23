@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 2.1.11 - 2026-09-23
+
+### What's Changed
+
+* feat: add Laravel LSP support to the devcontainer AI image via `AI_LARAVEL_LSP`, plus docs on enabling the `laravel/agent-skills` plugins by @francoism90 in https://github.com/foxws/laravel-podman/commit/c729308add4f4ad3056609c3f44775e43ea5660e
+* feat: add Boost skills for `lpod`, preset customization, and S3 setup, and rewrite the `docs/` prose by @francoism90 in https://github.com/foxws/laravel-podman/commit/0b186fd9a1d1e3c108b6b29bc6e777dbe3a55ef7
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/2.1.10...2.1.11
+
 ## 2.1.10 - 2026-09-22
 
 ### What's Changed

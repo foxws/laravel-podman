@@ -5,10 +5,10 @@ order: 1
 
 # Comparison
 
-This isn't a full desktop app — it's a Laravel package that renders presets into host-managed Podman Quadlet/systemd services. Swapping a bundled part, like Caddy for Nginx, means more host-level setup in exchange for more control.
+Laravel Podman is not a desktop app. It's a Laravel package that renders config into Podman Quadlet services, which systemd runs on your host. You get more control, but swapping a part (say, Nginx for Caddy) takes more setup on the host.
 
-| Tool | What it is | Main limits | How Laravel Podman differs |
+| Tool | What it is | Limits | How Laravel Podman differs |
 | --- | --- | --- | --- |
-| Laravel Sail | Docker Compose setup for Laravel development. | Development-only, per-project Docker setup. | Multiple presets/runtimes (`development`, `frankenphp-octane`, etc.) with Podman Quadlet + systemd-managed services. |
-| Laravel Herd | Native local dev app from Laravel. | macOS and Windows only. | Linux with Podman + systemd only (rootless or system-wide). |
-| Lerd ([docs](https://lerd.sh/getting-started/comparison)) | Open-source local dev tool, rootless Podman (Linux/macOS). | Different scope and architecture. | Renders preset templates into Quadlet units, bundles a Caddy `proxy` preset, and pairs with the standalone [`lpod`](https://github.com/foxws/lpod) host tool. |
+| Laravel Sail | Docker Compose setup for Laravel | Development only, Docker per project | Several presets (`development`, `frankenphp-octane`, ...), run by Podman and systemd |
+| Laravel Herd | Native local dev app from Laravel | macOS and Windows only | Linux only, with Podman and systemd (rootless or system-wide) |
+| Lerd ([docs](https://lerd.sh/getting-started/comparison)) | Open-source local dev tool on rootless Podman (Linux/macOS) | Different scope and design | Renders templates into Quadlet units, includes a Caddy `proxy` preset, and works with the standalone [`lpod`](https://github.com/foxws/lpod) CLI |

@@ -5,16 +5,16 @@ order: 1
 
 # Setting up without PHP on the host
 
-`podman:generate`/`podman:setup` only render files — they never touch the `podman` binary, so they run anywhere PHP does. The output is a build artifact: don't commit it, and feel free to delete and regenerate it any time.
+`podman:setup` and `podman:generate` only render files. You can delete and regenerate the output any time, so don't commit it.
 
-**Normal workflow:** render on your dev machine as usual (`php artisan podman:setup`), then copy the generated `podman/` folder to production and install it there with [`lpod`](https://github.com/foxws/lpod). Production needs no PHP, and `lpod` doesn't need this package installed either.
+**Usual workflow:** render on your dev machine with `php artisan podman:setup`, copy the `podman/` folder to the server, and install it there with [`lpod`](lpod.md). The server needs neither PHP nor this package.
 
 ## No PHP anywhere
 
-What if there's no PHP on the rendering machine either? Install dependencies and render inside disposable containers, using the same `composer`/`php:8.5-cli` images `lpod-setup` defaults to:
+If the machine you render on has no PHP either, run Composer and Artisan in throwaway containers. These are the same `composer` and `php:8.5-cli` images `lpod setup` uses:
 
 ```bash
-# vendor/ has to exist before "podman:setup" can boot at all
+# vendor/ must exist before "podman:setup" can run
 podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
     -v "$PWD":/app:Z -w /app docker.io/library/composer:2 \
     install --no-dev --optimize-autoloader --no-interaction
@@ -24,12 +24,12 @@ podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
     -v "$PWD":/var/www/html:Z -w /var/www/html docker.io/library/php:8.5-cli \
     php artisan podman:setup --preset=frankenphp-octane
 
-# On the host: install, then set secrets
+# Back on the host: install and set secrets
 lpod install frankenphp-octane/pgsql.quadlets --replace
 lpod pgsql secrets
 ```
 
-Example output for an app named `acme` — `podman/frankenphp-octane/valkey.quadlets`:
+For an app named `acme`, this is what `podman/frankenphp-octane/valkey.quadlets` looks like:
 
 ```ini
 # FileName=acme-valkey
@@ -60,11 +60,11 @@ VolumeName=systemd-acme-valkey
 lpod install frankenphp-octane/valkey.quadlets --replace
 ```
 
-A few things worth knowing about this approach:
+Good to know:
 
-- `PODMAN_WORKING_PATH`/`--working-path=` only change the host paths *baked into* the rendered files — rendering itself always happens from `/var/www/html` here.
-- `--userns=keep-id -u "$(id -u):$(id -g)"` keeps the generated files owned by you, not root. Keep `:Z` on SELinux hosts.
-- `lpod setup` wraps the `podman run` command above, once [`lpod`](https://github.com/foxws/lpod) (which also ships `lpod-setup`) is on the host. Add `--install` to install immediately, or `--secrets` to also set secrets.
-- Once services are installed, `lpod` needs nothing else from this project — that's what makes a production install truly standalone. `lpod-setup` itself still shells out to `php artisan podman:setup`, which needs this project's `vendor/`. That's why copying already-rendered output is the normal path for production.
+- `PODMAN_WORKING_PATH` (or `--working-path=`) sets the host path written into the rendered files. The container itself always renders from `/var/www/html`.
+- `--userns=keep-id -u "$(id -u):$(id -g)"` makes you, not root, the owner of the generated files. Keep `:Z` on SELinux hosts.
+- `lpod setup` runs the commands above for you. Add `--install` to install right away, or `--secrets` to also set secrets.
+- `lpod setup` still needs this project's `vendor/`, because it runs `php artisan podman:setup`. That's why copying pre-rendered files is the usual way to deploy.
 
-See [`lpod` CLI](lpod.md) for the full command reference.
+See [`lpod` CLI](lpod.md) for all commands.

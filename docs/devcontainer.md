@@ -5,7 +5,9 @@ order: 2
 
 # Devcontainer
 
-The `devcontainer` preset is a [VS Code/JetBrains Dev Containers](https://containers.dev/) image for developing your Laravel app itself inside a container. That's different from the `development`/`frankenphp-octane` presets, which run the app as a service. It's commented out by default, so add it to `presets` in `config/podman.php` (or generate it directly) to use it.
+The `devcontainer` preset is a [Dev Containers](https://containers.dev/) image for VS Code and JetBrains. You write code inside the container. The `development` and `frankenphp-octane` presets are different: they run your app as a service.
+
+It's commented out by default. Add it to `presets` in `config/podman.php`, or generate it directly.
 
 ## Setup
 
@@ -13,62 +15,112 @@ The `devcontainer` preset is a [VS Code/JetBrains Dev Containers](https://contai
 php artisan podman:generate devcontainer
 ```
 
-This renders `stubs/devcontainer/runtimes/` into `podman/devcontainer/runtimes/` — a `Containerfile`, `entrypoint.sh`, and four devcontainer configs (see below). VS Code/JetBrains look for `.devcontainer/devcontainer.json` at the project root, not under `podman/`, so symlink whichever config you want to use:
+This writes a `Containerfile`, `entrypoint.sh` and four devcontainer configs to `podman/devcontainer/runtimes/`. Your editor looks for `.devcontainer/devcontainer.json`, so symlink the config you want:
 
 ```bash
 mkdir -p .devcontainer
 ln -sf ../podman/devcontainer/runtimes/devcontainer.json .devcontainer/devcontainer.json
 ```
 
-Using a symlink instead of a copy means re-running `podman:generate devcontainer` keeps it up to date automatically.
+With a symlink, re-running `podman:generate devcontainer` updates it automatically.
 
-## Four configs, two choices
+## Choosing a config
 
-There are two independent choices — prebuilt vs. local, and default vs. AI — which give four configs:
+Pick prebuilt or local, and with or without AI tools:
 
-| Config | Image source | Use it when |
+| Config | Image | Use it when |
 | --- | --- | --- |
-| `devcontainer.json` (default) | `ghcr.io/foxws/laravel-podman-devcontainer:php-8.5`, the prebuilt image from this repo's own CI (see [CI: Building a Container Image](ci-build.md)) | You want to start immediately, with no local build |
-| `devcontainer-local.json` | Builds `podman/devcontainer/runtimes/Containerfile` (`--target=base`) | You ran `podman:publish devcontainer` and edited the Containerfile (extra `PHP_EXTENSIONS`, apt packages, etc.) — the prebuilt image won't reflect those changes |
-| `devcontainer-ai.json` | Same as `devcontainer.json`, but pulls the `php-8.5-ai` tag | You want the AI CLIs below, without building locally |
-| `devcontainer-local-ai.json` | Same as `devcontainer-local.json`, but builds the Containerfile's `ai` stage (`--target=ai`) | You want the AI CLIs and a local build |
+| `devcontainer.json` (default) | Prebuilt `ghcr.io/foxws/laravel-podman-devcontainer:php-8.5` (see [CI](ci-build.md)) | You want to start right away |
+| `devcontainer-local.json` | Builds the `Containerfile` locally (`--target=base`) | You published the preset and changed the `Containerfile` (extra `PHP_EXTENSIONS`, apt packages, ...) |
+| `devcontainer-ai.json` | Prebuilt `php-8.5-ai` image | You want the [AI tools](#ai-variant) without building |
+| `devcontainer-local-ai.json` | Builds the `ai` stage locally (`--target=ai`) | You want the AI tools and a local build |
 
-Symlink `.devcontainer/devcontainer.json` to whichever one you need. Switching later is just repointing the symlink.
+To switch, point the symlink at another config.
 
 ## What's inside
 
-Debian-based (`php:8.5-cli`), with:
+Debian (`php:8.5-cli`) with:
 
-- `default-mysql-client`, a PostgreSQL client (version-pinned via `POSTGRES_VERSION`), and `sqlite3`
-- PHP extensions: `apcu bcmath exif ffi gd igbinary imagick intl pcntl pdo_mysql pdo_pgsql pdo_sqlite redis sockets zip`, plus whatever you pass via the `PHP_EXTENSIONS` build arg
-- Node.js (version-pinned via `NODE_VERSION`) with `pnpm`/`yarn` via Corepack, and `bun`
-- `cpx` (Composer's `npx` equivalent), `gh`, `awscli`
+- `default-mysql-client`, a PostgreSQL client (`POSTGRES_VERSION`) and `sqlite3`
+- PHP extensions: `apcu bcmath exif ffi gd igbinary imagick intl pcntl pdo_mysql pdo_pgsql pdo_sqlite redis sockets zip`, plus any in the `PHP_EXTENSIONS` build arg
+- Node.js (`NODE_VERSION`) with `pnpm` and `yarn` through Corepack, and `bun`
+- `cpx` (like `npx`, for Composer packages), `gh` and `awscli`
 
 ## AI variant
 
-`devcontainer-ai.json`/`devcontainer-local-ai.json` add Claude Code and OpenAI Codex CLI on top of everything in [What's inside](#whats-inside), plus whatever npm-installable agent CLI you pass via the `AI_NPM_PACKAGES` build arg (e.g. `@google/gemini-cli`). That build arg only matters if you're building locally, since it only takes effect on the `ai` target. Each CLI has its own build arg — `CLAUDE_CLI`/`CODEX_CLI` — which defaults to `latest`. Set it to `false` to skip that CLI, or to a version/channel (e.g. `stable`, `2.1.89`) to pin it.
+The `ai` configs add these on top of [What's inside](#whats-inside). Each has a build arg that defaults to `latest`. Set it to `false` to skip the tool, or to a version to pin it:
 
-### Laravel-specific context
+| Tool | Build arg | Pin example |
+| --- | --- | --- |
+| Claude Code | `CLAUDE_CLI` | `stable`, `2.1.89` |
+| OpenAI Codex CLI | `CODEX_CLI` | any npm version |
+| [Laravel LSP](https://github.com/laravel/lsp) (`laravel-lsp`) | `AI_LARAVEL_LSP` | `0.0.32` |
 
-If you want Laravel-specific context (routes, DB schema, config, Tinker) instead of a generic filesystem view, pair either CLI with [`laravel/boost`](https://github.com/laravel/boost) in your app itself. That's a per-project Composer package (`composer require laravel/boost --dev && php artisan boost:install`), not something this Containerfile installs.
+To add other npm-based agent CLIs, list them in `AI_NPM_PACKAGES`, e.g. `@google/gemini-cli`. Build args only apply when you build locally.
+
+### Laravel Boost
+
+For Laravel-specific context (routes, database schema, config, Tinker), add [`laravel/boost`](https://github.com/laravel/boost) to your app:
+
+```bash
+composer require laravel/boost --dev
+php artisan boost:install
+```
+
+### Laravel agent skills
+
+Claude Code uses `laravel-lsp` through the `laravel-lsp` plugin from [laravel/agent-skills](https://github.com/laravel/agent-skills). To enable it, and the `laravel` plugin with its agents and skills, add this to `.claude/settings.json` in your project (next to `artisan`, not in `~/.claude`):
+
+```json
+{
+  "extraKnownMarketplaces": {
+    "laravel": {
+      "source": { "source": "github", "repo": "laravel/agent-skills" }
+    }
+  },
+  "enabledPlugins": {
+    "laravel@laravel": true,
+    "laravel-lsp@laravel": true
+  }
+}
+```
+
+- Commit it, and everyone on the project is asked to install the plugins when they trust the project.
+- To keep it to yourself, use `.claude/settings.local.json` instead.
+- Installed plugins are stored in `~/.claude/plugins`, which the host and container share.
+- `laravel-cloud@laravel` and `laravel-nightwatch@laravel` are also available.
 
 ### Login persistence
 
-The `ai` configs bind-mount `~/.claude`, `~/.claude.json`, and `~/.codex` from the host into the container, read-write (unlike the read-only `.ssh` mount), so `claude`/`codex` stay logged in across container rebuilds instead of asking you to authenticate every time.
+The `ai` configs mount `~/.claude`, `~/.claude.json` and `~/.codex` from your host, so you stay logged in after rebuilding the container.
 
-`~/.claude.json` is a file, not a directory. If it doesn't exist yet on your host, create it before first launching the container (`touch ~/.claude.json`) — otherwise Podman will create an empty *directory* in its place, and Claude Code won't be able to use it. `~/.claude` and `~/.codex` don't have this problem, since Podman creates them as directories automatically if they're missing.
+Create `~/.claude.json` before the first start if it doesn't exist:
+
+```bash
+touch ~/.claude.json
+```
+
+Otherwise Podman creates a directory with that name, and Claude Code can't use it.
 
 ### Using API keys instead
 
-If you'd rather not share host credentials with the container at all, drop the `.claude`/`.codex` mounts from your copy of the config and set `ANTHROPIC_API_KEY`/`OPENAI_API_KEY` in `containerEnv` instead. This isn't just a simpler login — it's a different product with separate billing. A Claude.ai/ChatGPT consumer subscription can't be used as an API key, so this route needs a pay-per-token account at [console.anthropic.com](https://console.anthropic.com)/[platform.openai.com](https://platform.openai.com), in addition to (or instead of) your regular subscription.
+To keep your host logins out of the container, remove the `.claude`/`.codex` mounts from your config and set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` in `containerEnv`.
 
-## UID/GID handling
+API keys are billed separately, per token. A Claude.ai or ChatGPT subscription doesn't include one, so you need an account at [console.anthropic.com](https://console.anthropic.com) or [platform.openai.com](https://platform.openai.com).
 
-The container starts as root. `entrypoint.sh` renumbers the `docker` user to `PUID`/`PGID` (from `containerEnv`, which `podman:generate` fills in from your actual host UID/GID) before dropping privileges via `gosu`. Combined with `--userns=keep-id:uid=...,gid=...` in `runArgs`, this keeps the container's `docker` user aligned with your host user's file ownership on the bind-mounted workspace — whether you're running the locally-built image or the prebuilt one from GHCR (which is always built with UID/GID 1000, regardless of your actual host UID).
+## File ownership (UID/GID)
+
+Files you create in the container should be owned by your host user. This works as follows:
+
+1. `podman:generate` writes your host UID/GID into `PUID`/`PGID` in `containerEnv`.
+2. The container starts as root, and `entrypoint.sh` changes the `docker` user to that UID/GID.
+3. It then switches to `docker` with `gosu`.
+
+Together with `--userns=keep-id` in `runArgs`, this works for local builds and for the prebuilt image, which is always built with UID/GID 1000.
 
 ## Links
 
 - [CI: Building a Container Image](ci-build.md)
 - [Customizing](customizing.md)
-- [Flatpak-packaged editors](flatpak.md) — if VS Code/JetBrains itself runs sandboxed
+- [Flatpak-packaged editors](flatpak.md), if your editor runs as a Flatpak
 - [Introduction](index.md)

@@ -5,16 +5,20 @@ order: 2
 
 # CI: Building a Container Image
 
-This is an example GitHub Actions workflow that renders a preset's `Containerfile` via `podman:generate` and builds/pushes a multi-arch image with `buildah`. Copy it into your own app's `.github/workflows/` and adjust the preset name/paths for your setup.
+An example GitHub Actions workflow. It renders a preset's `Containerfile` with `podman:generate`, then builds and pushes a multi-arch image with `buildah`. Copy it to your app's `.github/workflows/` and change the preset name and paths to match.
 
-The `devcontainer` preset is the exception: it ships no template placeholders and copies no app source, so it builds as-is straight from this repo, with no rendering step needed. This repo's own [`.github/workflows/build-devcontainer.yml`](../.github/workflows/build-devcontainer.yml) does exactly that, and publishes the result to `ghcr.io/foxws/laravel-podman-devcontainer` for `devcontainer.json` to pull directly (see [Devcontainer](devcontainer.md)). Every build is tagged by PHP version and variant (`php-8.5`, `php-8.5-ai`, ...) — the workflow's `variant` matrix axis maps to the Containerfile's `base`/`ai` stages via `--target`. The PHP version marked `default: true` additionally gets the floating `main`/commit-sha/`latest` tags on its `default` variant. To build/tag additional versions (e.g. `8.4`, `8.6`), add another entry to the `php:` matrix array.
+The `devcontainer` preset doesn't need this. It has no placeholders and no app code, so it builds straight from this repo. [`build-devcontainer.yml`](../.github/workflows/build-devcontainer.yml) publishes it to `ghcr.io/foxws/laravel-podman-devcontainer` (see [Devcontainer](devcontainer.md)):
+
+- Each build is tagged by PHP version and variant, e.g. `php-8.5` and `php-8.5-ai`. The `variant` matrix maps to the Containerfile's `base`/`ai` stages.
+- The PHP version marked `default: true` also gets the `main`, commit-sha and `latest` tags.
+- To build another PHP version, add it to the `php:` matrix.
 
 ## Prerequisites
 
 | Requirement | Why |
 | --- | --- |
-| A committed `.env` (or one written in CI, e.g. from an `.env.ci` template), with `APP_KEY` generated before `podman:generate` runs | The preset's `Containerfile`/templates may read app config at render time |
-| The preset you're building must ship a `runtimes/Containerfile` | The bundled `frankenphp-octane` does; custom presets need their own — see [Customizing](customizing.md) |
+| An `.env` in CI (committed, or copied from e.g. `.env.ci`), with `APP_KEY` generated before `podman:generate` | Templates can read app config while rendering |
+| A `runtimes/Containerfile` in the preset | `frankenphp-octane` has one. Custom presets need their own, see [Customizing](customizing.md) |
 
 ## Example: `.github/workflows/build.yml`
 
@@ -188,9 +192,9 @@ jobs:
 
 | Change | What to do |
 | --- | --- |
-| Different preset | Swap `frankenphp-octane` in both the `podman:generate` call and the `containerfiles:` path for your own (see [Customizing](customizing.md#custom-presets)) |
-| Single-arch only | Drop the matrix and the `merge` job; push straight from `build` instead of uploading digests |
-| Registry other than GHCR | Swap the login step and the `REGISTRY`/`IMAGE` env vars — `buildah`/`podman` work with any OCI registry |
+| Different preset | Replace `frankenphp-octane` in the `podman:generate` step and the `containerfiles:` path (see [Customizing](customizing.md#custom-presets)) |
+| One architecture only | Remove the matrix and the `merge` job, and push directly from `build` |
+| Other registry than GHCR | Change the login step and the `REGISTRY`/`IMAGE` env vars. `buildah` and `podman` work with any OCI registry |
 
 ## Links
 

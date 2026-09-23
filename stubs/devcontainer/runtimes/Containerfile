@@ -101,6 +101,7 @@ FROM base AS ai
 
 ARG CLAUDE_CLI="latest"
 ARG CODEX_CLI="latest"
+ARG AI_LARAVEL_LSP="latest"
 ARG AI_NPM_PACKAGES=""
 
 # Install Claude Code via its native installer -- self-updating, and the
@@ -118,6 +119,15 @@ fi
 # CODEX_CLI=false to skip it, or to a version to pin it.
 RUN if [ "$CODEX_CLI" != "false" ]; then \
     npm install -g --prefix=/home/docker/.local @openai/codex@$CODEX_CLI; \
+fi
+
+# Install Laravel LSP -- the language server laravel/agent-skills' laravel-lsp
+# plugin launches as `laravel-lsp`, so it's symlinked onto PATH. Set
+# AI_LARAVEL_LSP=false to skip it, or to a version constraint to pin it.
+RUN if [ "$AI_LARAVEL_LSP" != "false" ]; then \
+    if [ "$AI_LARAVEL_LSP" = "latest" ]; then LSP_PACKAGE=laravel/lsp; else LSP_PACKAGE="laravel/lsp:$AI_LARAVEL_LSP"; fi \
+    && COMPOSER_HOME=/usr/local/share/composer composer global require "$LSP_PACKAGE" \
+    && ln -s /usr/local/share/composer/vendor/bin/laravel-lsp /usr/local/bin/laravel-lsp; \
 fi
 
 # Install additional AI CLI packages if specified

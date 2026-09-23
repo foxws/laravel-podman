@@ -5,7 +5,7 @@ order: 3
 
 # Flatpak-packaged editors
 
-VS Code, JetBrains IDEs, and Zed installed via Flatpak run sandboxed, so they can't reach the host's `podman` the way the [Devcontainer](devcontainer.md) workflow (or any Podman-based dev setup) expects. [`org.freedesktop.Sdk.Extension.podman`](https://github.com/francoism90/org.freedesktop.Sdk.Extension.podman) is a community SDK extension (from the same author as this package) that bridges that gap.
+VS Code, JetBrains IDEs and Zed installed as Flatpaks run in a sandbox, so they can't reach the host's `podman`. That breaks the [Devcontainer](devcontainer.md) workflow. [`org.freedesktop.Sdk.Extension.podman`](https://github.com/francoism90/org.freedesktop.Sdk.Extension.podman), a community extension by the author of this package, fixes that.
 
 ## Installing the extension
 
@@ -29,7 +29,7 @@ flatpak override --user --env=FLATPAK_ENABLE_SDK_EXT=podman <app-id>
 
 ## Socket access
 
-Podman's rootless socket needs to be running and exposed to the sandbox:
+Start Podman's rootless socket and give the sandbox access to it:
 
 ```bash
 systemctl --user enable podman.socket --now
@@ -38,21 +38,21 @@ flatpak override --user --filesystem=xdg-run/podman:ro <app-id>
 
 ## Why not just mount `~/.local/bin`?
 
-Bind-mounting a directory with the host's `podman` binary into the sandbox doesn't actually work, for reasons beyond Flatpak convention:
+Mounting the host's `podman` binary into the sandbox doesn't work:
 
-- The binary is dynamically linked against host libraries (glibc, libselinux, ...) that may not match what's inside the Flatpak runtime, so it can fail to run or crash outright.
-- Even if it ran, creating rootless containers needs `newuidmap`/`newgidmap`, `/etc/subuid`/`/etc/subgid` entries, `crun`, `conmon`, `slirp4netns`/`pasta`, and cgroup v2 delegation — none of which a plain bind-mounted directory grants inside bubblewrap's sandbox, which is deliberately isolating exactly those things.
-- It's also an unbounded escape hatch: anything in that directory becomes executable with sandbox-adjacent privileges, versus `--filesystem=xdg-run/podman:ro`, which exposes only the API socket.
+- The binary needs host libraries (glibc, libselinux, ...) that may differ from the Flatpak runtime, so it may not start.
+- Rootless containers also need `newuidmap`/`newgidmap`, `/etc/subuid`/`/etc/subgid`, `crun`, `conmon`, `slirp4netns`/`pasta` and cgroup v2 delegation. The sandbox blocks all of these on purpose.
+- Everything in the mounted folder could run from the sandbox. `--filesystem=xdg-run/podman:ro` exposes only the API socket.
 
-The extension instead runs `podman` fully outside the sandbox as a service and talks to it over that socket — the same model Docker Desktop uses, not a workaround.
+The extension runs `podman` outside the sandbox and talks to it through that socket. Docker Desktop works the same way.
 
 ## Remote Podman
 
-If you're talking to a remote Podman host instead of a local rootless socket, set `PODMAN_FLATPAK_FORCE_REMOTE=1` to route through `podman-remote` instead.
+To use a remote Podman host instead of the local socket, set `PODMAN_FLATPAK_FORCE_REMOTE=1`. This uses `podman-remote`.
 
 ## Caveats
 
-This extension is community-maintained, not an official Flatpak or Podman project — upstream rejected including it directly. Use it at your own risk, and check its repo for current VS Code/Zed/PhpStorm-specific configuration.
+The extension is maintained by the community. It's not an official Flatpak or Podman project, and upstream declined to include it. Use it at your own risk. Its repo has the latest setup notes for VS Code, Zed and PhpStorm.
 
 ## Links
 

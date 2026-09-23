@@ -5,7 +5,7 @@ order: 2
 
 # `lpod` CLI
 
-`lpod` is a single, dependency-free bash script for managing [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) services — no PHP, Composer, or this package needed to run it. It wraps `podman exec`, `podman quadlet`, and `systemctl` behind one command; anything else is passed straight through to `podman`. Full docs and releases live at [foxws/lpod](https://github.com/foxws/lpod).
+`lpod` is a bash script for managing [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) services. It doesn't need PHP, Composer or this package. It combines `podman exec`, `podman quadlet` and `systemctl` in one command, and passes unknown commands on to `podman`. Source and releases are at [foxws/lpod](https://github.com/foxws/lpod).
 
 ## Installation
 
@@ -14,7 +14,7 @@ curl -fsSL -o ~/.local/bin/lpod https://github.com/foxws/lpod/releases/latest/do
 chmod +x ~/.local/bin/lpod
 ```
 
-To pin a version instead of always installing `latest`, download a tagged release directly (e.g. `.../releases/download/v0.1.0/lpod`). `lpod --version` prints the installed version.
+To pin a version, download a tagged release instead, e.g. `.../releases/download/v0.1.0/lpod`. Check the installed version with `lpod --version`.
 
 ## Usage
 
@@ -22,9 +22,9 @@ To pin a version instead of always installing `latest`, download a tagged releas
 lpod SERVICE COMMAND [options] [arguments]
 ```
 
-`SERVICE` is the name of a Quadlet service — your app, or a sibling service like `pgsql`. Commands that manage Quadlets themselves rather than a running service skip it: `setup`, `install`, `remove`, `uninstall`, `list`, `print`, `reload`.
+`SERVICE` is a Quadlet service name, like your app or `pgsql`. These commands don't take a service: `setup`, `install`, `remove`, `uninstall`, `list`, `print`, `reload`.
 
-Quadlet names the actual container `systemd-SERVICE` (e.g. `systemd-my-app`). `lpod` handles that prefix for you in commands that run inside the container (`shell`, `run`, `artisan`, and similar) — always refer to a service by its plain name.
+Quadlet names the container `systemd-SERVICE` (e.g. `systemd-my-app`). `lpod` adds that prefix for you, so always use the plain name.
 
 ## Commands
 
@@ -92,36 +92,36 @@ Quadlet names the actual container `systemd-SERVICE` (e.g. `systemd-my-app`). `l
 | `lpod list`                            | List installed Quadlets                           |
 | `lpod print NAME`                      | Print the generated systemd unit                  |
 | `lpod reload`                          | Reload the systemd manager configuration (`daemon-reload`) |
-| `lpod setup ...`                       | Render presets without PHP — see [Setting up without PHP](host-setup.md) |
+| `lpod setup ...`                       | Render presets without PHP. See [Setting up without PHP](host-setup.md) |
 
-Every command above except `reload` accepts the same extra flags as `podman quadlet` itself (`--replace`, `--application`, `--force`, `--ignore`, ...).
+All of these except `reload` accept the same flags as `podman quadlet` (`--replace`, `--application`, `--force`, `--ignore`, ...).
 
-> **Warning:** `remove` and `uninstall` delete the Podman volumes owned by the services they remove — see [Backing up volumes](commands.md#backing-up-volumes).
+> **Warning:** `remove` and `uninstall` also delete the service's volumes. See [Backing up volumes](commands.md#backing-up-volumes).
 
 ### Secrets
 
-`lpod app secrets` reads the `Secret=` lines from an installed unit and asks you for each one:
+`lpod app secrets` asks for a value for each `Secret=` line in the installed unit:
 
 | Secret type       | What it asks for                                                |
 | ------------------ | ------------------------------------------------------------------ |
 | `env`             | A masked value, entered directly                                  |
-| `mount` (default) | A file path (defaults to `.env`); `lpod` stores that file's contents |
+| `mount` (default) | A file path (default `.env`). `lpod` stores the file's contents |
 
-A secret used more than once is only asked for once. For an `env` secret, leaving the value blank keeps its current value untouched — handy for updating a single secret with `lpod app secrets --replace` without re-entering the rest.
+Each secret is asked only once, even if it's used more than once. For `env` secrets, leave the value empty to keep the current one. That way `lpod app secrets --replace` can update one secret without retyping the others.
 
 ## Configuration
 
-`lpod` reads its settings from environment variables:
+`lpod` is configured with environment variables:
 
 | Variable             | Default        | Description                                                                                                     |
 | ---------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------ |
-| `LPOD_PODMAN_BINARY` | `podman`       | The Podman binary to use.                                                                                       |
-| `LPOD_PUBLISH_PATH`  | `podman`       | Where `lpod` looks for rendered `.quadlets` files when you run `install`.                                       |
-| `APP_PORT`            | `80`           | Used by `lpod SERVICE open`.                                                                                    |
-| `APP_USER`            | `$(id -u)`     | The user `exec`-based commands run as inside the container. Empty string uses the image's default user. `root-shell`/`root-bash` always run as `root`. |
+| `LPOD_PODMAN_BINARY` | `podman`       | Podman binary to use                                                                                            |
+| `LPOD_PUBLISH_PATH`  | `podman`       | Where `install` looks for rendered `.quadlets` files                                                            |
+| `APP_PORT`            | `80`           | Port for `lpod SERVICE open`                                                                                    |
+| `APP_USER`            | `$(id -u)`     | User for commands run in the container. Empty means the image's default user. `root-shell`/`root-bash` always use `root` |
 
-`lpod` also loads `.env` and `.env.$APP_ENV` from the current directory, and forwards known AI coding agent environment variables (Claude Code, Cursor, Copilot, Codex, Gemini CLI, and others) into `exec`-based commands.
+`lpod` also loads `.env` and `.env.$APP_ENV` from the current directory. It passes environment variables of AI coding agents (Claude Code, Cursor, Copilot, Codex, Gemini CLI, ...) into the container.
 
 ## `lpod-setup`
 
-`lpod-setup` renders presets inside a disposable container, for hosts that have Podman but no PHP — see [Setting up without PHP](host-setup.md). It ships alongside `lpod` in [foxws/lpod](https://github.com/foxws/lpod). `lpod setup` is a shortcut for it.
+`lpod-setup` comes with `lpod` and renders presets in a throwaway container, for hosts with Podman but no PHP. `lpod setup` runs it. See [Setting up without PHP](host-setup.md).

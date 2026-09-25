@@ -2,6 +2,23 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 3.0.0 - 2026-09-25
+
+### ⚠️ Breaking change
+
+The `development` and `frankenphp-octane` presets now start a plain `queue:work` worker (`queue.quadlets`) with the app, instead of Horizon.
+
+**If you run Horizon from the package's stubs,** it no longer starts with the app after you regenerate `app.quadlets`. To keep it, publish the preset and change `queue` back to `horizon` on the app's `Wants=` line. See [Replacing the queue worker with Horizon](https://foxws.nl/laravel-podman/customizing#replacing-the-queue-worker-with-horizon).
+
+Apps with published stubs aren't affected.
+
+### What's Changed
+
+* feat(stubs)!: add a queue worker and start it instead of Horizon by default by @francoism90 in https://github.com/foxws/laravel-podman/pull/30
+* docs: link the README to the docs on foxws.nl by @francoism90 in https://github.com/foxws/laravel-podman/pull/31
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/2.1.11...3.0.0
+
 ## 2.1.11 - 2026-09-23
 
 ### What's Changed

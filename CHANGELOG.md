@@ -2,6 +2,22 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 3.0.1 - 2026-09-25
+
+### ⚠️ Breaking change
+
+The `development` and `frankenphp-octane` presets no longer start Reverb with the app. `reverb.quadlets` still ships, but it's now opt-in, like Horizon since 3.0.0.
+
+**If you run Reverb from the package's stubs,** it no longer starts with the app after you regenerate `app.quadlets`. To keep it, publish the preset and add `{{application}}-reverb.container` to the app's `Wants=` line. See [Adding Reverb](https://foxws.nl/laravel-podman/customizing#adding-reverb).
+
+Apps with published stubs aren't affected.
+
+### What's Changed
+
+* feat(stubs)!: don't start Reverb with the app by default by @francoism90 in https://github.com/foxws/laravel-podman/pull/32
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/3.0.0...3.0.1
+
 ## 3.0.0 - 2026-09-25
 
 ### ⚠️ Breaking change

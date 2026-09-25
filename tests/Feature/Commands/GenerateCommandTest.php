@@ -74,3 +74,13 @@ it('starts a queue worker alongside the app instead of horizon', function (strin
         ->toMatch("/^Wants=.*{$application}-queue\\.container/m")
         ->not->toContain("{$application}-horizon.container");
 })->with(['development', 'frankenphp-octane']);
+
+it('does not start reverb with the app by default', function (string $preset) {
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    $application = config('podman.quadlet_prefix');
+
+    expect(File::exists("{$this->publishPath}/{$preset}/reverb.quadlets"))->toBeTrue()
+        ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
+        ->not->toContain("{$application}-reverb.container");
+})->with(['development', 'frankenphp-octane']);

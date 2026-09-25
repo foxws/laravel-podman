@@ -88,7 +88,7 @@ Every preset except `devcontainer` and `s3` includes `app` plus these services. 
 
 `queue` runs a plain `php artisan queue:work` worker, which works with any queue connection. If your app uses [Laravel Horizon](https://laravel.com/docs/horizon) (Redis or Valkey queues only), use `horizon` instead. See [Replacing the queue worker with Horizon](#replacing-the-queue-worker-with-horizon).
 
-`frankenphp-octane` also includes `reverb`, `schedule` and `inertia-ssr`. These always run alongside the app.
+`frankenphp-octane` also includes `schedule` and `inertia-ssr`, which always run alongside the app. `reverb` ([Laravel Reverb](https://laravel.com/docs/reverb)) is included too, but doesn't start by default. See [Adding Reverb](#adding-reverb).
 
 ## Swapping a service
 
@@ -120,7 +120,7 @@ Then update `.env` (`DB_CONNECTION`, `DB_HOST`, ...) so Laravel connects to the 
 `app.quadlets` starts `queue` alongside the app through its `Wants=` line. To use `horizon` instead, publish the preset and change `queue` to `horizon` on that line:
 
 ```ini
-Wants={{application}}-mailpit.container {{application}}-horizon.container {{application}}-reverb.container {{application}}-schedule.container
+Wants={{application}}-mailpit.container {{application}}-horizon.container {{application}}-schedule.container
 ```
 
 Regenerate, then install `horizon` and reinstall `app`:
@@ -133,13 +133,29 @@ lpod install frankenphp-octane/app.quadlets --replace
 
 If `queue` was already running, stop it with `systemctl --user stop {app}-queue`. It won't start again, because nothing wants it anymore.
 
+### Adding Reverb
+
+`reverb` isn't started by default, because it needs [Laravel Reverb](https://laravel.com/docs/reverb) installed in your app. To run it, publish the preset and add it to the `Wants=` line in `app.quadlets`:
+
+```ini
+Wants={{application}}-mailpit.container {{application}}-queue.container {{application}}-reverb.container {{application}}-schedule.container
+```
+
+Regenerate, then install `reverb` and reinstall `app`:
+
+```bash
+php artisan podman:generate frankenphp-octane
+lpod install frankenphp-octane/reverb.quadlets --replace
+lpod install frankenphp-octane/app.quadlets --replace
+```
+
 ### `[Unit]` directives
 
 | Directive | Meaning | Used for |
 | --- | --- | --- |
 | `Requires=` | Hard dependency. If the target fails, this unit stops too | `app` → database and cache |
 | `After=` | Start order only | Together with `Requires=`/`Wants=` |
-| `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`queue`/`reverb`/`schedule` |
+| `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`queue`/`schedule` |
 | `BindsTo=` | Like `Requires=`, and also stops when the target stops | `horizon`/`queue`/`reverb`/`schedule`/`inertia-ssr` → `app` |
 | `PartOf=` | Stopping or restarting the target also stops or restarts this unit | `typesense`/`mailpit` → `app` |
 

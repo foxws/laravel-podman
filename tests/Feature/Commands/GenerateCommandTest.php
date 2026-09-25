@@ -60,3 +60,16 @@ it('refuses to run when podman is disabled', function () {
 
     expect(File::isDirectory("{$this->publishPath}/proxy"))->toBeFalse();
 });
+
+it('generates a queue worker the app starts alongside it', function (string $preset) {
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    $application = config('podman.quadlet_prefix');
+
+    expect(File::get("{$this->publishPath}/{$preset}/queue.quadlets"))
+        ->toContain("# FileName={$application}-queue")
+        ->toContain('artisan queue:work --sleep=3 --tries=3 --max-time=3600')
+        ->toContain("BindsTo={$application}.container")
+        ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
+        ->toMatch("/^Wants=.*{$application}-queue\\.container/m");
+})->with(['development', 'frankenphp-octane']);

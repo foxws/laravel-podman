@@ -85,7 +85,9 @@ Every preset except `devcontainer` and `s3` includes `app` plus these services. 
 | Object storage | `rustfs` |
 | Mail catcher | `mailpit` |
 
-`frankenphp-octane` also includes `horizon`, `reverb`, `schedule` and `inertia-ssr`. These always run alongside the app.
+`frankenphp-octane` also includes `horizon`, `queue`, `reverb`, `schedule` and `inertia-ssr`. These always run alongside the app.
+
+To process queued jobs, install either `horizon` (Laravel Horizon, Redis/Valkey queues only) or `queue`, a plain `php artisan queue:work` worker that works with any queue connection. You don't need both.
 
 ## Swapping a service
 
@@ -118,8 +120,8 @@ Then update `.env` (`DB_CONNECTION`, `DB_HOST`, ...) so Laravel connects to the 
 | --- | --- | --- |
 | `Requires=` | Hard dependency. If the target fails, this unit stops too | `app` → database and cache |
 | `After=` | Start order only | Together with `Requires=`/`Wants=` |
-| `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`horizon`/`reverb`/`schedule` |
-| `BindsTo=` | Like `Requires=`, and also stops when the target stops | `horizon`/`reverb`/`schedule`/`inertia-ssr` → `app` |
+| `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`horizon`/`queue`/`reverb`/`schedule` |
+| `BindsTo=` | Like `Requires=`, and also stops when the target stops | `horizon`/`queue`/`reverb`/`schedule`/`inertia-ssr` → `app` |
 | `PartOf=` | Stopping or restarting the target also stops or restarts this unit | `typesense`/`mailpit` → `app` |
 
 ## Increasing a service's memory limit

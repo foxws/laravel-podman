@@ -7,7 +7,7 @@
 
 Renders [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) units from your Laravel app's config, then installs them as [systemd-managed](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) containers on your host — no all-in-one runtime, no lock-in. Swap any bundled part (Caddy for Nginx, Postgres for MySQL) for your own.
 
-See the [full documentation](docs): [Commands](docs/commands.md), [Customizing](docs/customizing.md), [Devcontainer](docs/devcontainer.md), [Proxy](docs/proxy.md), [S3 Buckets](docs/s3.md), [`lpod` CLI](docs/lpod.md), [Setting up without PHP](docs/host-setup.md), [Comparison](docs/comparison.md), [CI: Building a Container Image](docs/ci-build.md).
+See the [full documentation](docs): [Commands](https://foxws.nl/laravel-podman/commands), [Customizing](https://foxws.nl/laravel-podman/customizing), [Devcontainer](https://foxws.nl/laravel-podman/devcontainer), [Proxy](https://foxws.nl/laravel-podman/proxy), [S3 Buckets](https://foxws.nl/laravel-podman/s3), [`lpod` CLI](https://foxws.nl/laravel-podman/lpod), [Setting up without PHP](https://foxws.nl/laravel-podman/host-setup), [Comparison](https://foxws.nl/laravel-podman/comparison), [CI: Building a Container Image](https://foxws.nl/laravel-podman/ci-build).
 
 ## Requirements
 
@@ -24,7 +24,7 @@ composer require foxws/laravel-podman --dev
 php artisan vendor:publish --tag="podman-config"
 ```
 
-Only needed to render Quadlet units — install as a dev dependency and skip it in production. See [Customizing](docs/customizing.md) for every config key.
+Only needed to render Quadlet units — install as a dev dependency and skip it in production. See [Customizing](https://foxws.nl/laravel-podman/customizing) for every config key.
 
 ## Presets
 
@@ -32,11 +32,11 @@ Only needed to render Quadlet units — install as a dev dependency and skip it 
 | --- | --- |
 | `development` | App + services, working copy live-mounted for local editing. **Enabled by default.** |
 | `frankenphp-octane` | Production-style image, app code baked in. Commented out by default. |
-| `devcontainer` | VS Code/JetBrains [Dev Containers](https://containers.dev/) image. Commented out by default. See [Devcontainer](docs/devcontainer.md). |
+| `devcontainer` | VS Code/JetBrains [Dev Containers](https://containers.dev/) image. Commented out by default. See [Devcontainer](https://foxws.nl/laravel-podman/devcontainer). |
 | `proxy` | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. **Enabled by default.** |
 | `s3` | CORS policy for S3-compatible storage buckets. |
 
-Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) without touching the others — see [Customizing](docs/customizing.md).
+Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) without touching the others — see [Customizing](https://foxws.nl/laravel-podman/customizing).
 
 ## Quick start
 
@@ -71,7 +71,7 @@ Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) wit
     lpod my-app open
     ```
 
-Trust the proxy's local certificate once — see [Proxy](docs/proxy.md#trusting-the-local-certificate).
+Trust the proxy's local certificate once — see [Proxy](https://foxws.nl/laravel-podman/proxy#trusting-the-local-certificate).
 
 Working on frontend assets? Vite's dev server is opt-in, not part of the default bundle (it needs `pnpm install` run first, or it'll crash-loop):
 
@@ -80,7 +80,7 @@ lpod install development/vite.quadlets --replace
 lpod vite up
 ```
 
-No PHP on the host? `lpod setup` renders the same way without it — see [Setting up without PHP](docs/host-setup.md).
+No PHP on the host? `lpod setup` renders the same way without it — see [Setting up without PHP](https://foxws.nl/laravel-podman/host-setup).
 
 ## Commands reference
 
@@ -91,9 +91,9 @@ No PHP on the host? `lpod setup` renders the same way without it — see [Settin
 | `podman:generate PRESET` | Render a single preset |
 | `podman:s3-setup` | Create S3 buckets and a CORS policy (requires `aws/aws-sdk-php`) |
 
-Installing, listing, removing, and setting secrets is [`lpod`](https://github.com/foxws/lpod)'s job, not Artisan's. Full flag reference: [Commands](docs/commands.md).
+Installing, listing, removing, and setting secrets is [`lpod`](https://github.com/foxws/lpod)'s job, not Artisan's. Full flag reference: [Commands](https://foxws.nl/laravel-podman/commands).
 
-> **Warning:** `lpod remove`/`lpod uninstall` delete the Podman volumes they own (databases, uploads, search indexes), with no undo — see [Backing up volumes](docs/commands.md#backing-up-volumes).
+> **Warning:** `lpod remove`/`lpod uninstall` delete the Podman volumes they own (databases, uploads, search indexes), with no undo — see [Backing up volumes](https://foxws.nl/laravel-podman/commands#backing-up-volumes).
 
 ## The `lpod` utility
 
@@ -115,7 +115,7 @@ lpod install development/app.quadlets --replace
 lpod my-app secrets
 ```
 
-[`lpod-setup`](https://github.com/foxws/lpod) renders presets inside a disposable container for hosts with Podman but no PHP. `lpod setup` is a shortcut for it — see [Setting up without PHP](docs/host-setup.md).
+[`lpod-setup`](https://github.com/foxws/lpod) renders presets inside a disposable container for hosts with Podman but no PHP. `lpod setup` is a shortcut for it — see [Setting up without PHP](https://foxws.nl/laravel-podman/host-setup).
 
 Full command reference, shortening the call, and tips & tricks: [foxws/lpod](https://github.com/foxws/lpod).
 

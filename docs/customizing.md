@@ -81,11 +81,14 @@ Every preset except `devcontainer` and `s3` includes `app` plus these services. 
 | --- | --- |
 | Database | `pgsql`, `mariadb`, `mysql`, `mongodb` |
 | Cache/queue | `valkey`, `redis`, `memcached` |
+| Queue worker | `queue`, `horizon` |
 | Search | `typesense`, `meilisearch` |
 | Object storage | `rustfs` |
 | Mail catcher | `mailpit` |
 
-`frankenphp-octane` also includes `horizon`, `reverb`, `schedule` and `inertia-ssr`. These always run alongside the app.
+`queue` runs a plain `php artisan queue:work` worker, which works with any queue connection. If your app uses [Laravel Horizon](https://laravel.com/docs/horizon) (Redis or Valkey queues only), use `horizon` instead. See [Replacing the queue worker with Horizon](#replacing-the-queue-worker-with-horizon).
+
+`frankenphp-octane` also includes `reverb`, `schedule` and `inertia-ssr`. These always run alongside the app.
 
 ## Swapping a service
 
@@ -112,14 +115,32 @@ lpod install frankenphp-octane/app.quadlets --replace
 
 Then update `.env` (`DB_CONNECTION`, `DB_HOST`, ...) so Laravel connects to the new service.
 
+### Replacing the queue worker with Horizon
+
+`app.quadlets` starts `queue` alongside the app through its `Wants=` line. To use `horizon` instead, publish the preset and change `queue` to `horizon` on that line:
+
+```ini
+Wants={{application}}-mailpit.container {{application}}-horizon.container {{application}}-reverb.container {{application}}-schedule.container
+```
+
+Regenerate, then install `horizon` and reinstall `app`:
+
+```bash
+php artisan podman:generate frankenphp-octane
+lpod install frankenphp-octane/horizon.quadlets --replace
+lpod install frankenphp-octane/app.quadlets --replace
+```
+
+If `queue` was already running, stop it with `systemctl --user stop {app}-queue`. It won't start again, because nothing wants it anymore.
+
 ### `[Unit]` directives
 
 | Directive | Meaning | Used for |
 | --- | --- | --- |
 | `Requires=` | Hard dependency. If the target fails, this unit stops too | `app` → database and cache |
 | `After=` | Start order only | Together with `Requires=`/`Wants=` |
-| `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`horizon`/`reverb`/`schedule` |
-| `BindsTo=` | Like `Requires=`, and also stops when the target stops | `horizon`/`reverb`/`schedule`/`inertia-ssr` → `app` |
+| `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`queue`/`reverb`/`schedule` |
+| `BindsTo=` | Like `Requires=`, and also stops when the target stops | `horizon`/`queue`/`reverb`/`schedule`/`inertia-ssr` → `app` |
 | `PartOf=` | Stopping or restarting the target also stops or restarts this unit | `typesense`/`mailpit` → `app` |
 
 ## Increasing a service's memory limit

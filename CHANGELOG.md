@@ -2,6 +2,32 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 4.0.3 - 2026-09-27
+
+### Fix
+
+**Development queue workers no longer stop when the on-demand app goes idle.** In the `development` preset, the queue worker and Horizon stopped with the app after its idle timeout, which killed any job running longer than 60 seconds. They still start with the app, but now keep running on their own, so imports, exports and media processing finish. They depend on the database and cache instead, as the `frankenphp-octane` workers already did.
+
+To apply it, regenerate `development` and reinstall the worker you use:
+
+```bash
+php artisan podman:generate development
+lpod install development/queue.quadlets --replace   # or horizon.quadlets
+
+```
+**Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
+
+```ini
+Requires={{application}}-pgsql.container {{application}}-valkey.container
+After={{application}}-pgsql.container {{application}}-valkey.container
+
+```
+### What's Changed
+
+* fix(stubs): keep development queue workers running while the app is idle by @francoism90 in https://github.com/foxws/laravel-podman/pull/37
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/4.0.2...4.0.3
+
 ## 4.0.2 - 2026-09-27
 
 ### Fix
@@ -14,6 +40,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 ```
 ### What's Changed
@@ -35,6 +62,7 @@ php artisan podman:generate development   # or frankenphp-octane
 lpod install development/app.quadlets --replace
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -47,6 +75,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 ```

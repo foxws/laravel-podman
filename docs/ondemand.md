@@ -60,7 +60,7 @@ With the `proxy` preset, regenerate it too. Caddy then sends app traffic to the 
 | Service | `development` | `frankenphp-octane` |
 | --- | --- | --- |
 | Vite, Reverb, Inertia SSR | Stop with the app | Stop with the app |
-| Queue worker / Horizon | Stops with the app | Keeps running, starts at boot |
+| Queue worker / Horizon | Starts with the app, then keeps running, so long jobs finish | Keeps running, starts at boot |
 | Scheduler | Stops with the app | A timer runs `schedule:run` every minute |
 | Database, cache | Keep running | Keep running |
 

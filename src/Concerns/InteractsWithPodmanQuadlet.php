@@ -8,6 +8,7 @@ use Foxws\Podman\Support\PodmanQuadletFile;
 use Foxws\Podman\Support\PodmanQuadletPath;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
+use Symfony\Component\Finder\SplFileInfo;
 
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
@@ -94,18 +95,14 @@ trait InteractsWithPodmanQuadlet
         $path = $this->podmanQuadletPath();
         $file = $this->podmanQuadletFile();
 
-        $quadletsSource = $path->presetQuadletsPath($preset);
+        $target = $path->presetPublishPath($preset);
 
-        if (File::isDirectory($quadletsSource)) {
-            $quadletsTarget = $path->presetPublishPath($preset);
+        foreach ($this->getPodmanPresetQuadlets($preset) as $filename => $source) {
+            $file->prepareSource($source, "{$target}/{$filename}", $preset);
+        }
 
-            foreach (File::files($quadletsSource) as $quadlet) {
-                if ($quadlet->getExtension() !== 'quadlets') {
-                    continue;
-                }
-
-                $file->prepareSource($quadlet->getRealPath(), "{$quadletsTarget}/{$quadlet->getFilename()}", $preset);
-            }
+        foreach ($this->getPodmanPresetOnDemandUnits($preset) as $filename => $source) {
+            $file->prepareSource($source, "{$target}/{$path->prefix()}-{$filename}", $preset);
         }
 
         $runtimesSource = $path->presetRuntimesPath($preset);
@@ -113,6 +110,52 @@ trait InteractsWithPodmanQuadlet
         if (File::isDirectory($runtimesSource)) {
             $file->publishDirectory($runtimesSource, $path->presetPublishRuntimesPath($preset), $preset);
         }
+    }
+
+    /**
+     * A preset's ".quadlets" sources keyed by filename. When the preset is
+     * rendered on-demand, its "ondemand/quadlets/" files replace the
+     * preset's own files of the same name.
+     *
+     * @return array<string, string>
+     */
+    protected function getPodmanPresetQuadlets(string $preset): array
+    {
+        $path = $this->podmanQuadletPath();
+
+        $directories = [$path->presetQuadletsPath($preset)];
+
+        if ($path->usesOnDemand($preset)) {
+            $directories[] = "{$path->presetOnDemandPath($preset)}/quadlets";
+        }
+
+        return Collection::make($directories)
+            ->filter(fn (string $directory): bool => File::isDirectory($directory))
+            ->flatMap(fn (string $directory): array => File::files($directory))
+            ->filter(fn (SplFileInfo $quadlet): bool => $quadlet->getExtension() === 'quadlets')
+            ->mapWithKeys(fn (SplFileInfo $quadlet): array => [$quadlet->getFilename() => $quadlet->getRealPath()])
+            ->all();
+    }
+
+    /**
+     * A preset's on-demand systemd units (sockets, services, timers) keyed
+     * by filename, or none when the preset isn't rendered on-demand.
+     *
+     * @return array<string, string>
+     */
+    protected function getPodmanPresetOnDemandUnits(string $preset): array
+    {
+        $path = $this->podmanQuadletPath();
+
+        $directory = "{$path->presetOnDemandPath($preset)}/systemd";
+
+        if (! $path->usesOnDemand($preset) || ! File::isDirectory($directory)) {
+            return [];
+        }
+
+        return Collection::make(File::files($directory))
+            ->mapWithKeys(fn (SplFileInfo $unit): array => [$unit->getFilename() => $unit->getRealPath()])
+            ->all();
     }
 
     /**

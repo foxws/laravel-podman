@@ -84,3 +84,83 @@ it('does not start reverb with the app by default', function (string $preset) {
         ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
         ->not->toContain("{$application}-reverb.container");
 })->with(['development', 'frankenphp-octane']);
+
+it('does not render on-demand units by default', function (string $preset) {
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    $application = config('podman.quadlet_prefix');
+
+    expect(File::exists("{$this->publishPath}/{$preset}/{$application}-ondemand.socket"))->toBeFalse()
+        ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))->not->toContain('StopWhenUnneeded=yes')
+        ->and(File::get("{$this->publishPath}/{$preset}/queue.quadlets"))->toContain("BindsTo={$application}.container");
+})->with(['development', 'frankenphp-octane']);
+
+it('renders the app on-demand when enabled', function (string $preset) {
+    config([
+        'podman.quadlet_prefix' => 'acme',
+        'podman.ondemand.enabled' => true,
+        'podman.ondemand.listen' => '0.0.0.0:9000',
+        'podman.ondemand.port' => 19000,
+        'podman.ondemand.idle_timeout' => '5min',
+    ]);
+
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/{$preset}/acme-ondemand.socket"))
+        ->toContain('ListenStream=0.0.0.0:9000')
+        ->and(File::get("{$this->publishPath}/{$preset}/acme-ondemand.service"))
+        ->toContain('Requires=acme.service acme-ondemand.socket')
+        ->toContain('--exit-idle-time=5min 127.0.0.1:19000')
+        ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
+        ->toContain('StopWhenUnneeded=yes')
+        ->toContain('PublishPort=127.0.0.1:19000:8000')
+        ->toContain('Notify=healthy');
+})->with(['development', 'frankenphp-octane']);
+
+it('does not let on-demand sidecars keep the app running', function (string $preset) {
+    config(['podman.ondemand.enabled' => true]);
+
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    $application = config('podman.quadlet_prefix');
+
+    foreach (File::glob("{$this->publishPath}/{$preset}/*.quadlets") as $quadlet) {
+        expect(File::get($quadlet))->not->toContain('BindsTo=');
+    }
+
+    expect(File::get("{$this->publishPath}/{$preset}/reverb.quadlets"))->toContain("PartOf={$application}.container");
+})->with(['development', 'frankenphp-octane']);
+
+it('keeps the queue worker and scheduler running while an on-demand app sleeps', function () {
+    config(['podman.ondemand.enabled' => true]);
+
+    $this->artisan('podman:generate', ['preset' => 'frankenphp-octane'])->assertExitCode(0);
+
+    $application = config('podman.quadlet_prefix');
+    $path = "{$this->publishPath}/frankenphp-octane";
+
+    expect(File::get("{$path}/queue.quadlets"))
+        ->toContain('WantedBy=default.target')
+        ->not->toContain("{$application}.container")
+        ->and(File::get("{$path}/schedule.quadlets"))
+        ->toContain('artisan schedule:run')
+        ->toContain('Type=oneshot')
+        ->and(File::get("{$path}/{$application}-schedule.timer"))
+        ->toContain('OnCalendar=*-*-* *:*:00');
+});
+
+it('points the proxy at the app or its on-demand socket', function () {
+    config(['podman.quadlet_prefix' => 'acme']);
+
+    $this->artisan('podman:generate', ['preset' => 'proxy'])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/proxy/runtimes/sites/laravel.Caddyfile"))
+        ->toContain('reverse_proxy systemd-acme:8000');
+
+    config(['podman.ondemand.enabled' => true, 'podman.ondemand.listen' => '0.0.0.0:9000']);
+
+    $this->artisan('podman:generate', ['preset' => 'proxy'])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/proxy/runtimes/sites/laravel.Caddyfile"))
+        ->toContain('reverse_proxy host.containers.internal:9000');
+});

@@ -217,6 +217,72 @@ class PodmanQuadletPath
         return Config::boolean('podman.selinux_volume_mapping');
     }
 
+    /**
+     * A preset's opt-in on-demand overlay: "quadlets/" replacing the
+     * preset's own ".quadlets" files by name, and "systemd/" holding plain
+     * systemd units (sockets, services, timers) rendered next to them.
+     */
+    public function presetOnDemandPath(string $preset): string
+    {
+        return "{$this->presetPath($preset)}/ondemand";
+    }
+
+    public function isOnDemandEnabled(): bool
+    {
+        return Config::boolean('podman.ondemand.enabled');
+    }
+
+    /**
+     * Whether a preset is rendered on-demand: the feature is enabled and
+     * the preset ships an "ondemand/" overlay.
+     */
+    public function usesOnDemand(string $preset): bool
+    {
+        return $this->isOnDemandEnabled() && File::isDirectory($this->presetOnDemandPath($preset));
+    }
+
+    /**
+     * The systemd "ListenStream=" value the on-demand socket listens on,
+     * e.g. "8000" or "0.0.0.0:8000".
+     */
+    public function onDemandListen(): string
+    {
+        return (string) Config::get('podman.ondemand.listen');
+    }
+
+    public function onDemandListenPort(): string
+    {
+        return Str::afterLast($this->onDemandListen(), ':');
+    }
+
+    /**
+     * The loopback port the app is published on, for the socket proxy to
+     * forward to.
+     */
+    public function onDemandPort(): int
+    {
+        return (int) Config::get('podman.ondemand.port');
+    }
+
+    public function onDemandIdleTimeout(): string
+    {
+        return (string) Config::get('podman.ondemand.idle_timeout');
+    }
+
+    /**
+     * Where the "proxy" preset sends app traffic: straight to the app
+     * container, or to the on-demand socket on the host so a request can
+     * start the app.
+     */
+    public function appUpstream(): string
+    {
+        if ($this->isOnDemandEnabled()) {
+            return "host.containers.internal:{$this->onDemandListenPort()}";
+        }
+
+        return "systemd-{$this->prefix()}:8000";
+    }
+
     protected function resolvePath(string $path, string $base): string
     {
         return Str::startsWith($path, '/') ? $path : Str::rtrim($base, '/')."/{$path}";

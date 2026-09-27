@@ -3,7 +3,7 @@
 Description=MariaDB container
 
 [Container]
-Image=docker.io/library/mariadb:latest
+Image=docker.io/library/mariadb:13
 AutoUpdate=registry
 Secret={{application}}-mariadb-root-password,type=env,target=MYSQL_ROOT_PASSWORD
 Environment=MYSQL_ROOT_HOST=%

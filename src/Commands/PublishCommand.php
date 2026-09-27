@@ -9,7 +9,6 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 use function Laravel\Prompts\info;
-use function Laravel\Prompts\select;
 
 #[AsCommand(name: 'podman:publish')]
 class PublishCommand extends Command
@@ -29,13 +28,9 @@ class PublishCommand extends Command
             return self::FAILURE;
         }
 
-        $preset = $this->argument('preset') ?? select(
-            label: 'Select a preset to publish',
-            options: $this->getPodmanQuadletPresets(),
-            required: true,
-        );
+        $preset = $this->resolvePodmanPreset($this->argument('preset'), 'Select a preset to publish');
 
-        if (! $this->publishPodmanPreset($preset, force: $this->option('force'))) {
+        if (! $this->publishPodmanPreset($preset, force: $this->option('force') === true)) {
             return self::FAILURE;
         }
 

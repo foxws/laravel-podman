@@ -1,4 +1,8 @@
-FROM docker.io/dunglas/frankenphp:latest
+# FrankenPHP 1 with PHP 8.5. Pass --build-arg FRANKENPHP_VERSION=1-php8.4
+# (or add it under [Build] as BuildArg=) for another PHP version.
+ARG FRANKENPHP_VERSION=1-php8.5
+
+FROM docker.io/dunglas/frankenphp:${FRANKENPHP_VERSION}
 
 ARG UID=1000
 ARG GID=1000
@@ -99,11 +103,6 @@ RUN npm install -g npm@latest corepack@latest svgo@latest \
 # Entrypoint
 COPY --chmod=755 podman/frankenphp-octane/runtimes/entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Clean up unnecessary files and caches to reduce image size
-RUN apt-get autoremove -y \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
 # Copy application source
 COPY --chown=docker:docker . /app
 
@@ -119,9 +118,6 @@ RUN --mount=type=cache,target=/home/docker/.composer/cache,uid=${UID},gid=${GID}
 
 # Complete composer setup
 RUN composer dump-autoload --optimize
-
-# Generate application key
-RUN ${PHP_CLI} key:generate
 
 # Create storage symlink
 RUN ${PHP_CLI} storage:link

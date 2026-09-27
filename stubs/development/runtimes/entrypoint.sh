@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Unlike the other presets, this image is always built locally with the
 # host's actual UID/GID baked in at build time (see the app quadlet's
-# [Build] Environment=UID/GID), and the Containerfile ends as USER docker,
+# [Build] BuildArg=UID/GID), and the Containerfile ends as USER docker,
 # not root -- so there's no renumbering to do here.
 
 APP_COMMAND=${APP_COMMAND:-'/usr/bin/bash'}

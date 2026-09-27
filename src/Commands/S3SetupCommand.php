@@ -36,9 +36,9 @@ class S3SetupCommand extends Command
             return self::FAILURE;
         }
 
-        $path = $this->podmanQuadletPath();
+        $config = $this->podmanConfig();
 
-        $buckets = $path->s3Buckets();
+        $buckets = $config->s3Buckets();
 
         if ($buckets === []) {
             error('No S3 buckets are configured. Set podman.s3_buckets in the config file.');
@@ -62,7 +62,7 @@ class S3SetupCommand extends Command
             return self::FAILURE;
         }
 
-        $corsBuckets = $path->s3CorsBuckets();
+        $corsBuckets = $config->s3CorsBuckets();
 
         if ($corsBuckets === []) {
             info('Done.');
@@ -70,7 +70,7 @@ class S3SetupCommand extends Command
             return self::SUCCESS;
         }
 
-        $corsPolicyPath = $path->s3CorsPolicyPath();
+        $corsPolicyPath = $this->podmanQuadletPath()->s3CorsPolicyPath();
 
         if (! File::exists($corsPolicyPath)) {
             error("CORS policy file not found at {$corsPolicyPath}. Run \"podman:publish s3\" first.");

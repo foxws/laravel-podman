@@ -87,7 +87,8 @@ Quadlet names the container `systemd-SERVICE` (e.g. `systemd-my-app`). `lpod` ad
 | Command                                | Description                                     |
 | ----------------------------------------- | -------------------------------------------------- |
 | `lpod install PRESET/SERVICE.quadlets` | Install a rendered Quadlet                       |
-| `lpod remove NAME`                     | Remove an installed Quadlet                       |
+| `lpod install PRESET/UNIT.socket`      | Install and enable a rendered socket or timer (see [On-demand services](ondemand.md)) |
+| `lpod remove NAME`                     | Remove an installed Quadlet, socket or timer      |
 | `lpod uninstall APPLICATION`           | Remove an application and all of its Quadlets     |
 | `lpod list`                            | List installed Quadlets                           |
 | `lpod print NAME`                      | Print the generated systemd unit                  |

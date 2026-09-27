@@ -2,11 +2,12 @@
 [Unit]
 Description=Laravel queue worker container
 After={{application}}.container
-BindsTo={{application}}.container
+PartOf={{application}}.container
 
 [Container]
 Image={{application}}.build
 AutoUpdate=local
+HealthCmd=none
 Environment=APP_COMMAND="php -d variables_order=EGPCS /app/artisan queue:work --sleep=3 --tries=3 --max-time=3600"
 UserNS=keep-id
 ShmSize=128m

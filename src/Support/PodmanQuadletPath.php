@@ -5,12 +5,13 @@ declare(strict_types=1);
 namespace Foxws\Podman\Support;
 
 use Composer\InstalledVersions;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use Illuminate\Support\Uri;
 
+/**
+ * Where presets are read from and rendered to.
+ */
 class PodmanQuadletPath
 {
     public function vendorPath(): string
@@ -69,6 +70,16 @@ class PodmanQuadletPath
     public function presetRuntimesPath(string $preset): string
     {
         return "{$this->presetPath($preset)}/runtimes";
+    }
+
+    /**
+     * A preset's plain systemd units (the on-demand socket and its proxy
+     * service, timers), rendered next to its ".quadlets" files. Quadlet has
+     * no unit type for these.
+     */
+    public function presetSystemdPath(string $preset): string
+    {
+        return "{$this->presetPath($preset)}/systemd";
     }
 
     public function basePath(): string
@@ -130,112 +141,13 @@ class PodmanQuadletPath
         return "{$publishPath}/{$preset}/runtimes";
     }
 
-    public function domain(): string
-    {
-        return Uri::of(Config::string('app.url'))->host();
-    }
-
-    public function prefix(): string
-    {
-        return Str::kebab(Config::string('podman.quadlet_prefix'));
-    }
-
-    public function proxy(): string
-    {
-        return Str::kebab(Config::string('podman.proxy_prefix'));
-    }
-
-    public function uid(): int
-    {
-        $uid = Config::get('podman.quadlet_uid');
-
-        if ($uid !== null) {
-            return (int) $uid;
-        }
-
-        return function_exists('posix_getuid') ? posix_getuid() : 1000;
-    }
-
-    public function gid(): int
-    {
-        $gid = Config::get('podman.quadlet_gid');
-
-        if ($gid !== null) {
-            return (int) $gid;
-        }
-
-        return function_exists('posix_getgid') ? posix_getgid() : 1000;
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    public function defaultPresets(): array
-    {
-        return $this->parseNameList(Config::get('podman.presets', []));
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    public function s3Buckets(): array
-    {
-        return $this->parseNameList(Config::get('podman.s3_buckets', []));
-    }
-
-    /**
-     * @return array<int, string>
-     */
-    public function s3CorsBuckets(): array
-    {
-        return $this->parseNameList(Config::get('podman.s3_cors_buckets', []));
-    }
-
     public function s3CorsPolicyPath(): string
     {
         return "{$this->presetPath('s3')}/cors.json";
     }
 
-    /**
-     * Extra "{{placeholder}}" => value pairs merged into every rendered
-     * template, on top of the built-in ones.
-     *
-     * @return array<string, string>
-     */
-    public function customSubstitutions(): array
-    {
-        return Config::array('podman.substitutions', []);
-    }
-
-    public function isEnabled(): bool
-    {
-        return Config::boolean('podman.enabled');
-    }
-
-    public function shouldUseSelinuxVolumeMapping(): bool
-    {
-        return Config::boolean('podman.selinux_volume_mapping');
-    }
-
     protected function resolvePath(string $path, string $base): string
     {
         return Str::startsWith($path, '/') ? $path : Str::rtrim($base, '/')."/{$path}";
-    }
-
-    /**
-     * Normalize a config value that may be either a comma-separated string
-     * or a plain array into a list of trimmed, non-empty names.
-     *
-     * @return array<int, string>
-     */
-    protected function parseNameList(mixed $value): array
-    {
-        if (is_string($value)) {
-            $value = explode(',', $value);
-        }
-
-        $value = Arr::map($value, fn (mixed $item): string => trim((string) $item));
-
-        return array_values(Arr::where($value, fn (string $item): bool => $item !== ''));
     }
 }

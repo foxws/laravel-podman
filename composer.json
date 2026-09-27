@@ -76,10 +76,7 @@
         "laravel": {
             "providers": [
                 "Foxws\\Podman\\PodmanServiceProvider"
-            ],
-            "aliases": {
-                "Podman": "Foxws\\Podman\\Facades\\Podman"
-            }
+            ]
         }
     },
     "minimum-stability": "dev",

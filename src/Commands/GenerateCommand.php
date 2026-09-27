@@ -9,7 +9,6 @@ use Illuminate\Console\Command;
 use Symfony\Component\Console\Attribute\AsCommand;
 
 use function Laravel\Prompts\info;
-use function Laravel\Prompts\select;
 
 #[AsCommand(name: 'podman:generate')]
 class GenerateCommand extends Command
@@ -33,11 +32,7 @@ class GenerateCommand extends Command
             config(['podman.working_path' => $workingPath]);
         }
 
-        $preset = $this->argument('preset') ?? select(
-            label: 'Select a preset to generate',
-            options: $this->getPodmanQuadletPresets(),
-            required: true,
-        );
+        $preset = $this->resolvePodmanPreset($this->argument('preset'), 'Select a preset to generate');
 
         $this->generatePodmanPreset($preset);
 

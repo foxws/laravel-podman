@@ -3,7 +3,7 @@
 Description=Meilisearch container
 
 [Container]
-Image=docker.io/getmeili/meilisearch:latest
+Image=docker.io/getmeili/meilisearch:v1.54
 AutoUpdate=registry
 Environment=MEILI_NO_ANALYTICS=true
 Environment=MEILI_MASTER_KEY=masterKeyDevelopment

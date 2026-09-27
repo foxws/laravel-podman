@@ -24,6 +24,7 @@ You customize the package in two places: `config/podman.php` (publish it with `p
 | `s3_buckets` | `PODMAN_S3_BUCKETS` | see `config/podman.php` | Buckets `podman:s3-setup` creates. See [S3 Buckets](s3.md) |
 | `s3_cors_buckets` | `PODMAN_S3_CORS_BUCKETS` | see `config/podman.php` | Which of those buckets get the CORS policy |
 | `substitutions` | *(none)* | `[]` | Your own `{{placeholder}}` values. See [Custom substitutions](#custom-substitutions) |
+| `ondemand.*` | `PODMAN_ONDEMAND_*` | enabled | Start the app on its first request and stop it when idle. See [On-demand services](ondemand.md) |
 
 `presets`, `s3_buckets` and `s3_cors_buckets` take a PHP array or a comma-separated string.
 
@@ -155,9 +156,11 @@ lpod install frankenphp-octane/app.quadlets --replace
 | --- | --- | --- |
 | `Requires=` | Hard dependency. If the target fails, this unit stops too | `app` → database and cache |
 | `After=` | Start order only | Together with `Requires=`/`Wants=` |
-| `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`queue`/`schedule` |
-| `BindsTo=` | Like `Requires=`, and also stops when the target stops | `horizon`/`queue`/`reverb`/`schedule`/`inertia-ssr` → `app` |
-| `PartOf=` | Stopping or restarting the target also stops or restarts this unit | `typesense`/`mailpit` → `app` |
+| `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`reverb`/`vite`, and `queue`/`schedule` in `development` |
+| `PartOf=` | Stopping or restarting the target also stops or restarts this unit | `reverb`/`vite`/`inertia-ssr`, and `horizon`/`queue`/`schedule` in `development` → `app` |
+| `BindsTo=` | Like `Requires=`, and also stops when the target stops. Not used: it counts as needing the target, which keeps an [on-demand](ondemand.md) app running | |
+
+In `frankenphp-octane`, the queue worker and Horizon start at boot on their own (`[Install]`), and a `systemd/schedule.timer` runs `schedule:run` every minute. Install it with `lpod install frankenphp-octane/my-app-schedule.timer`.
 
 ## Increasing a service's memory limit
 

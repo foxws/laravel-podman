@@ -66,6 +66,7 @@ To change a preset, publish it with `php artisan podman:publish frankenphp-octan
     lpod install development/app.quadlets --replace
     lpod install development/pgsql.quadlets --replace
     lpod install development/valkey.quadlets --replace
+    lpod install development/my-app-ondemand.socket --replace
     lpod install proxy/proxy.quadlets --replace
     ```
 
@@ -74,9 +75,10 @@ To change a preset, publish it with `php artisan podman:publish frankenphp-octan
     ```bash
     lpod my-app secrets
     lpod pgsql secrets
-    lpod my-app up
     lpod my-app open
     ```
+
+   The app starts on its first request and stops again after 10 minutes without traffic. See [On-demand services](ondemand.md) to change that, or to keep it running with `PODMAN_ONDEMAND_ENABLED=false`.
 
 5. **Trust the proxy's local certificate** once. See [Proxy](proxy.md#trusting-the-local-certificate).
 

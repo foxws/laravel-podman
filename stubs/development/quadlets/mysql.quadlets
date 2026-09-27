@@ -3,7 +3,7 @@
 Description=MySQL container
 
 [Container]
-Image=docker.io/library/mysql:latest
+Image=docker.io/library/mysql:26
 AutoUpdate=registry
 Environment=MYSQL_ROOT_PASSWORD=password
 Environment=MYSQL_ROOT_HOST=%

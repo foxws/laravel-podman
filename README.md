@@ -7,7 +7,9 @@
 
 Renders [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) units from your Laravel app's config, then installs them as [systemd-managed](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) containers on your host — no all-in-one runtime, no lock-in. Swap any bundled part (Caddy for Nginx, Postgres for MySQL) for your own.
 
-See the [full documentation](docs): [Commands](https://foxws.nl/laravel-podman/commands), [Customizing](https://foxws.nl/laravel-podman/customizing), [Devcontainer](https://foxws.nl/laravel-podman/devcontainer), [Proxy](https://foxws.nl/laravel-podman/proxy), [S3 Buckets](https://foxws.nl/laravel-podman/s3), [`lpod` CLI](https://foxws.nl/laravel-podman/lpod), [Setting up without PHP](https://foxws.nl/laravel-podman/host-setup), [Comparison](https://foxws.nl/laravel-podman/comparison), [CI: Building a Container Image](https://foxws.nl/laravel-podman/ci-build).
+Upgrading from v3? See [UPGRADING.md](UPGRADING.md).
+
+See the [full documentation](docs): [Commands](https://foxws.nl/laravel-podman/commands), [Customizing](https://foxws.nl/laravel-podman/customizing), [Devcontainer](https://foxws.nl/laravel-podman/devcontainer), [Proxy](https://foxws.nl/laravel-podman/proxy), [S3 Buckets](https://foxws.nl/laravel-podman/s3), [On-demand services](https://foxws.nl/laravel-podman/ondemand), [`lpod` CLI](https://foxws.nl/laravel-podman/lpod), [Setting up without PHP](https://foxws.nl/laravel-podman/host-setup), [Comparison](https://foxws.nl/laravel-podman/comparison), [CI: Building a Container Image](https://foxws.nl/laravel-podman/ci-build).
 
 ## Requirements
 
@@ -59,6 +61,7 @@ Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) wit
     lpod install development/app.quadlets --replace
     lpod install development/pgsql.quadlets --replace
     lpod install development/valkey.quadlets --replace
+    lpod install development/my-app-ondemand.socket --replace
     lpod install proxy/proxy.quadlets --replace
     ```
 
@@ -67,9 +70,10 @@ Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) wit
     ```bash
     lpod my-app secrets
     lpod pgsql secrets
-    lpod my-app up
     lpod my-app open
     ```
+
+The app starts on its first request and stops again after 10 minutes without traffic — see [On-demand services](https://foxws.nl/laravel-podman/ondemand), or set `PODMAN_ONDEMAND_ENABLED=false` to keep it running.
 
 Trust the proxy's local certificate once — see [Proxy](https://foxws.nl/laravel-podman/proxy#trusting-the-local-certificate).
 

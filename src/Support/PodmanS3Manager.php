@@ -61,7 +61,7 @@ class PodmanS3Manager
     }
 
     /**
-     * @param  array{CORSRules: array<int, array<string, mixed>>}  $policy
+     * @param  array{CORSRules: list<array<string, mixed>>}  $policy
      */
     public function applyCors(string $bucket, array $policy): bool
     {
@@ -82,7 +82,7 @@ class PodmanS3Manager
      * buckets that failed.
      *
      * @param  array<int, string>  $buckets
-     * @param  array{CORSRules: array<int, array<string, mixed>>}  $policy
+     * @param  array{CORSRules: list<array<string, mixed>>}  $policy
      * @return array<int, string>
      */
     public function applyCorsToBuckets(array $buckets, array $policy): array

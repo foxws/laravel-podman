@@ -3,7 +3,7 @@
 Description=Memcached container
 
 [Container]
-Image=docker.io/library/memcached:latest
+Image=docker.io/library/memcached:1.6
 AutoUpdate=registry
 Network={{application}}.network
 ExposeHostPort=11211

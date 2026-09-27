@@ -68,7 +68,7 @@ Skip this step if you haven't published any presets (nothing in `containers/stub
 - **Every other `quadlets/*.quadlets`:** replace `BindsTo={{application}}.container` with `PartOf={{application}}.container`.
 - **`development` sidecars** (`queue`, `horizon`, `schedule`, `reverb`, `vite`): add `HealthCmd=none` under `[Container]`. They don't run FrankenPHP's web server, so its built-in health check always fails.
 - **Database and cache quadlets:** pin the image tags, as in step 3.
-- **`runtimes/Containerfile`:** replace `FROM docker.io/dunglas/frankenphp:latest` with `ARG FRANKENPHP_VERSION=1-php8.5` followed by `FROM docker.io/dunglas/frankenphp:${FRANKENPHP_VERSION}`. You can also drop the final "Clean up unnecessary files" layer and, in `frankenphp-octane`, the build-time `key:generate`.
+- **`runtimes/Containerfile`:** replace `FROM docker.io/dunglas/frankenphp:latest` with `ARG FRANKENPHP_VERSION=1-php8.5` followed by `FROM docker.io/dunglas/frankenphp:${FRANKENPHP_VERSION}`. You can also drop the final "Clean up unnecessary files" layer. Keep the build-time `key:generate` in `frankenphp-octane`: the frontend build can boot Laravel (Wayfinder does), which needs a key.
 - **`systemd/`:** copy the folder from the package preset. It holds `ondemand.socket` and `ondemand.service`, plus `schedule.timer` for `frankenphp-octane`.
 - **`frankenphp-octane` only:**
   - **`queue.quadlets` / `horizon.quadlets`:**

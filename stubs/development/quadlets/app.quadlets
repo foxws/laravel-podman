@@ -10,6 +10,7 @@ SetWorkingDirectory={{workingPath}}
 # FileName={{application}}
 [Unit]
 Description=Laravel App (Octane) container
+StopWhenUnneeded={{ondemand}}
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
 Wants={{application}}-mailpit.container {{application}}-queue.container {{application}}-schedule.container
@@ -26,6 +27,13 @@ Volume={{application}}-cache.volume:/cache:rw,z,U
 Network={{application}}.network
 Network={{proxy}}.network
 ExposeHostPort=8000
+PublishPort=127.0.0.1:{{ondemandPort}}:8000
+Notify=healthy
+HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
+HealthInterval=2s
+HealthStartPeriod=120s
+HealthTimeout=5s
+HealthRetries=3
 
 [Service]
 Restart=always

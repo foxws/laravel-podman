@@ -97,12 +97,20 @@ trait InteractsWithPodmanQuadlet
 
         $target = $path->presetPublishPath($preset);
 
-        foreach ($this->getPodmanPresetQuadlets($preset) as $filename => $source) {
-            $file->prepareSource($source, "{$target}/{$filename}", $preset);
+        $quadletsSource = $path->presetQuadletsPath($preset);
+
+        if (File::isDirectory($quadletsSource)) {
+            foreach (File::files($quadletsSource) as $quadlet) {
+                if ($quadlet->getExtension() !== 'quadlets') {
+                    continue;
+                }
+
+                $file->prepareSource($quadlet->getRealPath(), "{$target}/{$quadlet->getFilename()}", $preset);
+            }
         }
 
-        foreach ($this->getPodmanPresetOnDemandUnits($preset) as $filename => $source) {
-            $file->prepareSource($source, "{$target}/{$path->prefix()}-{$filename}", $preset);
+        foreach ($this->getPodmanPresetUnits($preset) as $unit) {
+            $file->prepareSource($unit->getRealPath(), "{$target}/{$path->prefix()}-{$unit->getFilename()}", $preset);
         }
 
         $runtimesSource = $path->presetRuntimesPath($preset);
@@ -113,48 +121,26 @@ trait InteractsWithPodmanQuadlet
     }
 
     /**
-     * A preset's ".quadlets" sources keyed by filename. When the preset is
-     * rendered on-demand, its "ondemand/quadlets/" files replace the
-     * preset's own files of the same name.
+     * A preset's plain systemd units, rendered as "{application}-{file}":
+     * those in "systemd/", plus those in "ondemand/" when on-demand
+     * services are enabled.
      *
-     * @return array<string, string>
+     * @return array<int, SplFileInfo>
      */
-    protected function getPodmanPresetQuadlets(string $preset): array
+    protected function getPodmanPresetUnits(string $preset): array
     {
         $path = $this->podmanQuadletPath();
 
-        $directories = [$path->presetQuadletsPath($preset)];
+        $directories = [$path->presetSystemdPath($preset)];
 
-        if ($path->usesOnDemand($preset)) {
-            $directories[] = "{$path->presetOnDemandPath($preset)}/quadlets";
+        if ($path->isOnDemandEnabled()) {
+            $directories[] = $path->presetOnDemandPath($preset);
         }
 
         return Collection::make($directories)
             ->filter(fn (string $directory): bool => File::isDirectory($directory))
             ->flatMap(fn (string $directory): array => File::files($directory))
-            ->filter(fn (SplFileInfo $quadlet): bool => $quadlet->getExtension() === 'quadlets')
-            ->mapWithKeys(fn (SplFileInfo $quadlet): array => [$quadlet->getFilename() => $quadlet->getRealPath()])
-            ->all();
-    }
-
-    /**
-     * A preset's on-demand systemd units (sockets, services, timers) keyed
-     * by filename, or none when the preset isn't rendered on-demand.
-     *
-     * @return array<string, string>
-     */
-    protected function getPodmanPresetOnDemandUnits(string $preset): array
-    {
-        $path = $this->podmanQuadletPath();
-
-        $directory = "{$path->presetOnDemandPath($preset)}/systemd";
-
-        if (! $path->usesOnDemand($preset) || ! File::isDirectory($directory)) {
-            return [];
-        }
-
-        return Collection::make(File::files($directory))
-            ->mapWithKeys(fn (SplFileInfo $unit): array => [$unit->getFilename() => $unit->getRealPath()])
+            ->values()
             ->all();
     }
 

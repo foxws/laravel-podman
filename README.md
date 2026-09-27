@@ -59,6 +59,7 @@ Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) wit
     lpod install development/app.quadlets --replace
     lpod install development/pgsql.quadlets --replace
     lpod install development/valkey.quadlets --replace
+    lpod install development/my-app-ondemand.socket --replace
     lpod install proxy/proxy.quadlets --replace
     ```
 
@@ -67,9 +68,10 @@ Custom presets: publish one (`php artisan podman:publish frankenphp-octane`) wit
     ```bash
     lpod my-app secrets
     lpod pgsql secrets
-    lpod my-app up
     lpod my-app open
     ```
+
+The app starts on its first request and stops again after 10 minutes without traffic — see [On-demand services](https://foxws.nl/laravel-podman/ondemand), or set `PODMAN_ONDEMAND_ENABLED=false` to keep it running.
 
 Trust the proxy's local certificate once — see [Proxy](https://foxws.nl/laravel-podman/proxy#trusting-the-local-certificate).
 

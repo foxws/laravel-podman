@@ -32,6 +32,7 @@ class PodmanQuadletFile
             '{{configPath}}' => $this->path->configPath(),
             '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),
             '{{appUpstream}}' => $this->path->appUpstream(),
+            '{{ondemand}}' => $this->path->isOnDemandEnabled() ? 'yes' : 'no',
             '{{ondemandListen}}' => $this->path->onDemandListen(),
             '{{ondemandPort}}' => (string) $this->path->onDemandPort(),
             '{{ondemandIdleTimeout}}' => $this->path->onDemandIdleTimeout(),
@@ -45,10 +46,6 @@ class PodmanQuadletFile
 
         if (! $this->path->shouldUseSelinuxVolumeMapping()) {
             $contents = $this->removeSelinuxVolumeFlags($contents);
-        }
-
-        if ($this->path->usesOnDemand($preset)) {
-            $contents = $this->replaceBindsToWithPartOf($contents);
         }
 
         return $contents;
@@ -97,16 +94,5 @@ class PodmanQuadletFile
             },
             $contents,
         );
-    }
-
-    /**
-     * Sidecars declare "BindsTo=" the app so they stop with it. systemd
-     * counts that as the app being needed, which keeps an on-demand app
-     * ("StopWhenUnneeded=yes") from ever stopping. "PartOf=" still stops
-     * them with the app without holding it up.
-     */
-    public function replaceBindsToWithPartOf(string $contents): string
-    {
-        return preg_replace('/^BindsTo=/m', 'PartOf=', $contents);
     }
 }

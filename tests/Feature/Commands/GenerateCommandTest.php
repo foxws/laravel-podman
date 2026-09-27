@@ -61,18 +61,26 @@ it('refuses to run when podman is disabled', function () {
     expect(File::isDirectory("{$this->publishPath}/proxy"))->toBeFalse();
 });
 
-it('starts a queue worker alongside the app instead of horizon', function (string $preset) {
-    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+it('starts a queue worker alongside the app instead of horizon in development', function () {
+    $this->artisan('podman:generate', ['preset' => 'development'])->assertExitCode(0);
 
     $application = config('podman.quadlet_prefix');
 
-    expect(File::get("{$this->publishPath}/{$preset}/queue.quadlets"))
+    expect(File::get("{$this->publishPath}/development/queue.quadlets"))
         ->toContain("# FileName={$application}-queue")
         ->toContain('artisan queue:work --sleep=3 --tries=3 --max-time=3600')
-        ->toContain("BindsTo={$application}.container")
-        ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
+        ->toContain("PartOf={$application}.container")
+        ->and(File::get("{$this->publishPath}/development/app.quadlets"))
         ->toMatch("/^Wants=.*{$application}-queue\\.container/m")
         ->not->toContain("{$application}-horizon.container");
+});
+
+it('does not bind sidecars to the app', function (string $preset) {
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    foreach (File::glob("{$this->publishPath}/{$preset}/*.quadlets") as $quadlet) {
+        expect(File::get($quadlet))->not->toContain('BindsTo=');
+    }
 })->with(['development', 'frankenphp-octane']);
 
 it('does not start reverb with the app by default', function (string $preset) {
@@ -85,20 +93,21 @@ it('does not start reverb with the app by default', function (string $preset) {
         ->not->toContain("{$application}-reverb.container");
 })->with(['development', 'frankenphp-octane']);
 
-it('does not render on-demand units by default', function (string $preset) {
+it('renders the app always-on when on-demand is disabled', function (string $preset) {
+    config(['podman.ondemand.enabled' => false]);
+
     $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
 
     $application = config('podman.quadlet_prefix');
 
     expect(File::exists("{$this->publishPath}/{$preset}/{$application}-ondemand.socket"))->toBeFalse()
-        ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))->not->toContain('StopWhenUnneeded=yes')
-        ->and(File::get("{$this->publishPath}/{$preset}/queue.quadlets"))->toContain("BindsTo={$application}.container");
+        ->and(File::exists("{$this->publishPath}/{$preset}/{$application}-ondemand.service"))->toBeFalse()
+        ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))->toContain('StopWhenUnneeded=no');
 })->with(['development', 'frankenphp-octane']);
 
-it('renders the app on-demand when enabled', function (string $preset) {
+it('renders the app on-demand by default', function (string $preset) {
     config([
         'podman.quadlet_prefix' => 'acme',
-        'podman.ondemand.enabled' => true,
         'podman.ondemand.listen' => '0.0.0.0:9000',
         'podman.ondemand.port' => 19000,
         'podman.ondemand.idle_timeout' => '5min',
@@ -113,27 +122,10 @@ it('renders the app on-demand when enabled', function (string $preset) {
         ->toContain('--exit-idle-time=5min 127.0.0.1:19000')
         ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
         ->toContain('StopWhenUnneeded=yes')
-        ->toContain('PublishPort=127.0.0.1:19000:8000')
-        ->toContain('Notify=healthy');
+        ->toContain('PublishPort=127.0.0.1:19000:8000');
 })->with(['development', 'frankenphp-octane']);
 
-it('does not let on-demand sidecars keep the app running', function (string $preset) {
-    config(['podman.ondemand.enabled' => true]);
-
-    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
-
-    $application = config('podman.quadlet_prefix');
-
-    foreach (File::glob("{$this->publishPath}/{$preset}/*.quadlets") as $quadlet) {
-        expect(File::get($quadlet))->not->toContain('BindsTo=');
-    }
-
-    expect(File::get("{$this->publishPath}/{$preset}/reverb.quadlets"))->toContain("PartOf={$application}.container");
-})->with(['development', 'frankenphp-octane']);
-
-it('keeps the queue worker and scheduler running while an on-demand app sleeps', function () {
-    config(['podman.ondemand.enabled' => true]);
-
+it('runs the frankenphp-octane queue worker and scheduler independently of the app', function () {
     $this->artisan('podman:generate', ['preset' => 'frankenphp-octane'])->assertExitCode(0);
 
     $application = config('podman.quadlet_prefix');
@@ -142,6 +134,8 @@ it('keeps the queue worker and scheduler running while an on-demand app sleeps',
     expect(File::get("{$path}/queue.quadlets"))
         ->toContain('WantedBy=default.target')
         ->not->toContain("{$application}.container")
+        ->and(File::get("{$path}/app.quadlets"))
+        ->not->toContain("{$application}-queue.container")
         ->and(File::get("{$path}/schedule.quadlets"))
         ->toContain('artisan schedule:run')
         ->toContain('Type=oneshot')
@@ -150,7 +144,7 @@ it('keeps the queue worker and scheduler running while an on-demand app sleeps',
 });
 
 it('points the proxy at the app or its on-demand socket', function () {
-    config(['podman.quadlet_prefix' => 'acme']);
+    config(['podman.quadlet_prefix' => 'acme', 'podman.ondemand.enabled' => false]);
 
     $this->artisan('podman:generate', ['preset' => 'proxy'])->assertExitCode(0);
 

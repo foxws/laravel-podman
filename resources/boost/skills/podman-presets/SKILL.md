@@ -61,6 +61,7 @@ VolumeName=systemd-{{application}}-valkey
 | `{{configPath}}` | `config_path` (defaults to `working_path`) |
 | `{{runtimePath}}` | The preset's rendered `runtimes/` folder |
 | `{{appUpstream}}` | Where the proxy sends app traffic: `systemd-{app}:8000`, or the on-demand socket |
+| `{{ondemand}}` | `yes` when `ondemand.enabled`, otherwise `no` |
 | `{{ondemandListen}}`, `{{ondemandPort}}`, `{{ondemandIdleTimeout}}` | `ondemand.listen`, `ondemand.port`, `ondemand.idle_timeout` |
 
 Add your own in `config/podman.php`. They also override built-in placeholders:
@@ -87,7 +88,7 @@ After={{application}}-mysql.container {{application}}-redis.container
 
 Then regenerate, install the new service and `app.quadlets` with `--replace`, and update `.env` (`DB_CONNECTION`, `DB_HOST`, `REDIS_HOST`, ...). Quadlet names containers `systemd-{unit}`, so the host is e.g. `systemd-my-app-mysql`.
 
-Dependency directives: `Requires=` (hard), `Wants=` (soft), `After=` (order only), `BindsTo=` (stop with target), `PartOf=` (stop/restart with target).
+Dependency directives: `Requires=` (hard), `Wants=` (soft), `After=` (order only), `PartOf=` (stop/restart with target). Don't use `BindsTo=` on the app: it keeps an on-demand app from stopping.
 
 ### Add a service
 
@@ -103,7 +104,7 @@ Publish `proxy`, then edit `containers/stubs/proxy/runtimes/Caddyfile` and `site
 
 ### On-demand (scale-to-zero)
 
-`PODMAN_ONDEMAND_ENABLED=true` renders the preset's `ondemand/` overlay: `ondemand/quadlets/*.quadlets` replace the preset's files of the same name, and `ondemand/systemd/*` (socket, proxy service, timers) render as `{application}-{file}` next to them. Sidecars' `BindsTo=` becomes `PartOf=` so they don't keep the app running. Install the socket with `lpod install {preset}/{application}-ondemand.socket --replace`. When editing a published preset, keep `StopWhenUnneeded=yes`, `Notify=healthy` and the `127.0.0.1:{{ondemandPort}}` publish in `ondemand/quadlets/app.quadlets`.
+A preset can hold plain systemd units next to `quadlets/`: `systemd/*` (e.g. `schedule.timer`) always render, and `ondemand/*` (the socket and its `systemd-socket-proxyd` service) only when on-demand is enabled (the default; `PODMAN_ONDEMAND_ENABLED=false` turns it off). Both render as `{application}-{file}`. Install them with `lpod install {preset}/{application}-ondemand.socket --replace`. The app quadlet stays on-demand ready either way: keep `StopWhenUnneeded={{ondemand}}`, `Notify=healthy` with the `/up` health check, and the `127.0.0.1:{{ondemandPort}}` publish when editing it.
 
 ### Extra PHP extensions or packages
 

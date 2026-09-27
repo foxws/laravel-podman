@@ -1,8 +1,8 @@
 # FileName={{application}}-queue
 [Unit]
 Description=Laravel queue worker container
-After={{application}}.container
-BindsTo={{application}}.container
+Requires={{application}}-pgsql.container {{application}}-valkey.container
+After={{application}}-pgsql.container {{application}}-valkey.container
 
 [Container]
 Image={{application}}.build
@@ -22,3 +22,6 @@ Restart=always
 RestartSec=5
 TimeoutStartSec=120
 TimeoutStopSec=60
+
+[Install]
+WantedBy=default.target

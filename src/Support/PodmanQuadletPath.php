@@ -218,9 +218,17 @@ class PodmanQuadletPath
     }
 
     /**
-     * A preset's opt-in on-demand overlay: "quadlets/" replacing the
-     * preset's own ".quadlets" files by name, and "systemd/" holding plain
-     * systemd units (sockets, services, timers) rendered next to them.
+     * A preset's plain systemd units (such as timers), rendered next to its
+     * ".quadlets" files.
+     */
+    public function presetSystemdPath(string $preset): string
+    {
+        return "{$this->presetPath($preset)}/systemd";
+    }
+
+    /**
+     * A preset's on-demand systemd units (the socket and its proxy service),
+     * only rendered when on-demand services are enabled.
      */
     public function presetOnDemandPath(string $preset): string
     {
@@ -230,15 +238,6 @@ class PodmanQuadletPath
     public function isOnDemandEnabled(): bool
     {
         return Config::boolean('podman.ondemand.enabled');
-    }
-
-    /**
-     * Whether a preset is rendered on-demand: the feature is enabled and
-     * the preset ships an "ondemand/" overlay.
-     */
-    public function usesOnDemand(string $preset): bool
-    {
-        return $this->isOnDemandEnabled() && File::isDirectory($this->presetOnDemandPath($preset));
     }
 
     /**

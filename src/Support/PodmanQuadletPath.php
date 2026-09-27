@@ -241,6 +241,15 @@ class PodmanQuadletPath
     }
 
     /**
+     * Whether on-demand services are enabled, as a systemd boolean for
+     * directives like "StopWhenUnneeded=".
+     */
+    public function onDemand(): string
+    {
+        return $this->isOnDemandEnabled() ? 'yes' : 'no';
+    }
+
+    /**
      * The systemd "ListenStream=" value the on-demand socket listens on,
      * e.g. "8000" or "0.0.0.0:8000".
      */

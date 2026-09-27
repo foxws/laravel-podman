@@ -32,7 +32,7 @@ class PodmanQuadletFile
             '{{configPath}}' => $this->path->configPath(),
             '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),
             '{{appUpstream}}' => $this->path->appUpstream(),
-            '{{ondemand}}' => $this->path->isOnDemandEnabled() ? 'yes' : 'no',
+            '{{ondemand}}' => $this->path->onDemand(),
             '{{ondemandListen}}' => $this->path->onDemandListen(),
             '{{ondemandPort}}' => (string) $this->path->onDemandPort(),
             '{{ondemandIdleTimeout}}' => $this->path->onDemandIdleTimeout(),

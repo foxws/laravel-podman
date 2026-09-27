@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\File;
 
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
+use function Laravel\Prompts\select;
 
 trait InteractsWithPodmanQuadlet
 {
@@ -43,7 +44,7 @@ trait InteractsWithPodmanQuadlet
      * configured stubs path for customization, keeping "{{placeholder}}"
      * tokens intact so "podman:generate" can still substitute them later.
      */
-    protected function publishPodmanPreset(string $preset, ?bool $force = null): bool
+    protected function publishPodmanPreset(string $preset, bool $force = false): bool
     {
         $path = $this->podmanQuadletPath();
         $source = $path->vendorPresetPath($preset);
@@ -66,7 +67,7 @@ trait InteractsWithPodmanQuadlet
      * @param  array<int, string>  $presets
      * @return array<int, string>
      */
-    protected function publishPodmanPresets(array $presets, ?bool $force = null): array
+    protected function publishPodmanPresets(array $presets, bool $force = false): array
     {
         $failed = [];
 
@@ -135,6 +136,24 @@ trait InteractsWithPodmanQuadlet
 
             info("Preset {$preset} generated to {$this->podmanQuadletPath()->presetPublishPath($preset)}");
         }
+    }
+
+    /**
+     * The "preset" argument, or the preset the user picks when it's omitted.
+     */
+    protected function podmanPresetArgument(string $label): string
+    {
+        $preset = $this->argument('preset');
+
+        if (is_string($preset) && $preset !== '') {
+            return $preset;
+        }
+
+        return (string) select(
+            label: $label,
+            options: $this->getPodmanQuadletPresets(),
+            required: true,
+        );
     }
 
     /**

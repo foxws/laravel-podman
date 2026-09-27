@@ -26,7 +26,7 @@ podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
 
 # Back on the host: install and set secrets
 lpod install frankenphp-octane/pgsql.quadlets --replace
-lpod pgsql secrets
+lpod my-app-pgsql secrets
 ```
 
 For an app named `acme`, this is what `podman/frankenphp-octane/valkey.quadlets` looks like:

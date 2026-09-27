@@ -70,11 +70,9 @@ To change a preset, publish it with `php artisan podman:publish frankenphp-octan
     lpod install proxy/proxy.quadlets --replace
     ```
 
-4. **Set secrets and start:**
+4. **Open** your app. The first request starts it:
 
     ```bash
-    lpod my-app secrets
-    lpod pgsql secrets
     lpod my-app open
     ```
 
@@ -86,8 +84,10 @@ For frontend work, install the Vite dev server too. Run `pnpm install` first, or
 
 ```bash
 lpod install development/vite.quadlets --replace
-lpod vite up
+lpod my-app-vite up
 ```
+
+Deploying with `frankenphp-octane`? Also set the secrets it expects, such as your `.env` and database password, with `lpod my-app secrets` and `lpod my-app-pgsql secrets`.
 
 No PHP on the host? See [Setting up without PHP](host-setup.md).
 

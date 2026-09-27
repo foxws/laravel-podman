@@ -2,6 +2,45 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 4.0.1 - 2026-09-27
+
+### Highlights
+
+**Lighter health checks.** The app's `/up` health check used to run every 2 seconds for as long as the app was up. It now polls every second only while the app starts, so cold starts stay just as fast, then checks once a minute after that.
+
+To apply it, regenerate and reinstall the app:
+
+```bash
+php artisan podman:generate development   # or frankenphp-octane
+lpod install development/app.quadlets --replace
+
+```
+**Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
+
+```ini
+Notify=healthy
+HealthStartupCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
+HealthStartupInterval=1s
+HealthStartupTimeout=5s
+HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
+HealthInterval=1m
+HealthTimeout=5s
+HealthRetries=3
+
+```
+**Docs fixes.**
+
+- The README now opens with a features overview.
+- The quick starts use lpod's full service names (`lpod my-app-pgsql`, `lpod my-app-vite`).
+- The development quick start no longer has a secrets step. That preset has no secrets.
+
+### What's Changed
+
+* docs: lead the README with what the package offers out of the box by @francoism90 in https://github.com/foxws/laravel-podman/pull/35
+* perf(stubs): check app health once a minute after startup by @francoism90 in https://github.com/foxws/laravel-podman/pull/34
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/4.0.0...4.0.1
+
 ## 4.0.0 - 2026-09-27
 
 ### ⚠️ Breaking changes

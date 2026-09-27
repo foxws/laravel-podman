@@ -186,3 +186,12 @@ it('never removes preset templates that live in the publish path', function () {
 
     File::deleteDirectory(dirname($presetPath));
 });
+
+it('generates an app key before building the frontend of the production image', function () {
+    $this->artisan('podman:generate', ['preset' => 'frankenphp-octane'])->assertExitCode(0);
+
+    $containerfile = File::get("{$this->publishPath}/frankenphp-octane/runtimes/Containerfile");
+
+    expect(strpos($containerfile, 'key:generate'))->toBeInt()
+        ->toBeLessThan(strpos($containerfile, 'pnpm build'));
+});

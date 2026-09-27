@@ -78,7 +78,6 @@ it('starts a queue worker alongside the app instead of horizon in development', 
     expect(File::get("{$this->publishPath}/development/queue.quadlets"))
         ->toContain("# FileName={$application}-queue")
         ->toContain('artisan queue:work --sleep=3 --tries=3 --max-time=3600')
-        ->toContain("PartOf={$application}.container")
         ->and(File::get("{$this->publishPath}/development/app.quadlets"))
         ->toMatch("/^Wants=.*{$application}-queue\\.container/m")
         ->not->toContain("{$application}-horizon.container");
@@ -195,3 +194,14 @@ it('generates an app key before building the frontend of the production image', 
     expect(strpos($containerfile, 'key:generate'))->toBeInt()
         ->toBeLessThan(strpos($containerfile, 'pnpm build'));
 });
+
+it('keeps queue workers running while the on-demand app is idle', function (string $preset, string $worker) {
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    $application = config('podman.quadlet_prefix');
+
+    expect(File::get("{$this->publishPath}/{$preset}/{$worker}.quadlets"))
+        ->not->toContain("PartOf={$application}.container")
+        ->not->toContain("BindsTo={$application}.container")
+        ->toContain("Requires={$application}-pgsql.container {$application}-valkey.container");
+})->with(['development', 'frankenphp-octane'])->with(['queue', 'horizon']);

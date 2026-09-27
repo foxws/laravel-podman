@@ -76,7 +76,7 @@ lpod install frankenphp-octane/my-app-schedule.timer --replace
 lpod my-app-queue up   # or my-app-horizon
 ```
 
-Installing sockets and timers needs [`lpod`](https://github.com/foxws/lpod) v2.1.0 or later. Update it with the install command in the [`lpod` docs](docs/lpod.md#installation).
+Installing sockets and timers needs the latest [`lpod`](https://github.com/foxws/lpod) (added in [foxws/lpod#11](https://github.com/foxws/lpod/pull/11)). Update it with the install command in the [`lpod` docs](docs/lpod.md#installation).
 
 On a server, run `loginctl enable-linger` once, so the socket listens after a reboot without a login.
 

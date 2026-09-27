@@ -76,6 +76,6 @@ lpod my-app-queue up               # or my-app-horizon
 ```
 
 Remind them of three things:
-- Socket and timer installs need `lpod` v2.1.0 or later.
+- Socket and timer installs need the latest `lpod`. Reinstall it with the curl command in the `lpod` docs.
 - On a server, `loginctl enable-linger` is needed once.
 - `lpod my-app up` no longer keeps an on-demand app running. A request (`lpod my-app open`) starts it.

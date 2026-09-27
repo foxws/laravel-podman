@@ -28,7 +28,7 @@ class PublishCommand extends Command
             return self::FAILURE;
         }
 
-        $preset = $this->podmanPresetArgument('Select a preset to publish');
+        $preset = $this->resolvePodmanPreset($this->argument('preset'), 'Select a preset to publish');
 
         if (! $this->publishPodmanPreset($preset, force: $this->option('force') === true)) {
             return self::FAILURE;

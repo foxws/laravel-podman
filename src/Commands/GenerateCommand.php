@@ -32,7 +32,7 @@ class GenerateCommand extends Command
             config(['podman.working_path' => $workingPath]);
         }
 
-        $preset = $this->podmanPresetArgument('Select a preset to generate');
+        $preset = $this->resolvePodmanPreset($this->argument('preset'), 'Select a preset to generate');
 
         $this->generatePodmanPreset($preset);
 

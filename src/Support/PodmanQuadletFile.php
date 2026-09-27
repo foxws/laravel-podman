@@ -12,6 +12,7 @@ class PodmanQuadletFile
 {
     public function __construct(
         protected PodmanQuadletPath $path,
+        protected PodmanConfig $config,
     ) {}
 
     /**
@@ -23,20 +24,20 @@ class PodmanQuadletFile
             '{{appEnv}}' => Config::string('app.env'),
             '{{appName}}' => Config::string('app.name'),
             '{{appUrl}}' => Config::string('app.url'),
-            '{{appHost}}' => $this->path->domain(),
-            '{{appUid}}' => (string) $this->path->uid(),
-            '{{appGid}}' => (string) $this->path->gid(),
-            '{{application}}' => $this->path->prefix(),
-            '{{proxy}}' => $this->path->proxy(),
+            '{{appHost}}' => $this->config->domain(),
+            '{{appUid}}' => (string) $this->config->uid(),
+            '{{appGid}}' => (string) $this->config->gid(),
+            '{{application}}' => $this->config->prefix(),
+            '{{proxy}}' => $this->config->proxy(),
             '{{workingPath}}' => $this->path->workingPath(),
             '{{configPath}}' => $this->path->configPath(),
             '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),
-            '{{appUpstream}}' => $this->path->appUpstream(),
-            '{{ondemand}}' => $this->path->onDemand(),
-            '{{ondemandListen}}' => $this->path->onDemandListen(),
-            '{{ondemandPort}}' => (string) $this->path->onDemandPort(),
-            '{{ondemandIdleTimeout}}' => $this->path->onDemandIdleTimeout(),
-            ...$this->path->customSubstitutions(),
+            '{{appUpstream}}' => $this->config->appUpstream(),
+            '{{ondemand}}' => $this->config->onDemand(),
+            '{{ondemandListen}}' => $this->config->onDemandListen(),
+            '{{ondemandPort}}' => (string) $this->config->onDemandPort(),
+            '{{ondemandIdleTimeout}}' => $this->config->onDemandIdleTimeout(),
+            ...$this->config->customSubstitutions(),
         ];
     }
 
@@ -44,7 +45,7 @@ class PodmanQuadletFile
     {
         $contents = strtr(File::get($source), $this->substitutions($preset));
 
-        if (! $this->path->shouldUseSelinuxVolumeMapping()) {
+        if (! $this->config->shouldUseSelinuxVolumeMapping()) {
             $contents = $this->removeSelinuxVolumeFlags($contents);
         }
 

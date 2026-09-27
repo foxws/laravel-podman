@@ -41,6 +41,15 @@ it('substitutes placeholders in the generated quadlets file', function () {
     expect(File::get("{$this->publishPath}/frankenphp-octane/app.quadlets"))->toContain('localhost/acme:latest');
 });
 
+it('passes the uid and gid to the image build', function (string $preset) {
+    config(['podman.quadlet_uid' => 1234, 'podman.quadlet_gid' => 5678]);
+
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
+        ->toContain("BuildArg=UID=1234\nBuildArg=GID=5678");
+})->with(['development', 'frankenphp-octane']);
+
 it('overrides the working path for this run via --working-path', function () {
     $this->artisan('podman:generate', [
         'preset' => 'frankenphp-octane',
@@ -153,4 +162,25 @@ it('points the proxy at the app or its on-demand socket', function () {
 
     expect(File::get("{$this->publishPath}/proxy/runtimes/sites/laravel.Caddyfile"))
         ->toContain('reverse_proxy host.containers.internal:9000');
+});
+
+it('removes output left over from a previous generate', function () {
+    File::ensureDirectoryExists("{$this->publishPath}/proxy");
+    File::put("{$this->publishPath}/proxy/stale.quadlets", '');
+
+    $this->artisan('podman:generate', ['preset' => 'proxy'])->assertExitCode(0);
+
+    expect(File::exists("{$this->publishPath}/proxy/stale.quadlets"))->toBeFalse()
+        ->and(File::exists("{$this->publishPath}/proxy/proxy.quadlets"))->toBeTrue();
+});
+
+it('never removes preset templates that live in the publish path', function () {
+    $presetPath = $this->makePresetPath('stub-preset', ['pgsql']);
+    config(['podman.publish_path' => dirname($presetPath)]);
+
+    $this->artisan('podman:generate', ['preset' => 'stub-preset'])->assertExitCode(0);
+
+    expect(File::exists("{$presetPath}/quadlets/pgsql.quadlets"))->toBeTrue();
+
+    File::deleteDirectory(dirname($presetPath));
 });

@@ -13,18 +13,6 @@ it('resolves the vendor path from the installed package', function () {
     expect($this->path->vendorPath())->toBeString()->not->toBeEmpty();
 });
 
-it('resolves the current process uid and gid by default', function () {
-    expect($this->path->uid())->toBe(posix_getuid())
-        ->and($this->path->gid())->toBe(posix_getgid());
-});
-
-it('uses the configured uid and gid when set', function () {
-    config(['podman.quadlet_uid' => 2000, 'podman.quadlet_gid' => 2001]);
-
-    expect($this->path->uid())->toBe(2000)
-        ->and($this->path->gid())->toBe(2001);
-});
-
 it('resolves the base path to Laravel\'s base_path', function () {
     expect($this->path->basePath())->toBe(base_path());
 });
@@ -99,92 +87,6 @@ it('resolves the working preset runtime path against the base path by default', 
     config(['podman.publish_path' => 'podman']);
 
     expect($this->path->workingPresetRuntimePath('frankenphp-octane'))->toBe(base_path('podman/frankenphp-octane/runtimes'));
-});
-
-it('resolves the domain from the app url', function () {
-    config(['app.url' => 'https://example.test']);
-
-    expect($this->path->domain())->toBe('example.test');
-});
-
-it('kebab-cases the configured quadlet prefix', function () {
-    config(['podman.quadlet_prefix' => 'My App']);
-
-    expect($this->path->prefix())->toBe('my-app');
-});
-
-it('defaults selinux volume mapping to true', function () {
-    expect($this->path->shouldUseSelinuxVolumeMapping())->toBeTrue();
-});
-
-it('disables selinux volume mapping when configured', function () {
-    config(['podman.selinux_volume_mapping' => false]);
-
-    expect($this->path->shouldUseSelinuxVolumeMapping())->toBeFalse();
-});
-
-it('defaults enabled to true', function () {
-    expect($this->path->isEnabled())->toBeTrue();
-});
-
-it('disables when configured', function () {
-    config(['podman.enabled' => false]);
-
-    expect($this->path->isEnabled())->toBeFalse();
-});
-
-it('splits the configured comma-separated presets into an array', function () {
-    config(['podman.presets' => 'frankenphp-octane,proxy']);
-
-    expect($this->path->defaultPresets())->toBe(['frankenphp-octane', 'proxy']);
-});
-
-it('accepts the configured presets as a plain array', function () {
-    config(['podman.presets' => ['frankenphp-octane', 'proxy']]);
-
-    expect($this->path->defaultPresets())->toBe(['frankenphp-octane', 'proxy']);
-});
-
-it('trims whitespace and drops empty entries from the configured presets', function () {
-    config(['podman.presets' => ' frankenphp-octane ,, proxy ']);
-
-    expect($this->path->defaultPresets())->toBe(['frankenphp-octane', 'proxy']);
-});
-
-it('returns no default presets when none are configured', function () {
-    config(['podman.presets' => '']);
-
-    expect($this->path->defaultPresets())->toBe([]);
-});
-
-it('splits the configured comma-separated s3 buckets into an array', function () {
-    config(['podman.s3_buckets' => 'local,conversions,secrets']);
-
-    expect($this->path->s3Buckets())->toBe(['local', 'conversions', 'secrets']);
-});
-
-it('accepts the configured s3 buckets as a plain array', function () {
-    config(['podman.s3_buckets' => ['local', 'conversions', 'secrets']]);
-
-    expect($this->path->s3Buckets())->toBe(['local', 'conversions', 'secrets']);
-});
-
-it('returns no s3 buckets when none are configured', function () {
-    config(['podman.s3_buckets' => '']);
-
-    expect($this->path->s3Buckets())->toBe([]);
-});
-
-it('splits the configured comma-separated s3 cors buckets into an array', function () {
-    config(['podman.s3_cors_buckets' => 'conversions,secrets']);
-
-    expect($this->path->s3CorsBuckets())->toBe(['conversions', 'secrets']);
-});
-
-it('returns no s3 cors buckets when none are configured', function () {
-    config(['podman.s3_cors_buckets' => '']);
-
-    expect($this->path->s3CorsBuckets())->toBe([]);
 });
 
 it('resolves the s3 cors policy path against the s3 preset path', function () {

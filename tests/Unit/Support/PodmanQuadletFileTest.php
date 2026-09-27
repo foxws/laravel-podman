@@ -2,13 +2,15 @@
 
 declare(strict_types=1);
 
+use Foxws\Podman\Support\PodmanConfig;
 use Foxws\Podman\Support\PodmanQuadletFile;
 use Foxws\Podman\Support\PodmanQuadletPath;
 use Illuminate\Support\Facades\File;
 
 beforeEach(function () {
     $this->path = new PodmanQuadletPath;
-    $this->file = new PodmanQuadletFile($this->path);
+    $this->config = new PodmanConfig;
+    $this->file = new PodmanQuadletFile($this->path, $this->config);
 });
 
 it('removes selinux volume flags from quadlet contents', function () {
@@ -153,7 +155,7 @@ it('replaces the appEnv, appUid and appGid placeholders', function () {
     $this->file->prepareSource($source, $target, 'frankenphp-octane');
 
     expect(File::get($target))->toBe(
-        "Environment=APP_ENV=testing\nEnvironment=UID={$this->path->uid()}\nEnvironment=GID={$this->path->gid()}\n",
+        "Environment=APP_ENV=testing\nEnvironment=UID={$this->config->uid()}\nEnvironment=GID={$this->config->gid()}\n",
     );
 
     File::delete($source);

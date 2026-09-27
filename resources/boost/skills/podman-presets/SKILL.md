@@ -60,6 +60,8 @@ VolumeName=systemd-{{application}}-valkey
 | `{{workingPath}}` | `working_path` (project path on the host) |
 | `{{configPath}}` | `config_path` (defaults to `working_path`) |
 | `{{runtimePath}}` | The preset's rendered `runtimes/` folder |
+| `{{appUpstream}}` | Where the proxy sends app traffic: `systemd-{app}:8000`, or the on-demand socket |
+| `{{ondemandListen}}`, `{{ondemandPort}}`, `{{ondemandIdleTimeout}}` | `ondemand.listen`, `ondemand.port`, `ondemand.idle_timeout` |
 
 Add your own in `config/podman.php`. They also override built-in placeholders:
 
@@ -99,10 +101,14 @@ Add `Memory=1G` under `[Container]` in that service's `.quadlets` file, then reg
 
 Publish `proxy`, then edit `containers/stubs/proxy/runtimes/Caddyfile` and `sites/*.Caddyfile`. The default site routes `APP_URL` to the app, and the subdomains `vite.`, `ws.` (Reverb), `s3.` and `fs.` (RustFS) and `mail.` (Mailpit). Regenerate and run `lpod proxy restart`.
 
+### On-demand (scale-to-zero)
+
+`PODMAN_ONDEMAND_ENABLED=true` renders the preset's `ondemand/` overlay: `ondemand/quadlets/*.quadlets` replace the preset's files of the same name, and `ondemand/systemd/*` (socket, proxy service, timers) render as `{application}-{file}` next to them. Sidecars' `BindsTo=` becomes `PartOf=` so they don't keep the app running. Install the socket with `lpod install {preset}/{application}-ondemand.socket --replace`. When editing a published preset, keep `StopWhenUnneeded=yes`, `Notify=healthy` and the `127.0.0.1:{{ondemandPort}}` publish in `ondemand/quadlets/app.quadlets`.
+
 ### Extra PHP extensions or packages
 
 Edit `containers/stubs/{preset}/runtimes/Containerfile`, or pass the `PHP_EXTENSIONS` build arg.
 
 ## Config keys
 
-`PODMAN_QUADLET_PREFIX`, `PODMAN_PROXY_PREFIX`, `PODMAN_STUBS_PATH`, `PODMAN_WORKING_PATH` (override once with `podman:generate --working-path=`), `PODMAN_CONFIG_PATH`, `PODMAN_QUADLET_UID`/`_GID`, `PODMAN_PUBLISH_PATH`, `PODMAN_SELINUX_VOLUME_MAPPING` (turn off on hosts without SELinux), `PODMAN_DEFAULT_PRESETS`.
+`PODMAN_QUADLET_PREFIX`, `PODMAN_PROXY_PREFIX`, `PODMAN_STUBS_PATH`, `PODMAN_WORKING_PATH` (override once with `podman:generate --working-path=`), `PODMAN_CONFIG_PATH`, `PODMAN_QUADLET_UID`/`_GID`, `PODMAN_PUBLISH_PATH`, `PODMAN_SELINUX_VOLUME_MAPPING` (turn off on hosts without SELinux), `PODMAN_DEFAULT_PRESETS`, `PODMAN_ONDEMAND_ENABLED`/`_LISTEN`/`_PORT`/`_IDLE_TIMEOUT`.

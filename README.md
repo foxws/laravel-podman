@@ -7,7 +7,7 @@
 
 Renders [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) units from your Laravel app's config, then installs them as [systemd-managed](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) containers on your host — no all-in-one runtime, no lock-in. Swap any bundled part (Caddy for Nginx, Postgres for MySQL) for your own.
 
-See the [full documentation](docs): [Commands](https://foxws.nl/laravel-podman/commands), [Customizing](https://foxws.nl/laravel-podman/customizing), [Devcontainer](https://foxws.nl/laravel-podman/devcontainer), [Proxy](https://foxws.nl/laravel-podman/proxy), [S3 Buckets](https://foxws.nl/laravel-podman/s3), [`lpod` CLI](https://foxws.nl/laravel-podman/lpod), [Setting up without PHP](https://foxws.nl/laravel-podman/host-setup), [Comparison](https://foxws.nl/laravel-podman/comparison), [CI: Building a Container Image](https://foxws.nl/laravel-podman/ci-build).
+See the [full documentation](docs): [Commands](https://foxws.nl/laravel-podman/commands), [Customizing](https://foxws.nl/laravel-podman/customizing), [Devcontainer](https://foxws.nl/laravel-podman/devcontainer), [Proxy](https://foxws.nl/laravel-podman/proxy), [S3 Buckets](https://foxws.nl/laravel-podman/s3), [On-demand services](https://foxws.nl/laravel-podman/ondemand), [`lpod` CLI](https://foxws.nl/laravel-podman/lpod), [Setting up without PHP](https://foxws.nl/laravel-podman/host-setup), [Comparison](https://foxws.nl/laravel-podman/comparison), [CI: Building a Container Image](https://foxws.nl/laravel-podman/ci-build).
 
 ## Requirements
 

@@ -24,6 +24,7 @@ You customize the package in two places: `config/podman.php` (publish it with `p
 | `s3_buckets` | `PODMAN_S3_BUCKETS` | see `config/podman.php` | Buckets `podman:s3-setup` creates. See [S3 Buckets](s3.md) |
 | `s3_cors_buckets` | `PODMAN_S3_CORS_BUCKETS` | see `config/podman.php` | Which of those buckets get the CORS policy |
 | `substitutions` | *(none)* | `[]` | Your own `{{placeholder}}` values. See [Custom substitutions](#custom-substitutions) |
+| `ondemand.*` | `PODMAN_ONDEMAND_*` | disabled | Start the app on its first request and stop it when idle. See [On-demand services](ondemand.md) |
 
 `presets`, `s3_buckets` and `s3_cors_buckets` take a PHP array or a comma-separated string.
 

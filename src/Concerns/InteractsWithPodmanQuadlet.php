@@ -8,7 +8,6 @@ use Foxws\Podman\Support\PodmanQuadletFile;
 use Foxws\Podman\Support\PodmanQuadletPath;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
-use Symfony\Component\Finder\SplFileInfo;
 
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
@@ -109,8 +108,12 @@ trait InteractsWithPodmanQuadlet
             }
         }
 
-        foreach ($this->getPodmanPresetUnits($preset) as $unit) {
-            $file->prepareSource($unit->getRealPath(), "{$target}/{$path->prefix()}-{$unit->getFilename()}", $preset);
+        $unitsSource = $path->presetSystemdPath($preset);
+
+        if (File::isDirectory($unitsSource)) {
+            foreach (File::files($unitsSource) as $unit) {
+                $file->prepareSource($unit->getRealPath(), "{$target}/{$path->prefix()}-{$unit->getFilename()}", $preset);
+            }
         }
 
         $runtimesSource = $path->presetRuntimesPath($preset);
@@ -118,30 +121,6 @@ trait InteractsWithPodmanQuadlet
         if (File::isDirectory($runtimesSource)) {
             $file->publishDirectory($runtimesSource, $path->presetPublishRuntimesPath($preset), $preset);
         }
-    }
-
-    /**
-     * A preset's plain systemd units, rendered as "{application}-{file}":
-     * those in "systemd/", plus those in "ondemand/" when on-demand
-     * services are enabled.
-     *
-     * @return array<int, SplFileInfo>
-     */
-    protected function getPodmanPresetUnits(string $preset): array
-    {
-        $path = $this->podmanQuadletPath();
-
-        $directories = [$path->presetSystemdPath($preset)];
-
-        if ($path->isOnDemandEnabled()) {
-            $directories[] = $path->presetOnDemandPath($preset);
-        }
-
-        return Collection::make($directories)
-            ->filter(fn (string $directory): bool => File::isDirectory($directory))
-            ->flatMap(fn (string $directory): array => File::files($directory))
-            ->values()
-            ->all();
     }
 
     /**

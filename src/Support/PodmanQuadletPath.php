@@ -218,21 +218,13 @@ class PodmanQuadletPath
     }
 
     /**
-     * A preset's plain systemd units (such as timers), rendered next to its
-     * ".quadlets" files.
+     * A preset's plain systemd units (the on-demand socket and its proxy
+     * service, timers), rendered next to its ".quadlets" files. Quadlet has
+     * no unit type for these.
      */
     public function presetSystemdPath(string $preset): string
     {
         return "{$this->presetPath($preset)}/systemd";
-    }
-
-    /**
-     * A preset's on-demand systemd units (the socket and its proxy service),
-     * only rendered when on-demand services are enabled.
-     */
-    public function presetOnDemandPath(string $preset): string
-    {
-        return "{$this->presetPath($preset)}/ondemand";
     }
 
     public function isOnDemandEnabled(): bool

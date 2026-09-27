@@ -104,7 +104,7 @@ Publish `proxy`, then edit `containers/stubs/proxy/runtimes/Caddyfile` and `site
 
 ### On-demand (scale-to-zero)
 
-A preset can hold plain systemd units next to `quadlets/`: `systemd/*` (e.g. `schedule.timer`) always render, and `ondemand/*` (the socket and its `systemd-socket-proxyd` service) only when on-demand is enabled (the default; `PODMAN_ONDEMAND_ENABLED=false` turns it off). Both render as `{application}-{file}`. Install them with `lpod install {preset}/{application}-ondemand.socket --replace`. The app quadlet stays on-demand ready either way: keep `StopWhenUnneeded={{ondemand}}`, `Notify=healthy` with the `/up` health check, and the `127.0.0.1:{{ondemandPort}}` publish when editing it.
+A preset can hold plain systemd units next to `quadlets/`, because Quadlet has no unit type for sockets or timers. Everything in `systemd/*` renders as `{application}-{file}`: the on-demand socket and its `systemd-socket-proxyd` service, and `schedule.timer` in `frankenphp-octane`. On-demand is the default; `PODMAN_ONDEMAND_ENABLED=false` renders `StopWhenUnneeded=no` and points the proxy at the container. Install them with `lpod install {preset}/{application}-ondemand.socket --replace`. The app quadlet stays on-demand ready either way: keep `StopWhenUnneeded={{ondemand}}`, `Notify=healthy` with the `/up` health check, and the `127.0.0.1:{{ondemandPort}}` publish when editing it.
 
 ### Extra PHP extensions or packages
 

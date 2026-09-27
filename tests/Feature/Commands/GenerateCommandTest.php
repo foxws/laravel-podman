@@ -98,11 +98,7 @@ it('renders the app always-on when on-demand is disabled', function (string $pre
 
     $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
 
-    $application = config('podman.quadlet_prefix');
-
-    expect(File::exists("{$this->publishPath}/{$preset}/{$application}-ondemand.socket"))->toBeFalse()
-        ->and(File::exists("{$this->publishPath}/{$preset}/{$application}-ondemand.service"))->toBeFalse()
-        ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))->toContain('StopWhenUnneeded=no');
+    expect(File::get("{$this->publishPath}/{$preset}/app.quadlets"))->toContain('StopWhenUnneeded=no');
 })->with(['development', 'frankenphp-octane']);
 
 it('renders the app on-demand by default', function (string $preset) {

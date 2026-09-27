@@ -43,7 +43,7 @@ PODMAN_ONDEMAND_ENABLED=false
 
 Running several apps on one host? Give each its own `listen` and `port`.
 
-Render and install as usual. The preset's `ondemand/` folder holds the socket and its proxy service. They're plain systemd units, not Quadlets, and are rendered next to the `.quadlets` files:
+Render and install as usual. The socket and its proxy service are plain systemd units, because Quadlet has no unit type for them. They live in the preset's `systemd/` folder and are rendered next to the `.quadlets` files:
 
 ```bash
 php artisan podman:generate development
@@ -64,7 +64,7 @@ With the `proxy` preset, regenerate it too. Caddy then sends app traffic to the 
 | Scheduler | Stops with the app | A timer runs `schedule:run` every minute |
 | Database, cache | Keep running | Keep running |
 
-The presets are the same with on-demand on or off. Only `StopWhenUnneeded=` on the app changes (`{{ondemand}}` renders `yes` or `no`), and the socket units are only rendered when it's on. Sidecars use `PartOf=` the app rather than `BindsTo=`: `BindsTo=` would count as needing the app and keep it running.
+The presets are the same with on-demand on or off. Only `StopWhenUnneeded=` on the app changes (`{{ondemand}}` renders `yes` or `no`), along with where the `proxy` preset sends traffic. The socket units are always rendered, but only take effect once installed. Sidecars use `PartOf=` the app rather than `BindsTo=`: `BindsTo=` would count as needing the app and keep it running.
 
 ## External proxies
 

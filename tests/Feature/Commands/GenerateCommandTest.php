@@ -127,7 +127,9 @@ it('renders the app on-demand by default', function (string $preset) {
         ->toContain('--exit-idle-time=5min 127.0.0.1:19000')
         ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
         ->toContain('StopWhenUnneeded=yes')
-        ->toContain('PublishPort=127.0.0.1:19000:8000');
+        ->toContain('PublishPort=127.0.0.1:19000:8000')
+        ->toContain("Notify=healthy\nHealthStartupCmd=")
+        ->toContain('HealthStartupInterval=1s');
 })->with(['development', 'frankenphp-octane']);
 
 it('runs the frankenphp-octane queue worker and scheduler independently of the app', function () {

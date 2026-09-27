@@ -55,9 +55,11 @@ Skip this step if you haven't published any presets (nothing in `containers/stub
 
     ```ini
     Notify=healthy
+    HealthStartupCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
+    HealthStartupInterval=1s
+    HealthStartupTimeout=5s
     HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
-    HealthInterval=2s
-    HealthStartPeriod=120s
+    HealthInterval=1m
     HealthTimeout=5s
     HealthRetries=3
     ```

@@ -2,6 +2,47 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 4.0.0 - 2026-09-27
+
+### ⚠️ Breaking changes
+
+**On-demand services are now the default.** The app starts on its first request and stops after 10 minutes without traffic, so an idle app no longer uses memory. A systemd socket listens on port `8000` and starts the app through `systemd-socket-proxyd`. Set `PODMAN_ONDEMAND_ENABLED=false` to keep the app running all the time. See [On-demand services](https://foxws.nl/laravel-podman/ondemand).
+
+**Follow [UPGRADING.md](https://github.com/foxws/laravel-podman/blob/main/UPGRADING.md)**, especially if you published presets. Using an AI agent with Laravel Boost? Run `php artisan boost:update` and ask it to upgrade laravel-podman; the new `podman-upgrade` skill covers the steps.
+
+The main changes:
+
+- **Socket install.** Install the socket with `lpod install {preset}/{app}-ondemand.socket`. This needs [lpod v2.1.0](https://github.com/foxws/lpod/releases/tag/v2.1.0) or later.
+  
+- **Health check.** The app needs a working `GET /up` route (Laravel 11+ has one), and only counts as started once it answers.
+  
+- **Ports.** The app is published on `127.0.0.1:18000`, and the socket takes port `8000`.
+  
+- **Sidecars.** They use `PartOf=` instead of `BindsTo=` the app.
+  
+- **frankenphp-octane workers and scheduler.** The queue worker and Horizon start at boot on their own. The scheduler runs from `{app}-schedule.timer`.
+  
+- **Pinned images.** Database, cache and proxy images are pinned to the major `latest` pointed to at release:
+  
+  - `postgres:18`, `mysql:26`, `mariadb:13`, `mongo:8`
+  - `valkey:9`, `redis:8`, `memcached:1.6`
+  - `meilisearch:v1.54`, `caddy:2`
+  
+  Check your data's major before reinstalling.
+  
+- **Image rebuild.** Rebuild the app image once with `lpod {app}-build restart`, so UID/GID reach the build as `BuildArg=`.
+  
+- **Generated output.** `podman:generate` clears `podman/{preset}/` before rendering.
+  
+- **API changes.** The empty `Podman` class, its facade and the `Podman` alias are removed. The config readers moved from `PodmanQuadletPath` to `PodmanConfig`.
+  
+
+### What's Changed
+
+* feat(stubs)!: on-demand services (scale-to-zero) by default by @francoism90 in https://github.com/foxws/laravel-podman/pull/33
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/3.0.1...4.0.0
+
 ## 3.0.1 - 2026-09-25
 
 ### ⚠️ Breaking change

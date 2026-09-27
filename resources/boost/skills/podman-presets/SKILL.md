@@ -36,7 +36,7 @@ One `.quadlets` file holds several units. Each starts with a `# FileName=` line,
 Description=Valkey container
 
 [Container]
-Image=docker.io/valkey/valkey:latest
+Image=docker.io/valkey/valkey:9
 Volume={{application}}-valkey.volume:/data:rw,Z,U
 Network={{application}}.network
 

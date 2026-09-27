@@ -37,7 +37,7 @@ For an app named `acme`, this is what `podman/frankenphp-octane/valkey.quadlets`
 Description=Valkey container
 
 [Container]
-Image=docker.io/valkey/valkey:latest
+Image=docker.io/valkey/valkey:9
 AutoUpdate=registry
 Exec=valkey-server --save --loglevel warning
 Volume=acme-valkey:/data:rw,Z,U

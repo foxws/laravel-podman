@@ -3,7 +3,7 @@
 Description=Redis container
 
 [Container]
-Image=docker.io/library/redis:latest
+Image=docker.io/library/redis:8
 AutoUpdate=registry
 Exec=redis-server --save 60 1 --maxmemory-policy noeviction --loglevel warning
 Volume={{application}}-redis.volume:/data:rw,Z,U

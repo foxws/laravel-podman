@@ -3,7 +3,7 @@
 Description=MongoDB container
 
 [Container]
-Image=docker.io/library/mongo:latest
+Image=docker.io/library/mongo:8
 AutoUpdate=registry
 Secret={{application}}-mongodb-user,type=env,target=MONGO_INITDB_ROOT_USERNAME
 Secret={{application}}-mongodb-password,type=env,target=MONGO_INITDB_ROOT_PASSWORD

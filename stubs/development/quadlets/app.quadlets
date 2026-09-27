@@ -1,8 +1,8 @@
 # FileName={{application}}
 [Build]
 ImageTag=localhost/{{application}}:latest
-Environment=UID={{appUid}}
-Environment=GID={{appGid}}
+BuildArg=UID={{appUid}}
+BuildArg=GID={{appGid}}
 File={{runtimePath}}/Containerfile
 IgnoreFile={{runtimePath}}/dockerignore
 SetWorkingDirectory={{workingPath}}

@@ -35,8 +35,9 @@ Upgrading from v3? See [UPGRADING.md](UPGRADING.md).
 **Scale to zero**
 
 - The app starts on its first request and stops again after 10 minutes without traffic ([on-demand services](https://foxws.nl/laravel-podman/ondemand)).
+- Make that shorter or longer with `PODMAN_ONDEMAND_IDLE_TIMEOUT`, e.g. `5min`, `30min` or `2h`.
 - Works behind the bundled proxy or your own, such as a NAS or Nginx on another machine.
-- Turn it off with `PODMAN_ONDEMAND_ENABLED=false`.
+- Turn it off with `PODMAN_ONDEMAND_ENABLED=false` to keep the app running all the time.
 
 **Native to your system**
 

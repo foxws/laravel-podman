@@ -2,6 +2,26 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 4.0.2 - 2026-09-27
+
+### Fix
+
+**Production image builds fail with "No application encryption key has been specified".** 4.0.0 removed the build-time `key:generate` from the `frankenphp-octane` Containerfile. But the frontend build can boot Laravel: the Wayfinder Vite plugin runs `php artisan wayfinder:generate` during `pnpm build`, and that needs a key. This release restores the step. The key is throwaway: the build-time `.env` is still removed, and your app uses the key from its runtime `.env`.
+
+To apply it, regenerate `frankenphp-octane` and rebuild your image.
+
+**Published presets:** add this after `RUN composer dump-autoload --optimize` in `runtimes/Containerfile`, before the frontend build:
+
+```dockerfile
+RUN ${PHP_CLI} key:generate
+
+```
+### What's Changed
+
+* fix(stubs): generate a build-time app key before building the frontend by @francoism90 in https://github.com/foxws/laravel-podman/pull/36
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/4.0.1...4.0.2
+
 ## 4.0.1 - 2026-09-27
 
 ### Highlights
@@ -13,6 +33,7 @@ To apply it, regenerate and reinstall the app:
 ```bash
 php artisan podman:generate development   # or frankenphp-octane
 lpod install development/app.quadlets --replace
+
 
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
@@ -26,6 +47,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 ```
 **Docs fixes.**

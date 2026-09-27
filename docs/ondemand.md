@@ -82,4 +82,4 @@ A cold start takes a few seconds, well within the default timeouts of most proxi
 - **Cold start.** The first request after idling takes about 1–3 seconds with `frankenphp-octane`, and longer with the `development` preset's file watcher.
 - **Connections keep the app awake.** Open WebSockets or SSE through the app, and uptime monitors that request it more often than `idle_timeout`, prevent it from stopping. Point monitors at the proxy instead.
 - **`lpod my-app up` doesn't keep it running.** Nothing needs the app, so systemd stops it again. Send a request instead, e.g. `lpod my-app open`. Run `lpod my-app artisan ...` while it's awake.
-- **Health checks.** The app is checked every 2 seconds on `/up` while it runs, and only counts as started once `/up` answers. Publish the preset to change the path or interval.
+- **Health checks.** While the app starts, a startup check polls `/up` every second, and the app counts as started as soon as it answers. After that, `/up` is checked once a minute. Publish the preset to change the path or interval.

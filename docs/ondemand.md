@@ -68,6 +68,8 @@ The presets are the same with on-demand on or off. Only `StopWhenUnneeded=` on t
 
 ### Keeping the queue worker running
 
+In `frankenphp-octane`, the queue worker and Horizon always run: they start at boot and keep running while the app is idle.
+
 In `development`, the queue worker and Horizon are `PartOf=` the app, so they stop when it goes idle. A job still running then gets `TimeoutStopSec=` (60 seconds) to finish before it's killed, and is retried on the next start.
 
 To keep the worker running while the app is idle, for example for long imports or media processing, publish the preset:
@@ -95,7 +97,7 @@ php artisan podman:generate development
 lpod install development/queue.quadlets --replace   # or horizon.quadlets
 ```
 
-Stop it yourself with `systemctl --user stop my-app-queue`. The `frankenphp-octane` workers already work this way.
+Stop it yourself with `systemctl --user stop my-app-queue`.
 
 ## External proxies
 

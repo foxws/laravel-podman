@@ -60,11 +60,44 @@ With the `proxy` preset, regenerate it too. Caddy then sends app traffic to the 
 | Service | `development` | `frankenphp-octane` |
 | --- | --- | --- |
 | Vite, Reverb, Inertia SSR | Stop with the app | Stop with the app |
-| Queue worker / Horizon | Starts with the app, then keeps running, so long jobs finish | Keeps running, starts at boot |
+| Queue worker / Horizon | Stops with the app ([opt out](#keeping-the-queue-worker-running)) | Keeps running, starts at boot |
 | Scheduler | Stops with the app | A timer runs `schedule:run` every minute |
 | Database, cache | Keep running | Keep running |
 
 The presets are the same with on-demand on or off. Only `StopWhenUnneeded=` on the app changes (`{{ondemand}}` renders `yes` or `no`), along with where the `proxy` preset sends traffic. The socket units are always rendered, but only take effect once installed. Sidecars use `PartOf=` the app rather than `BindsTo=`: `BindsTo=` would count as needing the app and keep it running.
+
+### Keeping the queue worker running
+
+In `frankenphp-octane`, the queue worker and Horizon always run: they start at boot and keep running while the app is idle.
+
+In `development`, the queue worker and Horizon are `PartOf=` the app, so they stop when it goes idle. A job still running then gets `TimeoutStopSec=` (60 seconds) to finish before it's killed, and is retried on the next start.
+
+To keep the worker running while the app is idle, for example for long imports or media processing, publish the preset:
+
+```bash
+php artisan podman:publish development
+```
+
+In `containers/stubs/development/quadlets/queue.quadlets` (or `horizon.quadlets`), replace the app dependency under `[Unit]` with the database and cache your app uses:
+
+```ini
+# Remove:
+After={{application}}.container
+PartOf={{application}}.container
+
+# Add:
+Requires={{application}}-pgsql.container {{application}}-valkey.container
+After={{application}}-pgsql.container {{application}}-valkey.container
+```
+
+The app still starts the worker through its `Wants=` line, but no longer stops it. Regenerate and reinstall the worker:
+
+```bash
+php artisan podman:generate development
+lpod install development/queue.quadlets --replace   # or horizon.quadlets
+```
+
+Stop it yourself with `systemctl --user stop my-app-queue`.
 
 ## External proxies
 

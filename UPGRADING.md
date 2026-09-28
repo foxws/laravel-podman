@@ -65,7 +65,7 @@ Skip this step if you haven't published any presets (nothing in `containers/stub
     ```
 
   - Under `[Build]`, replace `Environment=UID={{appUid}}` and `Environment=GID={{appGid}}` with `BuildArg=UID={{appUid}}` and `BuildArg=GID={{appGid}}`. `Environment=` never reached the Containerfile, so the image's user was always built as 1000.
-- **Every other `quadlets/*.quadlets`:** replace `BindsTo={{application}}.container` with `PartOf={{application}}.container`. For the queue worker and Horizon, in both presets, drop the app dependency entirely instead, and use `Requires=`/`After=` on the database and cache, so running jobs aren't killed when the app goes idle.
+- **Every other `quadlets/*.quadlets`:** replace `BindsTo={{application}}.container` with `PartOf={{application}}.container`.
 - **`development` sidecars** (`queue`, `horizon`, `schedule`, `reverb`, `vite`): add `HealthCmd=none` under `[Container]`. They don't run FrankenPHP's web server, so its built-in health check always fails.
 - **Database and cache quadlets:** pin the image tags, as in step 3.
 - **`runtimes/Containerfile`:** replace `FROM docker.io/dunglas/frankenphp:latest` with `ARG FRANKENPHP_VERSION=1-php8.5` followed by `FROM docker.io/dunglas/frankenphp:${FRANKENPHP_VERSION}`. You can also drop the final "Clean up unnecessary files" layer. Keep the build-time `key:generate` in `frankenphp-octane`: the frontend build can boot Laravel (Wayfinder does), which needs a key.

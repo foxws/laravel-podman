@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 4.0.4 - 2026-09-28
+
+### What's Changed
+
+* fix(stubs): stop development queue workers with the on-demand app again by @francoism90 in https://github.com/foxws/laravel-podman/pull/38
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/4.0.3...4.0.4
+
 ## 4.0.3 - 2026-09-27
 
 ### Fix
@@ -14,12 +22,14 @@ To apply it, regenerate `development` and reinstall the worker you use:
 php artisan podman:generate development
 lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 ```
 ### What's Changed
@@ -40,6 +50,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 ```
@@ -63,6 +74,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -75,6 +87,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

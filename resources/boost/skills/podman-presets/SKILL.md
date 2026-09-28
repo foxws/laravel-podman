@@ -88,7 +88,7 @@ After={{application}}-mysql.container {{application}}-redis.container
 
 Then regenerate, install the new service and `app.quadlets` with `--replace`, and update `.env` (`DB_CONNECTION`, `DB_HOST`, `REDIS_HOST`, ...). Quadlet names containers `systemd-{unit}`, so the host is e.g. `systemd-my-app-mysql`.
 
-Dependency directives: `Requires=` (hard), `Wants=` (soft), `After=` (order only), `PartOf=` (stop/restart with target). Don't use `BindsTo=` on the app: it keeps an on-demand app from stopping.
+Dependency directives: `Requires=` (hard), `Wants=` (soft), `After=` (order only), `PartOf=` (stop/restart with target). Don't use `BindsTo=` on the app: it keeps an on-demand app from stopping. In `development`, `queue`/`horizon` are `PartOf=` the app and stop when it goes idle; to keep one running, replace its app `After=`/`PartOf=` with `Requires=`/`After=` on the database and cache, as in `frankenphp-octane`.
 
 ### Add a service
 

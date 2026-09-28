@@ -1,10 +1,8 @@
 # FileName={{application}}-queue
 [Unit]
 Description=Laravel queue worker container
-# Started with the app (through its Wants=), but not stopped with it, so
-# long-running jobs finish while the on-demand app is idle.
-Requires={{application}}-pgsql.container {{application}}-valkey.container
-After={{application}}-pgsql.container {{application}}-valkey.container
+After={{application}}.container
+PartOf={{application}}.container
 
 [Container]
 Image={{application}}.build

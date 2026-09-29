@@ -40,22 +40,22 @@ it('uses the configured config path when set, without affecting the working path
 });
 
 it('resolves the vendor preset path for a preset that has not been published', function () {
-    expect($this->path->presetPath('frankenphp-octane'))->toBe($this->path->vendorPresetPath('frankenphp-octane'))
-        ->and($this->path->vendorPresetPath('frankenphp-octane'))->toBe("{$this->path->vendorPath()}/stubs/frankenphp-octane");
+    expect($this->path->presetPath('production'))->toBe($this->path->vendorPresetPath('production'))
+        ->and($this->path->vendorPresetPath('production'))->toBe("{$this->path->vendorPath()}/stubs/production");
 });
 
 it('uses the published preset path when it exists', function () {
-    $preset = $this->makePresetPath('frankenphp-octane', ['app']);
+    $preset = $this->makePresetPath('production', ['app']);
 
-    expect($this->path->presetPath('frankenphp-octane'))->toBe($preset)
-        ->and($this->path->publishedPresetPath('frankenphp-octane'))->toBe($preset);
+    expect($this->path->presetPath('production'))->toBe($preset)
+        ->and($this->path->publishedPresetPath('production'))->toBe($preset);
 
     File::deleteDirectory(dirname($preset));
 });
 
 it('resolves presetQuadletsPath and presetRuntimesPath relative to the preset path', function () {
-    expect($this->path->presetQuadletsPath('frankenphp-octane'))->toBe($this->path->vendorPresetPath('frankenphp-octane').'/quadlets')
-        ->and($this->path->presetRuntimesPath('frankenphp-octane'))->toBe($this->path->vendorPresetPath('frankenphp-octane').'/runtimes');
+    expect($this->path->presetQuadletsPath('production'))->toBe($this->path->vendorPresetPath('production').'/quadlets')
+        ->and($this->path->presetRuntimesPath('production'))->toBe($this->path->vendorPresetPath('production').'/runtimes');
 });
 
 it('resolves a relative publish path against the base path', function () {
@@ -73,20 +73,20 @@ it('keeps an absolute publish path as-is', function () {
 it('resolves the preset publish path and its runtimes subfolder', function () {
     config(['podman.publish_path' => 'podman']);
 
-    expect($this->path->presetPublishPath('frankenphp-octane'))->toBe(base_path('podman/frankenphp-octane'))
-        ->and($this->path->presetPublishRuntimesPath('frankenphp-octane'))->toBe(base_path('podman/frankenphp-octane/runtimes'));
+    expect($this->path->presetPublishPath('production'))->toBe(base_path('podman/production'))
+        ->and($this->path->presetPublishRuntimesPath('production'))->toBe(base_path('podman/production/runtimes'));
 });
 
 it('resolves the working preset runtime path against the working path when set', function () {
     config(['podman.publish_path' => 'podman', 'podman.working_path' => '/home/francois/app']);
 
-    expect($this->path->workingPresetRuntimePath('frankenphp-octane'))->toBe('/home/francois/app/podman/frankenphp-octane/runtimes');
+    expect($this->path->workingPresetRuntimePath('production'))->toBe('/home/francois/app/podman/production/runtimes');
 });
 
 it('resolves the working preset runtime path against the base path by default', function () {
     config(['podman.publish_path' => 'podman']);
 
-    expect($this->path->workingPresetRuntimePath('frankenphp-octane'))->toBe(base_path('podman/frankenphp-octane/runtimes'));
+    expect($this->path->workingPresetRuntimePath('production'))->toBe(base_path('podman/production/runtimes'));
 });
 
 it('resolves the s3 cors policy path against the s3 preset path', function () {

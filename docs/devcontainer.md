@@ -5,7 +5,7 @@ order: 2
 
 # Devcontainer
 
-The `devcontainer` preset is a [Dev Containers](https://containers.dev/) image for VS Code and JetBrains. You write code inside the container. The `development` and `frankenphp-octane` presets are different: they run your app as a service.
+The `devcontainer` preset is a [Dev Containers](https://containers.dev/) image for VS Code and JetBrains. You write code inside the container. The `development` and `production` presets are different: they run your app as a service.
 
 It's commented out by default. Add it to `presets` in `config/podman.php`, or generate it directly.
 

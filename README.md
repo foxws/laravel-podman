@@ -16,7 +16,7 @@ Upgrading from v3? See [UPGRADING.md](UPGRADING.md).
 **Presets for every stage**
 
 - **`development`**: your working copy mounted live, Octane with file watching, and an optional Vite dev server.
-- **`frankenphp-octane`**: a production image with your code baked in, Inertia SSR, and the queue worker and scheduler running independently of the app.
+- **`production`**: a FrankenPHP and Octane image with your code baked in, Inertia SSR, and the queue worker and scheduler running independently of the app.
 - **`devcontainer`**: a [Dev Containers](https://containers.dev/) image for VS Code and JetBrains, with an optional AI variant (Claude Code, Codex, Laravel LSP).
 - **`proxy`**: [Caddy](https://caddyserver.com/) in front of everything, with HTTPS (local certificates in development, Let's Encrypt in production) and subdomains for Vite, Reverb, S3 and Mailpit.
 
@@ -115,7 +115,7 @@ lpod install development/vite.quadlets --replace
 lpod my-app-vite up
 ```
 
-Deploying with `frankenphp-octane`? Also set the secrets it expects, such as your `.env` and database password, with `lpod my-app secrets` and `lpod my-app-pgsql secrets`.
+Deploying with `production`? Also set the secrets it expects, such as your `.env` and database password, with `lpod my-app secrets` and `lpod my-app-pgsql secrets`.
 
 ## Commands
 

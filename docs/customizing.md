@@ -32,8 +32,8 @@ You customize the package in two places: `config/podman.php` (publish it with `p
 
 A preset is a folder with two directories: `quadlets/` for the `*.quadlets` files and `runtimes/` for build files. If `stubs_path/{preset}` exists, it's used instead of the bundled preset. It replaces the whole preset; files are not merged one by one.
 
-- **Change a service:** run `php artisan podman:publish frankenphp-octane`, then edit `containers/stubs/frankenphp-octane/quadlets/pgsql.quadlets`.
-- **Add a service:** create `containers/stubs/frankenphp-octane/quadlets/my-service.quadlets` in the same `# FileName=...` / `---` format. Then run `php artisan podman:generate frankenphp-octane` and `lpod install frankenphp-octane/my-service.quadlets`.
+- **Change a service:** run `php artisan podman:publish production`, then edit `containers/stubs/production/quadlets/pgsql.quadlets`.
+- **Add a service:** create `containers/stubs/production/quadlets/my-service.quadlets` in the same `# FileName=...` / `---` format. Then run `php artisan podman:generate production` and `lpod install production/my-service.quadlets`.
 - **Change build files:** same idea, in `runtimes/` (`Containerfile`, `entrypoint.sh`, PHP ini, Caddy templates).
 - **New preset:** create `containers/stubs/my-preset/quadlets/` and `containers/stubs/my-preset/runtimes/`.
 
@@ -50,7 +50,7 @@ A preset is a folder with two directories: `quadlets/` for the `*.quadlets` file
 | `{{appUid}}`/`{{appGid}}` | `quadlet_uid`/`quadlet_gid` |
 | `{{workingPath}}` | `working_path` |
 | `{{configPath}}` | `config_path` (same as `working_path` unless set) |
-| `{{runtimePath}}` | The preset's rendered `runtimes/` folder, e.g. `podman/frankenphp-octane/runtimes` |
+| `{{runtimePath}}` | The preset's rendered `runtimes/` folder, e.g. `podman/production/runtimes` |
 
 `{{configPath}}` is useful for keeping a service's config outside the project, for example in your own `proxy.quadlets`:
 
@@ -89,17 +89,17 @@ Every preset except `devcontainer` and `s3` includes `app` plus these services. 
 
 `queue` runs a plain `php artisan queue:work` worker, which works with any queue connection. If your app uses [Laravel Horizon](https://laravel.com/docs/horizon) (Redis or Valkey queues only), use `horizon` instead. See [Replacing the queue worker with Horizon](#replacing-the-queue-worker-with-horizon).
 
-`frankenphp-octane` also includes `schedule` and `inertia-ssr`, which always run alongside the app. `reverb` ([Laravel Reverb](https://laravel.com/docs/reverb)) is included too, but doesn't start by default. See [Adding Reverb](#adding-reverb).
+`production` also includes `schedule` and `inertia-ssr`, which always run alongside the app. `reverb` ([Laravel Reverb](https://laravel.com/docs/reverb)) is included too, but doesn't start by default. See [Adding Reverb](#adding-reverb).
 
 ## Swapping a service
 
 `app.quadlets` names its database and cache in its `[Unit]` section. To switch, publish the preset:
 
 ```bash
-php artisan podman:publish frankenphp-octane   # or development
+php artisan podman:publish production   # or development
 ```
 
-Edit `containers/stubs/frankenphp-octane/quadlets/app.quadlets`:
+Edit `containers/stubs/production/quadlets/app.quadlets`:
 
 ```ini
 Requires={{application}}-mysql.container {{application}}-redis.container
@@ -109,16 +109,16 @@ After={{application}}-mysql.container {{application}}-redis.container
 Regenerate and reinstall both:
 
 ```bash
-php artisan podman:generate frankenphp-octane
-lpod install frankenphp-octane/mysql.quadlets --replace
-lpod install frankenphp-octane/app.quadlets --replace
+php artisan podman:generate production
+lpod install production/mysql.quadlets --replace
+lpod install production/app.quadlets --replace
 ```
 
 Then update `.env` (`DB_CONNECTION`, `DB_HOST`, ...) so Laravel connects to the new service.
 
 ### Replacing the queue worker with Horizon
 
-`app.quadlets` starts `queue` alongside the app through its `Wants=` line. To use `horizon` instead, publish the preset and change `queue` to `horizon` on that line (in `frankenphp-octane`, the line ends with `schedule.timer`):
+`app.quadlets` starts `queue` alongside the app through its `Wants=` line. To use `horizon` instead, publish the preset and change `queue` to `horizon` on that line (in `production`, the line ends with `schedule.timer`):
 
 ```ini
 Wants={{application}}-mailpit.container {{application}}-horizon.container {{application}}-schedule.container
@@ -127,9 +127,9 @@ Wants={{application}}-mailpit.container {{application}}-horizon.container {{appl
 Regenerate, then install `horizon` and reinstall `app`:
 
 ```bash
-php artisan podman:generate frankenphp-octane
-lpod install frankenphp-octane/horizon.quadlets --replace
-lpod install frankenphp-octane/app.quadlets --replace
+php artisan podman:generate production
+lpod install production/horizon.quadlets --replace
+lpod install production/app.quadlets --replace
 ```
 
 If `queue` was already running, stop it with `systemctl --user stop {app}-queue`. It won't start again, because nothing wants it anymore.
@@ -145,9 +145,9 @@ Wants={{application}}-mailpit.container {{application}}-queue.container {{applic
 Regenerate, then install `reverb` and reinstall `app`:
 
 ```bash
-php artisan podman:generate frankenphp-octane
-lpod install frankenphp-octane/reverb.quadlets --replace
-lpod install frankenphp-octane/app.quadlets --replace
+php artisan podman:generate production
+lpod install production/reverb.quadlets --replace
+lpod install production/app.quadlets --replace
 ```
 
 ### `[Unit]` directives
@@ -156,23 +156,23 @@ lpod install frankenphp-octane/app.quadlets --replace
 | --- | --- | --- |
 | `Requires=` | Hard dependency. If the target fails, this unit stops too | `app` → database and cache |
 | `After=` | Start order only | Together with `Requires=`/`Wants=` |
-| `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`reverb`/`vite`, `queue`/`schedule` in `development`, and `queue`/`schedule.timer` in `frankenphp-octane` |
+| `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`reverb`/`vite`, `queue`/`schedule` in `development`, and `queue`/`schedule.timer` in `production` |
 | `PartOf=` | Stopping or restarting the target also stops or restarts this unit | `vite`/`inertia-ssr`, and `horizon`/`queue`/`schedule` in `development` → `app` |
 | `BindsTo=` | Like `Requires=`, and also stops when the target stops. Not used: it counts as needing the target, which keeps an [on-demand](ondemand.md) app running | |
 
-In `frankenphp-octane`, the queue worker and Horizon start at boot on their own (`[Install]`), and a `systemd/schedule.timer` runs `schedule:run` every minute. Install it with `lpod install frankenphp-octane/my-app-schedule.timer`.
+In `production`, the queue worker and Horizon start at boot on their own (`[Install]`), and a `systemd/schedule.timer` runs `schedule:run` every minute. Install it with `lpod install production/my-app-schedule.timer`.
 
 ## Increasing a service's memory limit
 
 ```bash
-php artisan podman:publish frankenphp-octane
+php artisan podman:publish production
 ```
 
-Add `Memory=` under `[Container]` in `containers/stubs/frankenphp-octane/quadlets/pgsql.quadlets`, then:
+Add `Memory=` under `[Container]` in `containers/stubs/production/quadlets/pgsql.quadlets`, then:
 
 ```bash
-php artisan podman:generate frankenphp-octane
-lpod install frankenphp-octane/pgsql.quadlets --replace
+php artisan podman:generate production
+lpod install production/pgsql.quadlets --replace
 ```
 
 ## Multiple apps on one host
@@ -181,7 +181,7 @@ Pass `--application=` to `lpod install` (needs Podman 6+). Each app then gets it
 
 ## Proxying services without the `proxy` preset
 
-`frankenphp-octane` runs [Octane with FrankenPHP](https://laravel.com/docs/octane#frankenphp), which has Caddy built in. This is separate from the `proxy` preset's Caddy container (see [Proxy](proxy.md)).
+`production` runs [Octane with FrankenPHP](https://laravel.com/docs/octane#frankenphp), which has Caddy built in. This is separate from the `proxy` preset's Caddy container (see [Proxy](proxy.md)).
 
 If you don't use the `proxy` preset, for example behind an external load balancer or on Laravel Cloud, the built-in Caddy can proxy other services (Reverb, Mailpit, S3 storage) itself. You configure it through Octane's `CADDY_EXTRA_CONFIG` environment variable.
 
@@ -216,7 +216,7 @@ Notes:
 
 - Use `env()` here, not `config()`. Config files can't rely on each other's load order.
 - An entry with an empty hostname or upstream (unset env var) is skipped.
-- `render()` uses `http://` by default. With a bare hostname, Caddy would try automatic HTTPS on port 443. The `frankenphp-octane` image runs as a non-root user without permission to bind that port, so the server would crash. Only pass the third `$scheme` argument if your Caddy is allowed to bind ports below 1024.
+- `render()` uses `http://` by default. With a bare hostname, Caddy would try automatic HTTPS on port 443. The `production` image runs as a non-root user without permission to bind that port, so the server would crash. Only pass the third `$scheme` argument if your Caddy is allowed to bind ports below 1024.
 
 ## Links
 

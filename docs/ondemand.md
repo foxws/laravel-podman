@@ -7,7 +7,7 @@ order: 5
 
 On-demand services start your app on its first request and stop it again after it has been idle for a while (scale-to-zero). It's handy on a development machine or a homelab that hosts several apps: an app nobody is using doesn't hold on to Octane workers, SSR or a Vite server.
 
-It's on by default for the `development` and `frankenphp-octane` presets. It only uses systemd and Quadlet, nothing else runs on the host.
+It's on by default for the `development` and `production` presets. It only uses systemd and Quadlet, nothing else runs on the host.
 
 ## How it works
 
@@ -43,7 +43,7 @@ PODMAN_ONDEMAND_ENABLED=false
 
 Running several apps on one host? Give each its own `listen` and `port`.
 
-Render and install as usual. The socket, its proxy service and the [idle check](#the-idle-check) are plain systemd units, because Quadlet has no unit type for them. They live in the `ondemand` preset, which works with both `development` and `frankenphp-octane`:
+Render and install as usual. The socket, its proxy service and the [idle check](#the-idle-check) are plain systemd units, because Quadlet has no unit type for them. They live in the `ondemand` preset, which works with both `development` and `production`:
 
 ```bash
 php artisan podman:generate development
@@ -59,7 +59,7 @@ With the `proxy` preset, regenerate it too. Caddy then sends app traffic to the 
 
 ## What keeps running
 
-| Service | `development` | `frankenphp-octane` |
+| Service | `development` | `production` |
 | --- | --- | --- |
 | Vite, Inertia SSR | Stop with the app | Stop with the app |
 | Queue worker / Horizon | Stops with the app ([opt out](#keeping-the-queue-worker-running)) | Starts at boot, stops once no jobs are left ([idle check](#the-idle-check)) |
@@ -98,7 +98,7 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 lpod install ondemand/my-app-idle.timer --replace
 ```
 
-In `frankenphp-octane`, the queue worker and Horizon already work this way.
+In `production`, the queue worker and Horizon already work this way.
 
 A worker that keeps running also needs the services its jobs use, such as `rustfs` for uploads, `typesense` for search indexing, `reverb` for broadcast events or `mailpit` for queued mail. Otherwise they [sleep](#sleeping-services) with the app while jobs still use them. Add a `Wants=` line under the worker's `[Unit]`:
 
@@ -119,7 +119,7 @@ To keep only one service running, such as the database for a client, publish the
 `{{ondemand}}` renders `StopWhenUnneeded=yes` on the database, cache, search and storage services. systemd then stops a service once no running unit `Requires=` or `Wants=` it anymore:
 
 1. The app goes idle and stops, along with its sidecars.
-2. The [idle check](#the-idle-check) stops the queue workers once no jobs are left, and the `frankenphp-octane` scheduler timer.
+2. The [idle check](#the-idle-check) stops the queue workers once no jobs are left, and the `production` scheduler timer.
 3. Nothing needs the database and cache anymore, so they stop too.
 4. The next request starts the app, which starts the services, workers and scheduler timer it `Requires=` or `Wants=`. The services report ready through a health check (`Notify=healthy`), so the app doesn't connect before they accept connections.
 
@@ -133,9 +133,9 @@ Wants={{application}}-mailpit.container {{application}}-queue.container {{applic
 
 ### The idle check
 
-Queue workers that keep running while the app is idle would keep the database and cache awake. The `ondemand` preset's idle check (`lpod install ondemand/my-app-idle.timer`) handles this for both `development` and `frankenphp-octane`.
+Queue workers that keep running while the app is idle would keep the database and cache awake. The `ondemand` preset's idle check (`lpod install ondemand/my-app-idle.timer`) handles this for both `development` and `production`.
 
-Once a minute, while the app is asleep, it runs `php artisan podman:idle` in a running queue worker or Horizon. If the app has no work in progress, it stops the workers and the scheduler timer, if one is running (`frankenphp-octane`). The next request starts them again through the app's `Wants=` line, which lists `queue` and, in `frankenphp-octane`, `schedule.timer`. Using Horizon? Put `horizon` on that line instead of `queue`.
+Once a minute, while the app is asleep, it runs `php artisan podman:idle` in a running queue worker or Horizon. If the app has no work in progress, it stops the workers and the scheduler timer, if one is running (`production`). The next request starts them again through the app's `Wants=` line, which lists `queue` and, in `production`, `schedule.timer`. Using Horizon? Put `horizon` on that line instead of `queue`.
 
 A long job keeps the stack awake until it's done. Delayed jobs count too, so they run on time. If `podman:idle` fails or doesn't exist, for example because the package was installed with `--dev` and the production image leaves it out, the workers keep running. The check does nothing when `PODMAN_ONDEMAND_ENABLED=false`.
 
@@ -224,7 +224,7 @@ A cold start takes a few seconds, well within the default timeouts of most proxi
 
 ## Caveats
 
-- **Cold start.** The first request after idling takes about 1–3 seconds with `frankenphp-octane`, and longer with the `development` preset's file watcher.
+- **Cold start.** The first request after idling takes about 1–3 seconds with `production`, and longer with the `development` preset's file watcher.
 - **Connections keep the app awake.** Open WebSockets or SSE through the app, and uptime monitors that request it more often than `idle_timeout`, prevent it from stopping. Point monitors at the proxy instead.
 - **`lpod my-app up` doesn't keep it running.** Nothing needs the app, so systemd stops it again. Send a request instead, e.g. `lpod my-app open`. Run `lpod my-app artisan ...` while it's awake.
 - **Health checks.** While the app starts, a startup check polls `/up` every second, and the app counts as started as soon as it answers. After that, `/up` is checked once a minute. Publish the preset to change the path or interval.

@@ -38,13 +38,13 @@ Using [Laravel Boost](https://github.com/laravel/boost)? Run `php artisan boost:
 | Preset              | What it is                                                                                                                            |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `development`       | App and services, with your working copy mounted for local editing. **Enabled by default.**                                           |
-| `frankenphp-octane` | Production-style image with the app code baked in. Commented out by default.                                                          |
+| `production`        | [FrankenPHP](https://frankenphp.dev/) and [Octane](https://laravel.com/docs/octane) image with the app code baked in, for servers. Commented out by default. |
 | `devcontainer`      | [Dev Containers](https://containers.dev/) image for VS Code/JetBrains. See [Devcontainer](devcontainer.md). Commented out by default. |
 | `ondemand`          | Socket that starts the app on its first request, and the idle check that lets it and its services sleep. See [On-demand services](ondemand.md). **Enabled by default.** |
 | `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. **Enabled by default.**                               |
 | `s3`                | CORS policy for S3-compatible storage buckets.                                                                                        |
 
-To change a preset, publish it with `php artisan podman:publish frankenphp-octane`. See [Customizing](customizing.md).
+To change a preset, publish it with `php artisan podman:publish production`. See [Customizing](customizing.md).
 
 ## Quick start
 
@@ -88,7 +88,7 @@ lpod install development/vite.quadlets --replace
 lpod my-app-vite up
 ```
 
-Deploying with `frankenphp-octane`? Also set the secrets it expects, such as your `.env` and database password, with `lpod my-app secrets` and `lpod my-app-pgsql secrets`.
+Deploying with `production`? Also set the secrets it expects, such as your `.env` and database password, with `lpod my-app secrets` and `lpod my-app-pgsql secrets`.
 
 No PHP on the host? See [Setting up without PHP](host-setup.md).
 

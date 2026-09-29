@@ -17,7 +17,7 @@ Renders all default presets. See [Quick start](index.md#quick-start).
 php artisan podman:setup
 
 # Use other presets than the defaults
-php artisan podman:setup --preset=frankenphp-octane
+php artisan podman:setup --preset=production
 ```
 
 ## `podman:publish PRESET`
@@ -25,10 +25,10 @@ php artisan podman:setup --preset=frankenphp-octane
 Copies a preset's `quadlets/` and `runtimes/` files into your project so you can edit them.
 
 ```bash
-php artisan podman:publish frankenphp-octane
+php artisan podman:publish production
 
 # Overwrite files you already published
-php artisan podman:publish frankenphp-octane --force
+php artisan podman:publish production --force
 ```
 
 ## `podman:generate PRESET`
@@ -36,7 +36,7 @@ php artisan podman:publish frankenphp-octane --force
 Renders one preset into `podman/`, ready for `lpod install`. See [Customizing](customizing.md) for the placeholders it fills in.
 
 ```bash
-php artisan podman:generate frankenphp-octane
+php artisan podman:generate production
 
 # Use a different host path for this run only
 php artisan podman:generate development --working-path=/srv/my-app

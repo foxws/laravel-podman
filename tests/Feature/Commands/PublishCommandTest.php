@@ -14,62 +14,62 @@ afterEach(function () {
 });
 
 it('publishes the selected preset to the stubs path, creating it if needed', function () {
-    expect(File::isDirectory("{$this->stubsPath}/frankenphp-octane"))->toBeFalse();
+    expect(File::isDirectory("{$this->stubsPath}/production"))->toBeFalse();
 
     $this->artisan('podman:publish')
-        ->expectsQuestion('Select a preset to publish', 'frankenphp-octane')
-        ->expectsOutputToContain("Preset frankenphp-octane published to {$this->stubsPath}/frankenphp-octane")
+        ->expectsQuestion('Select a preset to publish', 'production')
+        ->expectsOutputToContain("Preset production published to {$this->stubsPath}/production")
         ->assertExitCode(0);
 
-    expect(File::exists("{$this->stubsPath}/frankenphp-octane/runtimes/Containerfile"))->toBeTrue()
-        ->and(File::exists("{$this->stubsPath}/frankenphp-octane/quadlets/app.quadlets"))->toBeTrue();
+    expect(File::exists("{$this->stubsPath}/production/runtimes/Containerfile"))->toBeTrue()
+        ->and(File::exists("{$this->stubsPath}/production/quadlets/app.quadlets"))->toBeTrue();
 });
 
 it('keeps "{{placeholder}}" tokens intact instead of substituting them', function () {
     config(['podman.quadlet_prefix' => 'acme']);
 
-    $this->artisan('podman:publish', ['preset' => 'frankenphp-octane'])
+    $this->artisan('podman:publish', ['preset' => 'production'])
         ->assertExitCode(0);
 
-    expect(File::get("{$this->stubsPath}/frankenphp-octane/quadlets/app.quadlets"))
+    expect(File::get("{$this->stubsPath}/production/quadlets/app.quadlets"))
         ->toContain('{{application}}')
         ->not->toContain('acme');
 });
 
 it('accepts the preset name as an argument, skipping the prompt', function () {
-    $this->artisan('podman:publish', ['preset' => 'frankenphp-octane'])
-        ->expectsOutputToContain("Preset frankenphp-octane published to {$this->stubsPath}/frankenphp-octane")
+    $this->artisan('podman:publish', ['preset' => 'production'])
+        ->expectsOutputToContain("Preset production published to {$this->stubsPath}/production")
         ->assertExitCode(0);
 
-    expect(File::exists("{$this->stubsPath}/frankenphp-octane/runtimes/Containerfile"))->toBeTrue();
+    expect(File::exists("{$this->stubsPath}/production/runtimes/Containerfile"))->toBeTrue();
 });
 
 it('refuses to overwrite an existing published preset without the force option', function () {
-    File::ensureDirectoryExists("{$this->stubsPath}/frankenphp-octane");
-    File::put("{$this->stubsPath}/frankenphp-octane/marker", 'existing');
+    File::ensureDirectoryExists("{$this->stubsPath}/production");
+    File::put("{$this->stubsPath}/production/marker", 'existing');
 
-    $this->artisan('podman:publish', ['preset' => 'frankenphp-octane'])
+    $this->artisan('podman:publish', ['preset' => 'production'])
         ->assertExitCode(1);
 
-    expect(File::get("{$this->stubsPath}/frankenphp-octane/marker"))->toBe('existing');
+    expect(File::get("{$this->stubsPath}/production/marker"))->toBe('existing');
 });
 
 it('overwrites existing files when the force option is passed', function () {
-    File::ensureDirectoryExists("{$this->stubsPath}/frankenphp-octane");
-    File::put("{$this->stubsPath}/frankenphp-octane/marker", 'existing');
+    File::ensureDirectoryExists("{$this->stubsPath}/production");
+    File::put("{$this->stubsPath}/production/marker", 'existing');
 
-    $this->artisan('podman:publish', ['preset' => 'frankenphp-octane', '--force' => true])
+    $this->artisan('podman:publish', ['preset' => 'production', '--force' => true])
         ->assertExitCode(0);
 
-    expect(File::exists("{$this->stubsPath}/frankenphp-octane/quadlets/app.quadlets"))->toBeTrue();
+    expect(File::exists("{$this->stubsPath}/production/quadlets/app.quadlets"))->toBeTrue();
 });
 
 it('refuses to run when podman is disabled', function () {
     config(['podman.enabled' => false]);
 
-    $this->artisan('podman:publish', ['preset' => 'frankenphp-octane'])
+    $this->artisan('podman:publish', ['preset' => 'production'])
         ->expectsOutputToContain('Podman is disabled.')
         ->assertExitCode(1);
 
-    expect(File::isDirectory("{$this->stubsPath}/frankenphp-octane"))->toBeFalse();
+    expect(File::isDirectory("{$this->stubsPath}/production"))->toBeFalse();
 });

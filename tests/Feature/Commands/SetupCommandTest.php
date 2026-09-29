@@ -14,26 +14,26 @@ afterEach(function () {
 });
 
 it('generates the default presets', function () {
-    config(['podman.presets' => 'frankenphp-octane,proxy']);
+    config(['podman.presets' => 'production,proxy']);
 
     $this->artisan('podman:setup')
-        ->expectsOutputToContain("Preset frankenphp-octane generated to {$this->publishPath}/frankenphp-octane")
+        ->expectsOutputToContain("Preset production generated to {$this->publishPath}/production")
         ->expectsOutputToContain("Preset proxy generated to {$this->publishPath}/proxy")
-        ->expectsOutputToContain('Setup complete. Generated: frankenphp-octane, proxy')
+        ->expectsOutputToContain('Setup complete. Generated: production, proxy')
         ->assertExitCode(0);
 
-    expect(File::exists("{$this->publishPath}/frankenphp-octane/app.quadlets"))->toBeTrue()
+    expect(File::exists("{$this->publishPath}/production/app.quadlets"))->toBeTrue()
         ->and(File::exists("{$this->publishPath}/proxy/proxy.quadlets"))->toBeTrue();
 });
 
 it('accepts the preset option, overriding the default presets', function () {
-    config(['podman.presets' => 'frankenphp-octane,proxy']);
+    config(['podman.presets' => 'production,proxy']);
 
     $this->artisan('podman:setup', ['--preset' => ['proxy']])
         ->expectsOutputToContain('Setup complete. Generated: proxy')
         ->assertExitCode(0);
 
-    expect(File::exists("{$this->publishPath}/frankenphp-octane"))->toBeFalse()
+    expect(File::exists("{$this->publishPath}/production"))->toBeFalse()
         ->and(File::exists("{$this->publishPath}/proxy/proxy.quadlets"))->toBeTrue();
 });
 

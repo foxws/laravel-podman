@@ -69,7 +69,7 @@ Skip this step if you haven't published any presets (nothing in `containers/stub
 - **`development` sidecars** (`queue`, `horizon`, `schedule`, `reverb`, `vite`): add `HealthCmd=none` under `[Container]`. They don't run FrankenPHP's web server, so its built-in health check always fails.
 - **Database and cache quadlets:** pin the image tags, as in step 3.
 - **`runtimes/Containerfile`:** replace `FROM docker.io/dunglas/frankenphp:latest` with `ARG FRANKENPHP_VERSION=1-php8.5` followed by `FROM docker.io/dunglas/frankenphp:${FRANKENPHP_VERSION}`. You can also drop the final "Clean up unnecessary files" layer. Keep the build-time `key:generate` in `frankenphp-octane`: the frontend build can boot Laravel (Wayfinder does), which needs a key.
-- **`systemd/`:** copy the folder from the package preset. It holds `ondemand.socket` and `ondemand.service`, plus `schedule.timer` for `frankenphp-octane`.
+- **`systemd/`:** `frankenphp-octane` needs `schedule.timer` from the package preset. The on-demand socket and idle check live in the `ondemand` preset, so add `ondemand` to your `PODMAN_DEFAULT_PRESETS` if you set it.
 - **`frankenphp-octane` only:**
   - **`queue.quadlets` / `horizon.quadlets`:**
     - Drop the app from `After=`.
@@ -93,7 +93,7 @@ Stop the app first, so its old port is free:
 lpod my-app down
 php artisan podman:setup
 lpod install development/app.quadlets --replace
-lpod install development/my-app-ondemand.socket --replace   # skip when PODMAN_ONDEMAND_ENABLED=false
+lpod install ondemand/my-app-ondemand.socket --replace   # skip when PODMAN_ONDEMAND_ENABLED=false
 lpod install proxy/proxy.quadlets --replace
 ```
 

@@ -40,7 +40,7 @@ For each published preset, compare it with `vendor/foxws/laravel-podman/stubs/{p
 - **`development` sidecars** (`queue`, `horizon`, `schedule`, `reverb`, `vite`): add `HealthCmd=none` under `[Container]`, as the `frankenphp-octane` ones already have.
 - **Database and cache quadlets:** use the tags from step 2.
 - **`runtimes/Containerfile`:** `FROM docker.io/dunglas/frankenphp:latest` → `ARG FRANKENPHP_VERSION=1-php8.5` + `FROM docker.io/dunglas/frankenphp:${FRANKENPHP_VERSION}`. Keep a different PHP version if the user had one. The final "Clean up unnecessary files" layer can go. Keep the build-time `key:generate` in `frankenphp-octane`, or restore it if it was removed: the frontend build can boot Laravel (Wayfinder runs `php artisan wayfinder:generate`), which needs a key.
-- **`systemd/`:** copy any missing files from the vendor preset: `ondemand.socket`, `ondemand.service`, and `schedule.timer` for `frankenphp-octane`. If the user already has a `systemd/` folder, merge the files in without overwriting theirs.
+- **`systemd/`:** copy `schedule.timer` for `frankenphp-octane` from the vendor preset, without overwriting the user's files. The on-demand socket and idle check come from the separate `ondemand` preset: render it with `podman:generate ondemand` (it's in the default presets; add it to `PODMAN_DEFAULT_PRESETS` if the user set that).
 - **`frankenphp-octane` only:**
   - **Queue worker or Horizon (whichever they use):**
     - Remove the app from `After=`, and remove `BindsTo=`/`PartOf=` to the app.
@@ -65,7 +65,7 @@ Then check the output in `podman/{preset}/`:
 - `app.quadlets` has `StopWhenUnneeded=yes`, or `no` when on-demand is disabled.
 - `grep -r BindsTo= podman/` finds nothing.
 - `app.quadlets` has `BuildArg=UID=`/`BuildArg=GID=` and no `Environment=UID=`.
-- `{app}-ondemand.socket` and `{app}-ondemand.service` exist, plus `{app}-schedule.timer` for `frankenphp-octane`.
+- `podman/ondemand/` has `{app}-ondemand.socket`, `{app}-ondemand.service`, `{app}-idle.timer` and `{app}-idle.service`, and `{app}-schedule.timer` exists for `frankenphp-octane`.
 - `podman/proxy/runtimes/sites/laravel.Caddyfile` points at `host.containers.internal:{listen port}` when on-demand, or at `systemd-{app}:8000` when not.
 
 Also check that the app has a `GET /up` route (`php artisan route:list --path=up`). Without it, the app never becomes healthy and fails to start.
@@ -77,7 +77,7 @@ Also check that the app has a `GET /up` route (`php artisan route:list --path=up
 ```bash
 lpod my-app down
 lpod install development/app.quadlets --replace
-lpod install development/my-app-ondemand.socket --replace   # only when on-demand
+lpod install ondemand/my-app-ondemand.socket --replace   # only when on-demand
 lpod install proxy/proxy.quadlets --replace
 lpod my-app-build restart                                   # rebuild with the new build args
 # every other service in use, e.g.:

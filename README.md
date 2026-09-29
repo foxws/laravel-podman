@@ -77,7 +77,7 @@ Install it as a regular dependency, not with `--dev`: the idle check runs `php a
 
 ## Quick start
 
-1. **Render** the default presets (`development` and `proxy`):
+1. **Render** the default presets (`development`, `ondemand` and `proxy`):
 
     ```bash
     php artisan podman:setup
@@ -96,7 +96,7 @@ Install it as a regular dependency, not with `--dev`: the idle check runs `php a
     lpod install development/app.quadlets --replace
     lpod install development/pgsql.quadlets --replace
     lpod install development/valkey.quadlets --replace
-    lpod install development/my-app-ondemand.socket --replace
+    lpod install ondemand/my-app-ondemand.socket --replace
     lpod install proxy/proxy.quadlets --replace
     ```
 

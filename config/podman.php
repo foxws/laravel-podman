@@ -1,5 +1,7 @@
 <?php
 
+use Foxws\Podman\Support\Idle\QueueIdleCheck;
+
 return [
     /*
     |--------------------------------------------------------------------------
@@ -33,6 +35,7 @@ return [
         // 'devcontainer',
         // 'frankenphp-octane',
         'development',
+        'ondemand',
         'proxy',
     ]),
 
@@ -210,5 +213,25 @@ return [
         'port' => env('PODMAN_ONDEMAND_PORT', 18000),
 
         'idle_timeout' => env('PODMAN_ONDEMAND_IDLE_TIMEOUT', '10min'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Idle Checks
+    |--------------------------------------------------------------------------
+    |
+    | While the app sleeps, the idle check stops a service once "podman:idle
+    | --service={service}" finds no work left. This maps each service to
+    | the checks that decide that. A service without checks counts as idle.
+    | To configure checks further, register them from a service provider
+    | with "app(PodmanIdle::class)->checks([...])" instead.
+    |
+    */
+
+    'idle' => [
+        'checks' => [
+            'queue' => [QueueIdleCheck::class],
+            'horizon' => [QueueIdleCheck::class],
+        ],
     ],
 ];

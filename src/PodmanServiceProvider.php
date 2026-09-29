@@ -29,5 +29,7 @@ class PodmanServiceProvider extends PackageServiceProvider
             Support\PodmanS3Manager::class,
             fn (): Support\PodmanS3Manager => Support\PodmanS3Manager::fromConfig(),
         );
+
+        $this->app->singleton(Support\Idle\PodmanIdle::class);
     }
 }

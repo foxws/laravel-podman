@@ -118,7 +118,7 @@ Then update `.env` (`DB_CONNECTION`, `DB_HOST`, ...) so Laravel connects to the 
 
 ### Replacing the queue worker with Horizon
 
-`app.quadlets` starts `queue` alongside the app through its `Wants=` line. To use `horizon` instead, publish the preset and change `queue` to `horizon` on that line:
+`app.quadlets` starts `queue` alongside the app through its `Wants=` line. To use `horizon` instead, publish the preset and change `queue` to `horizon` on that line (in `frankenphp-octane`, the line ends with `schedule.timer`):
 
 ```ini
 Wants={{application}}-mailpit.container {{application}}-horizon.container {{application}}-schedule.container
@@ -156,7 +156,7 @@ lpod install frankenphp-octane/app.quadlets --replace
 | --- | --- | --- |
 | `Requires=` | Hard dependency. If the target fails, this unit stops too | `app` → database and cache |
 | `After=` | Start order only | Together with `Requires=`/`Wants=` |
-| `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`reverb`/`vite`, and `queue`/`schedule` in `development` |
+| `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`reverb`/`vite`, `queue`/`schedule` in `development`, and `queue`/`schedule.timer` in `frankenphp-octane` |
 | `PartOf=` | Stopping or restarting the target also stops or restarts this unit | `reverb`/`vite`/`inertia-ssr`, and `horizon`/`queue`/`schedule` in `development` → `app` |
 | `BindsTo=` | Like `Requires=`, and also stops when the target stops. Not used: it counts as needing the target, which keeps an [on-demand](ondemand.md) app running | |
 

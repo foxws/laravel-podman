@@ -1,5 +1,5 @@
 [Unit]
-Description=Laravel queue workers and scheduler idle check timer
+Description=Laravel idle check timer
 
 [Timer]
 OnCalendar=*-*-* *:*:30

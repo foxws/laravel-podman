@@ -61,10 +61,10 @@ With the `proxy` preset, regenerate it too. Caddy then sends app traffic to the 
 
 | Service | `development` | `frankenphp-octane` |
 | --- | --- | --- |
-| Vite, Reverb, Inertia SSR | Stop with the app | Stop with the app |
+| Vite, Inertia SSR | Stop with the app | Stop with the app |
 | Queue worker / Horizon | Stops with the app ([opt out](#keeping-the-queue-worker-running)) | Starts at boot, stops once no jobs are left ([idle check](#the-idle-check)) |
 | Scheduler | Stops with the app | A timer runs `schedule:run` every minute while the app is awake |
-| Database, cache, other services | [Sleep](#sleeping-services) once nothing needs them | [Sleep](#sleeping-services) once nothing needs them |
+| Database, cache, Reverb, Mailpit, other services | [Sleep](#sleeping-services) once nothing needs them | [Sleep](#sleeping-services) once nothing needs them |
 
 The presets are the same with on-demand on or off. Only `StopWhenUnneeded=` on the app and services changes (`{{ondemand}}` renders `yes` or `no`), along with where the `proxy` preset sends traffic. The socket and timer units are always rendered, but only take effect once installed. Sidecars use `PartOf=` the app rather than `BindsTo=`: `BindsTo=` would count as needing the app and keep it running.
 
@@ -100,7 +100,7 @@ lpod install ondemand/my-app-idle.timer --replace
 
 In `frankenphp-octane`, the queue worker and Horizon already work this way.
 
-A worker that keeps running also needs the services its jobs use, such as `rustfs` for uploads or `typesense` for search indexing. Otherwise they [sleep](#sleeping-services) with the app while jobs still use them. Add a `Wants=` line under the worker's `[Unit]`:
+A worker that keeps running also needs the services its jobs use, such as `rustfs` for uploads, `typesense` for search indexing, `reverb` for broadcast events or `mailpit` for queued mail. Otherwise they [sleep](#sleeping-services) with the app while jobs still use them. Add a `Wants=` line under the worker's `[Unit]`:
 
 ```ini
 Wants={{application}}-rustfs.container {{application}}-typesense.container

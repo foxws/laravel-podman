@@ -1,7 +1,7 @@
 # FileName={{application}}-mailpit
 [Unit]
 Description=Mailpit container
-PartOf={{application}}.container
+StopWhenUnneeded={{ondemand}}
 
 [Container]
 Image=docker.io/axllent/mailpit:latest

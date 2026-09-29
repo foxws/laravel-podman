@@ -157,7 +157,7 @@ lpod install frankenphp-octane/app.quadlets --replace
 | `Requires=` | Hard dependency. If the target fails, this unit stops too | `app` → database and cache |
 | `After=` | Start order only | Together with `Requires=`/`Wants=` |
 | `Wants=` | Soft dependency. Tries to start the target, but doesn't fail without it | `app` → `mailpit`/`reverb`/`vite`, `queue`/`schedule` in `development`, and `queue`/`schedule.timer` in `frankenphp-octane` |
-| `PartOf=` | Stopping or restarting the target also stops or restarts this unit | `reverb`/`vite`/`inertia-ssr`, and `horizon`/`queue`/`schedule` in `development` → `app` |
+| `PartOf=` | Stopping or restarting the target also stops or restarts this unit | `vite`/`inertia-ssr`, and `horizon`/`queue`/`schedule` in `development` → `app` |
 | `BindsTo=` | Like `Requires=`, and also stops when the target stops. Not used: it counts as needing the target, which keeps an [on-demand](ondemand.md) app running | |
 
 In `frankenphp-octane`, the queue worker and Horizon start at boot on their own (`[Install]`), and a `systemd/schedule.timer` runs `schedule:run` every minute. Install it with `lpod install frankenphp-octane/my-app-schedule.timer`.

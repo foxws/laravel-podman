@@ -153,6 +153,12 @@ it('lets services sleep with the app by default', function (string $preset) {
         ->and(File::get("{$this->publishPath}/{$preset}/typesense.quadlets"))
         ->toContain('StopWhenUnneeded=yes')
         ->not->toContain('PartOf=');
+
+    foreach (['mailpit', 'reverb'] as $service) {
+        expect(File::get("{$this->publishPath}/{$preset}/{$service}.quadlets"))
+            ->toContain('StopWhenUnneeded=yes')
+            ->not->toContain('PartOf=');
+    }
 })->with(['development', 'frankenphp-octane']);
 
 it('keeps services running when on-demand is disabled', function () {

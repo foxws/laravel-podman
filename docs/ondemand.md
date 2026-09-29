@@ -36,11 +36,10 @@ PODMAN_ONDEMAND_ENABLED=false
 
 | Config key | Env variable | Default | Description |
 | --- | --- | --- | --- |
-| `ondemand.enabled` | `PODMAN_ONDEMAND_ENABLED` | `true` | Render presets on-demand |
+| `ondemand.enabled` | `PODMAN_ONDEMAND_ENABLED` | `true` | Render presets on-demand, including [sleeping services](#sleeping-services) |
 | `ondemand.listen` | `PODMAN_ONDEMAND_LISTEN` | `8000` | Where the socket listens (systemd `ListenStream=`), e.g. `8000` or `192.168.1.10:8000` |
 | `ondemand.port` | `PODMAN_ONDEMAND_PORT` | `18000` | Loopback port the app is published on for the socket proxy |
 | `ondemand.idle_timeout` | `PODMAN_ONDEMAND_IDLE_TIMEOUT` | `10min` | How long the app may be idle before it stops |
-| `ondemand.services` | `PODMAN_ONDEMAND_SERVICES` | `true` | Let the database, cache and other services sleep too. See [Sleeping services](#sleeping-services) |
 
 Running several apps on one host? Give each its own `listen` and `port`.
 
@@ -65,7 +64,7 @@ With the `proxy` preset, regenerate it too. Caddy then sends app traffic to the 
 | Scheduler | Stops with the app | A timer runs `schedule:run` every minute while the app is awake |
 | Database, cache, other services | [Sleep](#sleeping-services) once nothing needs them | [Sleep](#sleeping-services) once nothing needs them |
 
-The presets are the same with on-demand on or off. Only `StopWhenUnneeded=` changes (`{{ondemand}}` on the app and `{{ondemandServices}}` on services render `yes` or `no`), along with where the `proxy` preset sends traffic. The socket and timer units are always rendered, but only take effect once installed. Sidecars use `PartOf=` the app rather than `BindsTo=`: `BindsTo=` would count as needing the app and keep it running.
+The presets are the same with on-demand on or off. Only `StopWhenUnneeded=` on the app and services changes (`{{ondemand}}` renders `yes` or `no`), along with where the `proxy` preset sends traffic. The socket and timer units are always rendered, but only take effect once installed. Sidecars use `PartOf=` the app rather than `BindsTo=`: `BindsTo=` would count as needing the app and keep it running.
 
 ### Keeping the queue worker running
 
@@ -101,17 +100,15 @@ In `frankenphp-octane`, the queue worker and Horizon already work this way.
 
 ## Sleeping services
 
-The database, cache and other services sleep too, once nothing needs them anymore: the app is idle and no jobs are left. Nothing runs until the next request, much like hibernation on a managed platform. To keep them running all the time, turn it off:
+The database, cache and other services sleep too, once nothing needs them anymore: the app is idle and no jobs are left. Nothing runs until the next request, much like hibernation on a managed platform.
 
-```ini
-PODMAN_ONDEMAND_SERVICES=false
-```
+`PODMAN_ONDEMAND_ENABLED=false` keeps the app and every service running. Do that when something outside the app needs them, such as a database client, a backup job or a public S3 bucket (see [caveats](#caveats)).
 
-Keep them running when something outside the app needs them, such as a database client, a backup job or a public S3 bucket (see [caveats](#caveats)). Sleeping services build on the on-demand app, so `PODMAN_ONDEMAND_ENABLED=false` keeps them running as well.
+To keep only one service running, such as the database for a client, publish the preset and set `StopWhenUnneeded=no` in that service's quadlet.
 
 ### How it works
 
-`{{ondemandServices}}` renders `StopWhenUnneeded=yes` on the database, cache, search and storage services. systemd then stops a service once no running unit `Requires=` or `Wants=` it anymore:
+`{{ondemand}}` renders `StopWhenUnneeded=yes` on the database, cache, search and storage services. systemd then stops a service once no running unit `Requires=` or `Wants=` it anymore:
 
 1. The app goes idle and stops, along with its sidecars.
 2. The [idle check](#the-idle-check) stops the queue workers once no jobs are left, and the `frankenphp-octane` scheduler timer.
@@ -132,14 +129,14 @@ lpod install frankenphp-octane/my-app-idle.timer --replace   # or development/
 
 Once a minute, while the app is asleep, it runs `php artisan podman:idle` in each running queue worker and Horizon. If no jobs are waiting or running, it stops that worker. In `frankenphp-octane`, once every worker is stopped, it also stops the scheduler timer. The next request starts them again through the app's `Wants=` line.
 
-A long job keeps the stack awake until it's done. Delayed jobs count too, so they run on time. If `podman:idle` fails or doesn't exist, for example because the package was installed with `--dev` and the production image leaves it out, the workers keep running. The check does nothing when `PODMAN_ONDEMAND_SERVICES=false`.
+A long job keeps the stack awake until it's done. Delayed jobs count too, so they run on time. If `podman:idle` fails or doesn't exist, for example because the package was installed with `--dev` and the production image leaves it out, the workers keep running. The check does nothing when `PODMAN_ONDEMAND_ENABLED=false`.
 
 `podman:idle` checks the default queue connection and every Horizon supervisor's queues. Pass `--connection=` and `--queue=` to check others.
 
 ### Caveats
 
 - **Cold start.** The first request after idling also waits for the services, which adds a few seconds.
-- **The scheduler doesn't run while the stack sleeps.** Tasks that must run on time, like nightly backups or reports, need `PODMAN_ONDEMAND_SERVICES=false`.
+- **The scheduler doesn't run while the stack sleeps.** Tasks that must run on time, like nightly backups or reports, need `PODMAN_ONDEMAND_ENABLED=false`.
 - **Host ports don't wake anything.** A database client, or a request to RustFS or Mailpit through the `proxy` preset, can't start a sleeping service. Open the app first, e.g. with `lpod my-app open`. Starting the service by hand doesn't help: nothing needs it, so systemd stops it again.
 - **Health checks.** Only PostgreSQL, MySQL, MariaDB, Valkey and Redis have one. Other services count as started as soon as their container runs.
 

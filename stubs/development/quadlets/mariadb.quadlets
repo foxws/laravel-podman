@@ -1,7 +1,7 @@
 # FileName={{application}}-mariadb
 [Unit]
 Description=MariaDB container
-StopWhenUnneeded={{ondemandServices}}
+StopWhenUnneeded={{ondemand}}
 
 [Container]
 Image=docker.io/library/mariadb:13

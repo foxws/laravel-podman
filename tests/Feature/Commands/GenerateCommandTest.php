@@ -146,8 +146,8 @@ it('lets services sleep with the app by default', function (string $preset) {
         ->toMatch("/^Wants=.*{$application}-rustfs\\.container/m");
 })->with(['development', 'frankenphp-octane']);
 
-it('keeps services running when they are not on-demand', function (string $preset) {
-    config(['podman.quadlet_prefix' => 'acme', 'podman.ondemand.services' => false]);
+it('keeps services running when on-demand is disabled', function (string $preset) {
+    config(['podman.quadlet_prefix' => 'acme', 'podman.ondemand.enabled' => false]);
 
     $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
 

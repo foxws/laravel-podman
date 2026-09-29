@@ -116,16 +116,6 @@ it('renders the on-demand setting as a systemd boolean', function () {
     expect($this->config->onDemand())->toBe('no');
 });
 
-it('only lets services sleep when the app itself is on-demand', function (bool $app, bool $services, string $expected) {
-    config(['podman.ondemand.enabled' => $app, 'podman.ondemand.services' => $services]);
-
-    expect($this->config->onDemandServices())->toBe($expected);
-})->with([
-    'both enabled' => [true, true, 'yes'],
-    'services disabled' => [true, false, 'no'],
-    'app always-on' => [false, true, 'no'],
-]);
-
 it('reads the port from the on-demand listen address', function (string $listen) {
     config(['podman.ondemand.listen' => $listen]);
 

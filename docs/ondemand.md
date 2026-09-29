@@ -121,7 +121,7 @@ To keep only one service running, such as the database for a client, publish the
 1. The app goes idle and stops, along with its sidecars.
 2. The [idle check](#the-idle-check) stops the queue workers once no jobs are left, and the `production` scheduler timer.
 3. Nothing needs the database and cache anymore, so they stop too.
-4. The next request starts the app, which starts the services, workers and scheduler timer it `Requires=` or `Wants=`. The services report ready through a health check (`Notify=healthy`), so the app doesn't connect before they accept connections.
+4. The next request starts the app, which starts the services, workers and scheduler timer it `Requires=` or `Wants=`. The services report ready through a health check (`Notify=healthy`). The app waits for the ones on its `After=` line, the database and cache, so it doesn't connect before they accept connections.
 
 Traffic between containers doesn't pass through the on-demand socket. A service stays up because a running unit needs it, not because of an idle timer, so a query from the app or a worker never hits a stopped database.
 
@@ -131,11 +131,17 @@ Traffic between containers doesn't pass through the on-demand socket. A service 
 Wants={{application}}-mailpit.container {{application}}-queue.container {{application}}-schedule.container {{application}}-rustfs.container
 ```
 
+`Wants=` starts the service alongside the app, but the app doesn't wait for it. If the first request after waking needs it, such as media from `rustfs` or search from `typesense`, also add it to the app's `After=` line. The app then starts once the service is healthy, which makes waking slower by the time the service takes to start. Do the same for a kept-running worker, so it doesn't pick up a job before the service is ready:
+
+```ini
+After={{application}}-pgsql.container {{application}}-valkey.container {{application}}-rustfs.container
+```
+
 ### The idle check
 
 Queue workers that keep running while the app is idle would keep the database and cache awake. The `ondemand` preset's idle check (`lpod install ondemand/my-app-idle.timer`) handles this for both `development` and `production`.
 
-Once a minute, while the app is asleep, it runs `php artisan podman:idle` in a running queue worker or Horizon. If the app has no work in progress, it stops the workers and the scheduler timer, if one is running (`production`). The next request starts them again through the app's `Wants=` line, which lists `queue` and, in `production`, `schedule.timer`. Using Horizon? Put `horizon` on that line instead of `queue`.
+Once a minute, while the app is asleep, it runs `php artisan podman:idle` in a running queue worker or Horizon. If the app has no work in progress, it stops the workers and the scheduler timer, if one is running (`production`). Before stopping anything, it checks again that the app is still asleep, so a request that wakes the app during the check keeps its workers running. The next request starts them again through the app's `Wants=` line, which lists `queue` and, in `production`, `schedule.timer`. Using Horizon? Put `horizon` on that line instead of `queue`.
 
 A long job keeps the stack awake until it's done. Delayed jobs count too, so they run on time. If `podman:idle` fails or doesn't exist, for example because the package was installed with `--dev` and the production image leaves it out, the workers keep running. The check does nothing when `PODMAN_ONDEMAND_ENABLED=false`.
 

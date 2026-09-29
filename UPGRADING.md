@@ -1,5 +1,60 @@
 # Upgrading
 
+## From v4 to v5
+
+v5 lets the whole stack sleep, not just the app. Once the app is idle and no work is left, the queue workers, the scheduler timer and every service stop too: the database, cache, search, storage, Mailpit and Reverb. The next request starts them again. See [Sleeping services](docs/ondemand.md#sleeping-services).
+
+Using an AI agent with [Laravel Boost](https://github.com/laravel/boost)? Run `php artisan boost:update` after upgrading, then ask it to upgrade laravel-podman. The `podman-upgrade` skill walks it through the steps below, including your published presets.
+
+### 1. Update the package
+
+Install it as a regular dependency, not with `--dev`. The idle check runs `php artisan podman:idle` inside your containers, and production images are built without dev dependencies:
+
+```bash
+composer remove foxws/laravel-podman --dev
+composer require foxws/laravel-podman:^5.0
+```
+
+If you published `config/podman.php`, copy the new `idle` block from the [package config](config/podman.php). If you set `presets` (or `PODMAN_DEFAULT_PRESETS`), add `ondemand` to it: the on-demand socket moved into this new preset.
+
+### 2. Decide whether services should sleep
+
+Services follow `PODMAN_ONDEMAND_ENABLED`, like the app. To keep the app and every service running all the time, set it to `false`.
+
+With it on, keep in mind:
+
+- Scheduled tasks only run while the app is awake. Tasks that must run on time, like nightly backups, need `PODMAN_ONDEMAND_ENABLED=false`.
+- Host ports don't wake a sleeping service. A database client, or an S3 URL requested while the app sleeps, gets no answer.
+
+### 3. Update published presets
+
+Skip this step if you haven't published any presets. Otherwise, make these changes to each published `development` or `frankenphp-octane` preset. Compare with the new files in `vendor/foxws/laravel-podman/stubs/{preset}`.
+
+- **Services** (`pgsql`, `mysql`, `mariadb`, `mongodb`, `valkey`, `redis`, `memcached`, `rustfs`, `meilisearch`, `typesense`, `mailpit`, `reverb`): add `StopWhenUnneeded={{ondemand}}` under `[Unit]`. For `typesense`, `mailpit` and `reverb`, it replaces `PartOf={{application}}.container`.
+- **Health checks:** add the vendor's `Notify=healthy` and `Health*=` block under `[Container]` to `pgsql`, `mysql`, `mariadb`, `mongodb`, `valkey`, `redis`, `rustfs`, `meilisearch`, `typesense` and `mailpit`, so the app waits until they accept connections.
+- **`quadlets/app.quadlets`:** a service with `StopWhenUnneeded=` that nothing needs stops right after it starts. Add every service you use besides the database and cache to `Wants=`, e.g. `{{application}}-rustfs.container`. In `frankenphp-octane`, also add the queue worker (or Horizon) and `{{application}}-schedule.timer`, so they wake with the app.
+- **Queue workers that keep running** (always in `frankenphp-octane`, or a `development` worker you took out of `PartOf=`): add the services their jobs use to a `Wants=` line under `[Unit]`, e.g. `rustfs` for uploads or `mailpit` for queued mail. Otherwise those services sleep with the app mid-job.
+- **`systemd/`:** delete `ondemand.socket` and `ondemand.service`. They live in the `ondemand` preset now. `frankenphp-octane` keeps `schedule.timer`.
+
+### 4. Regenerate and reinstall
+
+```bash
+php artisan podman:setup
+lpod install ondemand/my-app-ondemand.socket --replace
+lpod install ondemand/my-app-idle.timer --replace
+```
+
+The socket keeps its unit name, so installing it from its new path replaces the old one. Then reinstall every service you use with `--replace`, so they pick up `StopWhenUnneeded=` and their health check, e.g. `lpod install development/pgsql.quadlets --replace`.
+
+### 5. Check it
+
+Let the app idle for `PODMAN_ONDEMAND_IDLE_TIMEOUT` (set it to `1min` to try it), then check that everything stopped:
+
+```bash
+systemctl --user list-units 'my-app*'
+lpod my-app open   # wakes the app and its services again
+```
+
 ## From v3 to v4
 
 v4 makes [on-demand services](docs/ondemand.md) the default. The app starts on its first request and stops after 10 minutes without traffic. A systemd socket listens on port `8000`, and the app itself is published on `127.0.0.1:18000`.
@@ -69,7 +124,7 @@ Skip this step if you haven't published any presets (nothing in `containers/stub
 - **`development` sidecars** (`queue`, `horizon`, `schedule`, `reverb`, `vite`): add `HealthCmd=none` under `[Container]`. They don't run FrankenPHP's web server, so its built-in health check always fails.
 - **Database and cache quadlets:** pin the image tags, as in step 3.
 - **`runtimes/Containerfile`:** replace `FROM docker.io/dunglas/frankenphp:latest` with `ARG FRANKENPHP_VERSION=1-php8.5` followed by `FROM docker.io/dunglas/frankenphp:${FRANKENPHP_VERSION}`. You can also drop the final "Clean up unnecessary files" layer. Keep the build-time `key:generate` in `frankenphp-octane`: the frontend build can boot Laravel (Wayfinder does), which needs a key.
-- **`systemd/`:** `frankenphp-octane` needs `schedule.timer` from the package preset. The on-demand socket and idle check live in the `ondemand` preset, so add `ondemand` to your `PODMAN_DEFAULT_PRESETS` if you set it.
+- **`systemd/`:** copy the folder from the package preset. It holds `ondemand.socket` and `ondemand.service`, plus `schedule.timer` for `frankenphp-octane`.
 - **`frankenphp-octane` only:**
   - **`queue.quadlets` / `horizon.quadlets`:**
     - Drop the app from `After=`.
@@ -93,7 +148,7 @@ Stop the app first, so its old port is free:
 lpod my-app down
 php artisan podman:setup
 lpod install development/app.quadlets --replace
-lpod install ondemand/my-app-ondemand.socket --replace   # skip when PODMAN_ONDEMAND_ENABLED=false
+lpod install development/my-app-ondemand.socket --replace   # skip when PODMAN_ONDEMAND_ENABLED=false
 lpod install proxy/proxy.quadlets --replace
 ```
 

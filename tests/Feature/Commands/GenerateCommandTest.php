@@ -132,33 +132,53 @@ it('renders the app on-demand by default', function (string $preset) {
         ->toContain('HealthStartupInterval=1s');
 })->with(['development', 'frankenphp-octane']);
 
-it('keeps services running unless they are on-demand too', function (string $preset) {
+it('lets services sleep with the app by default', function (string $preset) {
     $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
 
-    expect(File::get("{$this->publishPath}/{$preset}/pgsql.quadlets"))->toContain('StopWhenUnneeded=no');
-
-    config(['podman.ondemand.services' => true]);
-
-    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+    $application = config('podman.quadlet_prefix');
 
     expect(File::get("{$this->publishPath}/{$preset}/pgsql.quadlets"))
         ->toContain('StopWhenUnneeded=yes')
         ->toContain("Notify=healthy\nHealthStartupCmd=pg_isready -q -h 127.0.0.1")
         ->and(File::get("{$this->publishPath}/{$preset}/rustfs.quadlets"))
-        ->toContain('StopWhenUnneeded=yes');
+        ->toContain('StopWhenUnneeded=yes')
+        ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
+        ->toMatch("/^Wants=.*{$application}-rustfs\\.container/m");
 })->with(['development', 'frankenphp-octane']);
 
-it('renders an idle check that stops development queue workers', function () {
+it('keeps services running when they are not on-demand', function (string $preset) {
+    config(['podman.quadlet_prefix' => 'acme', 'podman.ondemand.services' => false]);
+
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/{$preset}/pgsql.quadlets"))->toContain('StopWhenUnneeded=no')
+        ->and(File::get("{$this->publishPath}/{$preset}/acme-idle.service"))->toContain('[ no = yes ]');
+})->with(['development', 'frankenphp-octane']);
+
+it('renders an idle check that stops queue workers', function (string $preset) {
     config(['podman.quadlet_prefix' => 'acme']);
 
-    $this->artisan('podman:generate', ['preset' => 'development'])->assertExitCode(0);
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
 
-    expect(File::get("{$this->publishPath}/development/acme-idle.timer"))
+    expect(File::get("{$this->publishPath}/{$preset}/acme-idle.timer"))
         ->toContain('WantedBy=timers.target')
-        ->and(File::get("{$this->publishPath}/development/acme-idle.service"))
-        ->toContain("ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme.service'")
+        ->and(File::get("{$this->publishPath}/{$preset}/acme-idle.service"))
+        ->toContain('[ yes = yes ] && ! systemctl $$scope --quiet is-active acme.service')
         ->toContain('podman exec systemd-acme-$$worker php -d variables_order=EGPCS /app/artisan podman:idle')
-        ->toContain('systemctl --user stop acme-$$worker.service');
+        ->toContain('systemctl $$scope stop acme-$$worker.service');
+})->with(['development', 'frankenphp-octane']);
+
+it('stops the frankenphp-octane scheduler timer once its workers are idle', function () {
+    config(['podman.quadlet_prefix' => 'acme']);
+
+    $this->artisan('podman:generate', ['preset' => 'frankenphp-octane'])->assertExitCode(0);
+
+    $path = "{$this->publishPath}/frankenphp-octane";
+
+    expect(File::get("{$path}/acme-idle.service"))
+        ->toContain('[ $$busy -eq 1 ] || systemctl $$scope stop acme-schedule.timer')
+        ->and(File::get("{$path}/app.quadlets"))
+        ->toMatch('/^Wants=.*acme-queue\\.container acme-horizon\\.container acme-schedule\\.timer/m');
 });
 
 it('runs the frankenphp-octane queue worker and scheduler independently of the app', function () {
@@ -170,8 +190,6 @@ it('runs the frankenphp-octane queue worker and scheduler independently of the a
     expect(File::get("{$path}/queue.quadlets"))
         ->toContain('WantedBy=default.target')
         ->not->toContain("{$application}.container")
-        ->and(File::get("{$path}/app.quadlets"))
-        ->not->toContain("{$application}-queue.container")
         ->and(File::get("{$path}/schedule.quadlets"))
         ->toContain('artisan schedule:run')
         ->toContain('Type=oneshot')

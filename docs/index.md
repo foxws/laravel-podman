@@ -22,7 +22,7 @@ This package turns your Laravel app's config into [Podman Quadlet](https://docs.
 ## Installation
 
 ```bash
-composer require foxws/laravel-podman --dev
+composer require foxws/laravel-podman
 ```
 
 ```bash

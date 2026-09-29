@@ -38,7 +38,7 @@ Upgrading from v3? See [UPGRADING.md](UPGRADING.md).
 - Make that shorter or longer with `PODMAN_ONDEMAND_IDLE_TIMEOUT`, e.g. `5min`, `30min` or `2h`.
 - Works behind the bundled proxy or your own, such as a NAS or Nginx on another machine.
 - Turn it off with `PODMAN_ONDEMAND_ENABLED=false` to keep the app running all the time.
-- On a development machine, let the database, cache and other services sleep too with `PODMAN_ONDEMAND_SERVICES=true`.
+- The database, cache and other services sleep too, once no jobs are left. Keep them running with `PODMAN_ONDEMAND_SERVICES=false`.
 
 **Native to your system**
 
@@ -69,11 +69,11 @@ Upgrading from v3? See [UPGRADING.md](UPGRADING.md).
 ## Installation
 
 ```bash
-composer require foxws/laravel-podman --dev
+composer require foxws/laravel-podman
 php artisan vendor:publish --tag="podman-config"
 ```
 
-The package only renders Quadlet files, so a dev dependency is enough. See [Customizing](https://foxws.nl/laravel-podman/customizing) for every config key.
+Install it as a regular dependency, not with `--dev`: the idle check runs `php artisan podman:idle` inside your production containers too. See [Customizing](https://foxws.nl/laravel-podman/customizing) for every config key.
 
 ## Quick start
 

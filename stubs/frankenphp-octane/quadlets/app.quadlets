@@ -13,7 +13,7 @@ Description=Laravel App (Octane) container
 StopWhenUnneeded={{ondemand}}
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
-Wants={{application}}-mailpit.container
+Wants={{application}}-mailpit.container {{application}}-queue.container {{application}}-horizon.container {{application}}-schedule.timer {{application}}-rustfs.container {{application}}-typesense.container {{application}}-meilisearch.container {{application}}-memcached.container {{application}}-mongodb.container
 
 [Container]
 Image={{application}}.build

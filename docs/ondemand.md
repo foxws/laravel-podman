@@ -155,7 +155,7 @@ Pick checks with `--services`. Unknown names fail, so a typo keeps the workers r
 php artisan podman:idle --services=queue,database
 ```
 
-The checks are listed in `config/podman.php`:
+You can change the checks in two ways. To add or remove checks, edit the list in `config/podman.php` (publish it with `php artisan vendor:publish --tag="podman-config"`). The list takes class names, so each check runs with its defaults:
 
 ```php
 'idle' => [
@@ -167,12 +167,12 @@ The checks are listed in `config/podman.php`:
 ],
 ```
 
-To configure them, register checks from a service provider. Registered checks replace the config list:
+To configure a check, like the queues it watches, register the checks from a service provider's `boot()` method instead. Registered checks replace the config list, so include every check you want:
 
 ```php
 use Foxws\Podman\Support\Idle\Checks\DatabaseCheck;
-use Foxws\Podman\Support\Idle\PodmanIdle;
 use Foxws\Podman\Support\Idle\Checks\QueueCheck;
+use Foxws\Podman\Support\Idle\PodmanIdle;
 
 app(PodmanIdle::class)->checks([
     QueueCheck::new()->connection('redis')->queues(['default', 'media']),

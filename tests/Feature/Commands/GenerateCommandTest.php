@@ -154,6 +154,11 @@ it('lets services sleep with the app by default', function (string $preset) {
         ->toContain('StopWhenUnneeded=yes')
         ->not->toContain('PartOf=');
 
+    foreach (['pgsql', 'mysql', 'mariadb', 'mongodb', 'valkey', 'redis', 'rustfs', 'typesense', 'meilisearch', 'mailpit'] as $service) {
+        expect(File::get("{$this->publishPath}/{$preset}/{$service}.quadlets"))
+            ->toContain("Notify=healthy\nHealthStartupCmd=");
+    }
+
     foreach (['mailpit', 'reverb'] as $service) {
         expect(File::get("{$this->publishPath}/{$preset}/{$service}.quadlets"))
             ->toContain('StopWhenUnneeded=yes')

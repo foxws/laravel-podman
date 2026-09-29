@@ -121,7 +121,7 @@ To keep only one service running, such as the database for a client, publish the
 1. The app goes idle and stops, along with its sidecars.
 2. The [idle check](#the-idle-check) stops the queue workers once no jobs are left, and the `frankenphp-octane` scheduler timer.
 3. Nothing needs the database and cache anymore, so they stop too.
-4. The next request starts the app, which starts the services, workers and scheduler timer it `Requires=` or `Wants=`. PostgreSQL, MySQL, MariaDB, Valkey and Redis report ready through a health check (`Notify=healthy`), so the app doesn't connect before they accept connections.
+4. The next request starts the app, which starts the services, workers and scheduler timer it `Requires=` or `Wants=`. The services report ready through a health check (`Notify=healthy`), so the app doesn't connect before they accept connections.
 
 Traffic between containers doesn't pass through the on-demand socket. A service stays up because a running unit needs it, not because of an idle timer, so a query from the app or a worker never hits a stopped database.
 
@@ -209,7 +209,7 @@ class ImportCheck extends IdleCheck
 - **Cold start.** The first request after idling also waits for the services, which adds a few seconds.
 - **The scheduler doesn't run while the stack sleeps.** Tasks that must run on time, like nightly backups or reports, need `PODMAN_ONDEMAND_ENABLED=false`.
 - **Host ports don't wake anything.** A database client, or a request to RustFS or Mailpit through the `proxy` preset, can't start a sleeping service. Open the app first, e.g. with `lpod my-app open`. Starting the service by hand doesn't help: nothing needs it, so systemd stops it again.
-- **Health checks.** Only PostgreSQL, MySQL, MariaDB, Valkey and Redis have one. Other services count as started as soon as their container runs.
+- **Health checks.** Every service reports ready through a health check, except Memcached (it starts right away) and Reverb. Those count as started as soon as their container runs.
 
 ## External proxies
 

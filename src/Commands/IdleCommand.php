@@ -4,49 +4,54 @@ declare(strict_types=1);
 
 namespace Foxws\Podman\Commands;
 
-use Foxws\Podman\Support\Idle\IdleCheck;
 use Foxws\Podman\Support\Idle\PodmanIdle;
 use Illuminate\Console\Command;
-use Illuminate\Support\Collection;
 use Symfony\Component\Console\Attribute\AsCommand;
+
+use function Laravel\Prompts\error;
 
 #[AsCommand(name: 'podman:idle')]
 class IdleCommand extends Command
 {
     public $signature = 'podman:idle
-        {--service=* : The services to check, e.g. "horizon" or "my-app-horizon" (default: every registered check)}
+        {--services= : Comma-separated checks to run, e.g. "queue,database" (default: every check the app uses)}
     ';
 
-    public $description = 'Exit successfully when the given services have no work left, so the idle check can stop them while the app sleeps.';
+    public $description = 'Exit successfully when the app has no work in progress, so the idle check can stop its workers while it sleeps.';
 
     public function handle(PodmanIdle $idle): int
     {
-        $busy = $this->checks($idle)
-            ->map(fn (IdleCheck $check): array => [$check, $check->run()])
-            ->reject(fn (array $result): bool => $result[1]->isIdle);
+        $option = $this->option('services');
 
-        foreach ($busy as [$check, $result]) {
-            $this->line("{$check->name()}: {$result->message}");
+        $services = array_values(array_filter(array_map(
+            fn (string $service): string => trim($service),
+            explode(',', is_string($option) ? $option : ''),
+        )));
+
+        $checks = $services === [] ? $idle->enabledChecks() : $idle->registeredChecks();
+
+        if ($unknown = array_diff($services, array_keys($checks))) {
+            error('Unknown idle checks: '.implode(', ', $unknown).'. Available: '.implode(', ', array_keys($idle->registeredChecks())).'.');
+
+            return self::FAILURE;
         }
 
-        return $busy->isEmpty() ? self::SUCCESS : self::FAILURE;
-    }
-
-    /**
-     * @return Collection<int, IdleCheck>
-     */
-    protected function checks(PodmanIdle $idle): Collection
-    {
-        /** @var array<int, string> $services */
-        $services = (array) $this->option('service');
-
-        if ($services === []) {
-            return Collection::make($idle->registeredChecks());
+        if ($services !== []) {
+            $checks = array_intersect_key($checks, array_flip($services));
         }
 
-        return Collection::make($services)
-            ->flatMap(fn (string $service): array => $idle->checksFor($service))
-            ->unique(fn (IdleCheck $check): int => spl_object_id($check))
-            ->values();
+        $busy = 0;
+
+        foreach ($checks as $check) {
+            $result = $check->run();
+
+            if (! $result->isIdle) {
+                $busy++;
+
+                $this->line("{$check->name()}: {$result->message}");
+            }
+        }
+
+        return $busy === 0 ? self::SUCCESS : self::FAILURE;
     }
 }

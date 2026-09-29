@@ -125,7 +125,7 @@ Deploying with `frankenphp-octane`? Also set the secrets it expects, such as you
 | `podman:publish PRESET` | Copy a preset into your project to customize it |
 | `podman:generate PRESET` | Render a single preset |
 | `podman:s3-setup` | Create S3 buckets and apply a CORS policy (needs `aws/aws-sdk-php`) |
-| `podman:idle` | Succeed when no jobs are left, for stopping idle queue workers |
+| `podman:idle` | Succeed when the app has no work in progress, for stopping idle queue workers |
 
 Everything else, like installing, starting, removing and setting secrets, is done with [`lpod`](https://foxws.nl/laravel-podman/lpod):
 

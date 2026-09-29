@@ -23,6 +23,18 @@ class QueueIdleCheck extends IdleCheck
      */
     protected array $queues = [];
 
+    public function name(): string
+    {
+        return 'queue';
+    }
+
+    public function isEnabled(): bool
+    {
+        $connection = $this->connection ?? Config::string('queue.default');
+
+        return ! in_array(Config::get("queue.connections.{$connection}.driver"), [null, 'sync', 'null'], true);
+    }
+
     public function connection(string $connection): static
     {
         $this->connection = $connection;

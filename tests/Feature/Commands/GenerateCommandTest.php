@@ -171,9 +171,8 @@ it('renders an idle check that stops queue workers, then the scheduler timer', f
         ->toContain('WantedBy=timers.target')
         ->and(File::get("{$this->publishPath}/ondemand/acme-idle.service"))
         ->toContain('[ yes = yes ] && ! systemctl $$scope --quiet is-active acme.service')
-        ->toContain('podman exec systemd-acme-$$worker php -d variables_order=EGPCS /app/artisan podman:idle --service=$$worker')
-        ->toContain('systemctl $$scope stop acme-$$worker.service')
-        ->toContain('[ $$busy -eq 1 ] || ! systemctl $$scope --quiet is-active acme-schedule.timer || systemctl $$scope stop acme-schedule.timer');
+        ->toContain('podman exec systemd-acme-$$worker php -d variables_order=EGPCS /app/artisan podman:idle || exit 0')
+        ->toContain('for unit in queue.service horizon.service schedule.timer; do ! systemctl $$scope --quiet is-active acme-$$unit || systemctl $$scope stop acme-$$unit; done');
 });
 
 it('wakes the frankenphp-octane queue worker and scheduler timer with the app', function () {

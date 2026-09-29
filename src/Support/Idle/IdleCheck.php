@@ -5,16 +5,12 @@ declare(strict_types=1);
 namespace Foxws\Podman\Support\Idle;
 
 /**
- * Decides whether a service has work left, so the idle check may stop it
- * while the app sleeps. Checks without services apply to every service.
+ * Decides whether a part of the app, like its queue or database, still has
+ * work in progress, so the idle check may stop the workers while the app
+ * sleeps.
  */
 abstract class IdleCheck
 {
-    /**
-     * @var array<int, string>
-     */
-    protected array $services = [];
-
     final public function __construct() {}
 
     public static function new(): static
@@ -22,21 +18,18 @@ abstract class IdleCheck
         return new static;
     }
 
-    public function services(string ...$services): static
-    {
-        $this->services = array_values($services);
+    /**
+     * The name to select this check with, e.g. "podman:idle --services=queue".
+     */
+    abstract public function name(): string;
 
-        return $this;
-    }
-
-    public function appliesTo(string $service): bool
+    /**
+     * Whether the app uses what this check looks at, going by its config
+     * (e.g. QUEUE_CONNECTION). "podman:idle" skips unused checks.
+     */
+    public function isEnabled(): bool
     {
-        return $this->services === [] || in_array($service, $this->services, true);
-    }
-
-    public function name(): string
-    {
-        return class_basename($this);
+        return true;
     }
 
     abstract public function run(): IdleResult;

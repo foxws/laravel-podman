@@ -54,14 +54,14 @@ php artisan podman:s3-setup
 
 ## `podman:idle`
 
-Exits successfully when no jobs are waiting or running, and fails otherwise. The `development` preset's idle check runs it in a queue worker before stopping it. See [Sleeping services](ondemand.md#stopping-idle-queue-workers).
+Exits successfully when the app has no work in progress, and fails otherwise. The `ondemand` preset's idle check runs it in a queue worker before stopping the workers. See [Idle checks](ondemand.md#idle-checks).
 
 ```bash
-# The default connection's queue and every Horizon supervisor's queues
+# Every check for something the app uses (queue, database, broadcast, scout)
 php artisan podman:idle
 
-# Only these queues
-php artisan podman:idle --connection=redis --queue=default --queue=media
+# Only these checks
+php artisan podman:idle --services=queue,database
 ```
 
 ## Backing up volumes

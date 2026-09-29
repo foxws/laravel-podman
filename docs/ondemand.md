@@ -129,37 +129,54 @@ Wants={{application}}-mailpit.container {{application}}-queue.container {{applic
 
 Queue workers that keep running while the app is idle would keep the database and cache awake. The `ondemand` preset's idle check (`lpod install ondemand/my-app-idle.timer`) handles this for both `development` and `frankenphp-octane`.
 
-Once a minute, while the app is asleep, it runs `php artisan podman:idle --service=queue` (or `horizon`) in each running queue worker and Horizon. If no jobs are waiting or running, it stops that worker. Once every worker is stopped, it also stops the scheduler timer, if one is running (`frankenphp-octane`). The next request starts them again through the app's `Wants=` line, which lists `queue` and, in `frankenphp-octane`, `schedule.timer`. Using Horizon? Put `horizon` on that line instead of `queue`.
+Once a minute, while the app is asleep, it runs `php artisan podman:idle` in a running queue worker or Horizon. If the app has no work in progress, it stops the workers and the scheduler timer, if one is running (`frankenphp-octane`). The next request starts them again through the app's `Wants=` line, which lists `queue` and, in `frankenphp-octane`, `schedule.timer`. Using Horizon? Put `horizon` on that line instead of `queue`.
 
 A long job keeps the stack awake until it's done. Delayed jobs count too, so they run on time. If `podman:idle` fails or doesn't exist, for example because the package was installed with `--dev` and the production image leaves it out, the workers keep running. The check does nothing when `PODMAN_ONDEMAND_ENABLED=false`.
 
 #### Idle checks
 
-`podman:idle --service=NAME` succeeds when every check for that service finds no work left. A service without checks counts as idle. The prefixed name works too, e.g. `--service=my-app-horizon`. Without `--service`, it runs every check.
+`podman:idle` runs every check for something your app uses, going by its config, much like [Laravel Health](https://spatie.be/docs/laravel-health) checks:
 
-Out of the box, `queue` and `horizon` use `QueueIdleCheck`, which checks the default connection's queue and every Horizon supervisor's queues. Map services to checks in `config/podman.php`:
+| Check | Used when | Busy while |
+| --- | --- | --- |
+| `queue` | `QUEUE_CONNECTION` isn't `sync` or `null` | Jobs are waiting, running or delayed, on the default queue or any Horizon supervisor's queues |
+| `database` | `DB_CONNECTION` is set | Another client runs a query or holds a transaction open (PostgreSQL, MySQL, MariaDB). Idle connections, like a worker waiting for jobs, don't count |
+| `broadcast` | `BROADCAST_CONNECTION` uses the `reverb` driver | Clients are connected to Reverb. A Reverb server that doesn't answer counts as idle |
+| `scout` | `SCOUT_DRIVER` is a search engine, like `typesense` or `meilisearch` | Queued indexing jobs are left (`scout.queue`) |
+
+Pick checks with `--services`. Unknown names fail, so a typo keeps the workers running rather than stopping them:
+
+```bash
+php artisan podman:idle --services=queue,database
+```
+
+The checks are listed in `config/podman.php`:
 
 ```php
 'idle' => [
     'checks' => [
-        'queue' => [QueueIdleCheck::class],
-        'horizon' => [QueueIdleCheck::class],
+        QueueIdleCheck::class,
+        DatabaseIdleCheck::class,
+        BroadcastIdleCheck::class,
+        ScoutIdleCheck::class,
     ],
 ],
 ```
 
-To configure checks further, register them from a service provider. Registered checks replace the config map:
+To configure them, register checks from a service provider. Registered checks replace the config list:
 
 ```php
+use Foxws\Podman\Support\Idle\DatabaseIdleCheck;
 use Foxws\Podman\Support\Idle\PodmanIdle;
 use Foxws\Podman\Support\Idle\QueueIdleCheck;
 
 app(PodmanIdle::class)->checks([
-    QueueIdleCheck::new()->services('horizon')->connection('redis')->queues(['default', 'media']),
+    QueueIdleCheck::new()->connection('redis')->queues(['default', 'media']),
+    DatabaseIdleCheck::new(),
 ]);
 ```
 
-Write your own by extending `IdleCheck` and returning an `IdleResult` from `run()`:
+Write your own by extending `IdleCheck`. Give it a `name()`, return an `IdleResult` from `run()`, and optionally override `isEnabled()`:
 
 ```php
 use Foxws\Podman\Support\Idle\IdleCheck;
@@ -167,6 +184,11 @@ use Foxws\Podman\Support\Idle\IdleResult;
 
 class ImportIdleCheck extends IdleCheck
 {
+    public function name(): string
+    {
+        return 'imports';
+    }
+
     public function run(): IdleResult
     {
         $running = Import::query()->whereNull('finished_at')->count();

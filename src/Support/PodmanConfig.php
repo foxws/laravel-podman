@@ -139,6 +139,24 @@ class PodmanConfig
     }
 
     /**
+     * Whether the database, cache and other services sleep with the app.
+     * This builds on the on-demand app, so it's off whenever that is.
+     */
+    public function isOnDemandServicesEnabled(): bool
+    {
+        return $this->isOnDemandEnabled() && Config::boolean('podman.ondemand.services');
+    }
+
+    /**
+     * Whether services sleep with the app, as a systemd boolean for
+     * "StopWhenUnneeded=".
+     */
+    public function onDemandServices(): string
+    {
+        return $this->isOnDemandServicesEnabled() ? 'yes' : 'no';
+    }
+
+    /**
      * Where the "proxy" preset sends app traffic: straight to the app
      * container, or to the on-demand socket on the host so a request can
      * start the app.

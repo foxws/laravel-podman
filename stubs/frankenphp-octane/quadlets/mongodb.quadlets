@@ -1,6 +1,7 @@
 # FileName={{application}}-mongodb
 [Unit]
 Description=MongoDB container
+StopWhenUnneeded={{ondemandServices}}
 
 [Container]
 Image=docker.io/library/mongo:8

@@ -38,6 +38,7 @@ Upgrading from v3? See [UPGRADING.md](UPGRADING.md).
 - Make that shorter or longer with `PODMAN_ONDEMAND_IDLE_TIMEOUT`, e.g. `5min`, `30min` or `2h`.
 - Works behind the bundled proxy or your own, such as a NAS or Nginx on another machine.
 - Turn it off with `PODMAN_ONDEMAND_ENABLED=false` to keep the app running all the time.
+- On a development machine, let the database, cache and other services sleep too with `PODMAN_ONDEMAND_SERVICES=true`.
 
 **Native to your system**
 
@@ -124,6 +125,7 @@ Deploying with `frankenphp-octane`? Also set the secrets it expects, such as you
 | `podman:publish PRESET` | Copy a preset into your project to customize it |
 | `podman:generate PRESET` | Render a single preset |
 | `podman:s3-setup` | Create S3 buckets and apply a CORS policy (needs `aws/aws-sdk-php`) |
+| `podman:idle` | Succeed when no jobs are left, for stopping idle queue workers |
 
 Everything else, like installing, starting, removing and setting secrets, is done with [`lpod`](https://foxws.nl/laravel-podman/lpod):
 

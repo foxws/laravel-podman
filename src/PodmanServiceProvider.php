@@ -16,6 +16,7 @@ class PodmanServiceProvider extends PackageServiceProvider
             ->hasConfigFile('podman')
             ->hasCommands(
                 Commands\GenerateCommand::class,
+                Commands\IdleCommand::class,
                 Commands\PublishCommand::class,
                 Commands\S3SetupCommand::class,
                 Commands\SetupCommand::class,

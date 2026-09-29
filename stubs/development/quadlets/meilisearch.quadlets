@@ -1,6 +1,7 @@
 # FileName={{application}}-meilisearch
 [Unit]
 Description=Meilisearch container
+StopWhenUnneeded={{ondemandServices}}
 
 [Container]
 Image=docker.io/getmeili/meilisearch:v1.54

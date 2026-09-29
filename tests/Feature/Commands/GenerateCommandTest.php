@@ -132,6 +132,35 @@ it('renders the app on-demand by default', function (string $preset) {
         ->toContain('HealthStartupInterval=1s');
 })->with(['development', 'frankenphp-octane']);
 
+it('keeps services running unless they are on-demand too', function (string $preset) {
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/{$preset}/pgsql.quadlets"))->toContain('StopWhenUnneeded=no');
+
+    config(['podman.ondemand.services' => true]);
+
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/{$preset}/pgsql.quadlets"))
+        ->toContain('StopWhenUnneeded=yes')
+        ->toContain("Notify=healthy\nHealthStartupCmd=pg_isready -q -h 127.0.0.1")
+        ->and(File::get("{$this->publishPath}/{$preset}/rustfs.quadlets"))
+        ->toContain('StopWhenUnneeded=yes');
+})->with(['development', 'frankenphp-octane']);
+
+it('renders an idle check that stops development queue workers', function () {
+    config(['podman.quadlet_prefix' => 'acme']);
+
+    $this->artisan('podman:generate', ['preset' => 'development'])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/development/acme-idle.timer"))
+        ->toContain('WantedBy=timers.target')
+        ->and(File::get("{$this->publishPath}/development/acme-idle.service"))
+        ->toContain("ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme.service'")
+        ->toContain('podman exec systemd-acme-$$worker php -d variables_order=EGPCS /app/artisan podman:idle')
+        ->toContain('systemctl --user stop acme-$$worker.service');
+});
+
 it('runs the frankenphp-octane queue worker and scheduler independently of the app', function () {
     $this->artisan('podman:generate', ['preset' => 'frankenphp-octane'])->assertExitCode(0);
 

@@ -1,6 +1,7 @@
 # FileName={{application}}-redis
 [Unit]
 Description=Redis container
+StopWhenUnneeded={{ondemandServices}}
 
 [Container]
 Image=docker.io/library/redis:8
@@ -9,6 +10,14 @@ Exec=redis-server --save 60 1 --maxmemory-policy noeviction --loglevel warning
 Volume={{application}}-redis.volume:/data:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=6379
+Notify=healthy
+HealthStartupCmd=redis-cli ping
+HealthStartupInterval=1s
+HealthStartupTimeout=5s
+HealthCmd=redis-cli ping
+HealthInterval=1m
+HealthTimeout=5s
+HealthRetries=3
 
 [Service]
 Restart=always

@@ -1,6 +1,7 @@
 # FileName={{application}}-mariadb
 [Unit]
 Description=MariaDB container
+StopWhenUnneeded={{ondemandServices}}
 
 [Container]
 Image=docker.io/library/mariadb:13
@@ -14,6 +15,14 @@ ShmSize=256m
 Volume={{application}}-mariadb.volume:/var/lib/mysql:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=3306
+Notify=healthy
+HealthStartupCmd=healthcheck.sh --connect --innodb_initialized
+HealthStartupInterval=1s
+HealthStartupTimeout=5s
+HealthCmd=healthcheck.sh --connect --innodb_initialized
+HealthInterval=1m
+HealthTimeout=5s
+HealthRetries=3
 
 [Service]
 Restart=always

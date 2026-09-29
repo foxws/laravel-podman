@@ -35,7 +35,7 @@ return [
 
     'presets' => env('PODMAN_DEFAULT_PRESETS', [
         // 'devcontainer',
-        // 'frankenphp-octane',
+        // 'production',
         'development',
         'ondemand',
         'proxy',

@@ -11,8 +11,8 @@ it('lists the presets available in the vendor stubs directory', function () {
     expect($this->getPodmanQuadletPresets())->toBe([
         'devcontainer' => 'devcontainer',
         'development' => 'development',
-        'frankenphp-octane' => 'frankenphp-octane',
         'ondemand' => 'ondemand',
+        'production' => 'production',
         'proxy' => 'proxy',
         's3' => 's3',
     ]);
@@ -26,9 +26,9 @@ it('merges presets discovered in the configured stubs path with the vendor ones'
     expect($this->getPodmanQuadletPresets())->toBe([
         'devcontainer' => 'devcontainer',
         'development' => 'development',
-        'frankenphp-octane' => 'frankenphp-octane',
         'ondemand' => 'ondemand',
         'php-container' => 'php-container',
+        'production' => 'production',
         'proxy' => 'proxy',
         's3' => 's3',
     ]);
@@ -37,9 +37,9 @@ it('merges presets discovered in the configured stubs path with the vendor ones'
 });
 
 it('returns the configured list of default presets', function () {
-    config(['podman.presets' => 'proxy,frankenphp-octane']);
+    config(['podman.presets' => 'proxy,production']);
 
-    expect($this->getPodmanQuadletDefaultPresets())->toBe(['proxy', 'frankenphp-octane']);
+    expect($this->getPodmanQuadletDefaultPresets())->toBe(['proxy', 'production']);
 });
 
 it('publishes a preset from the vendor stubs into the configured stubs path', function () {
@@ -84,9 +84,9 @@ it('publishes multiple presets, returning no failures on success', function () {
     $stubsPath = sys_get_temp_dir().'/podman-stubs-'.uniqid();
     config(['podman.stubs_path' => $stubsPath]);
 
-    expect($this->publishPodmanPresets(['frankenphp-octane', 'proxy']))->toBe([]);
+    expect($this->publishPodmanPresets(['production', 'proxy']))->toBe([]);
 
-    expect(File::isDirectory("{$stubsPath}/frankenphp-octane"))->toBeTrue()
+    expect(File::isDirectory("{$stubsPath}/production"))->toBeTrue()
         ->and(File::isDirectory("{$stubsPath}/proxy"))->toBeTrue();
 
     File::deleteDirectory($stubsPath);
@@ -98,10 +98,10 @@ it('reports the presets that failed to publish while continuing with the rest', 
     File::put("{$stubsPath}/proxy/marker", 'existing');
     config(['podman.stubs_path' => $stubsPath]);
 
-    expect($this->publishPodmanPresets(['proxy', 'frankenphp-octane']))->toBe(['proxy']);
+    expect($this->publishPodmanPresets(['proxy', 'production']))->toBe(['proxy']);
 
     expect(File::exists("{$stubsPath}/proxy/marker"))->toBeTrue()
-        ->and(File::isDirectory("{$stubsPath}/frankenphp-octane"))->toBeTrue();
+        ->and(File::isDirectory("{$stubsPath}/production"))->toBeTrue();
 
     File::deleteDirectory($stubsPath);
 });

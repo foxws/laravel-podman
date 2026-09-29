@@ -20,7 +20,7 @@ class PodmanCaddySites
      * attempt automatic HTTPS (binding :443), which fails and crashes the
      * server whenever the embedded Caddy binary has had
      * CAP_NET_BIND_SERVICE stripped and runs as a non-root user, as the
-     * "frankenphp-octane" preset does. Only pass a different `$scheme` if
+     * "production" preset does. Only pass a different `$scheme` if
      * the embedded Caddy is allowed to bind privileged ports itself.
      *
      * @param  array<string, string>  $sites  Public hostname => internal "host:port" upstream.

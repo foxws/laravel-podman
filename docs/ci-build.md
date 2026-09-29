@@ -18,7 +18,7 @@ The `devcontainer` preset doesn't need this. It has no placeholders and no app c
 | Requirement | Why |
 | --- | --- |
 | An `.env` in CI (committed, or copied from e.g. `.env.ci`), with `APP_KEY` generated before `podman:generate` | Templates can read app config while rendering |
-| A `runtimes/Containerfile` in the preset | `frankenphp-octane` has one. Custom presets need their own, see [Customizing](customizing.md) |
+| A `runtimes/Containerfile` in the preset | `production` has one. Custom presets need their own, see [Customizing](customizing.md) |
 
 ## Example: `.github/workflows/build.yml`
 
@@ -82,7 +82,7 @@ jobs:
               run: |
                   cp .env.ci .env
                   php artisan key:generate
-                  php artisan podman:generate frankenphp-octane
+                  php artisan podman:generate production
 
             - name: Set platform pair
               id: platform
@@ -112,7 +112,7 @@ jobs:
               with:
                   image: ${{ env.IMAGE_NAME }}
                   tags: ci-${{ steps.platform.outputs.pair }}-${{ github.sha }}
-                  containerfiles: podman/frankenphp-octane/runtimes/Containerfile
+                  containerfiles: podman/production/runtimes/Containerfile
                   context: .
                   platform: ${{ matrix.platform }}
                   layers: true
@@ -192,7 +192,7 @@ jobs:
 
 | Change | What to do |
 | --- | --- |
-| Different preset | Replace `frankenphp-octane` in the `podman:generate` step and the `containerfiles:` path (see [Customizing](customizing.md#custom-presets)) |
+| Different preset | Replace `production` in the `podman:generate` step and the `containerfiles:` path (see [Customizing](customizing.md#custom-presets)) |
 | One architecture only | Remove the matrix and the `merge` job, and push directly from `build` |
 | Other registry than GHCR | Change the login step and the `REGISTRY`/`IMAGE` env vars. `buildah` and `podman` work with any OCI registry |
 

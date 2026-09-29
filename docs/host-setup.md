@@ -22,14 +22,14 @@ podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
 podman run --rm --userns=keep-id -u "$(id -u):$(id -g)" \
     -e PODMAN_WORKING_PATH="$PWD" \
     -v "$PWD":/var/www/html:Z -w /var/www/html docker.io/library/php:8.5-cli \
-    php artisan podman:setup --preset=frankenphp-octane
+    php artisan podman:setup --preset=production
 
 # Back on the host: install and set secrets
-lpod install frankenphp-octane/pgsql.quadlets --replace
+lpod install production/pgsql.quadlets --replace
 lpod my-app-pgsql secrets
 ```
 
-For an app named `acme`, this is what `podman/frankenphp-octane/valkey.quadlets` looks like:
+For an app named `acme`, this is what `podman/production/valkey.quadlets` looks like:
 
 ```ini
 # FileName=acme-valkey
@@ -57,7 +57,7 @@ VolumeName=systemd-acme-valkey
 ```
 
 ```bash
-lpod install frankenphp-octane/valkey.quadlets --replace
+lpod install production/valkey.quadlets --replace
 ```
 
 Good to know:

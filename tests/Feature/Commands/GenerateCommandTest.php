@@ -15,12 +15,12 @@ afterEach(function () {
 
 it('generates the selected preset to the publish path', function () {
     $this->artisan('podman:generate')
-        ->expectsQuestion('Select a preset to generate', 'frankenphp-octane')
-        ->expectsOutputToContain("Preset frankenphp-octane generated to {$this->publishPath}/frankenphp-octane")
+        ->expectsQuestion('Select a preset to generate', 'production')
+        ->expectsOutputToContain("Preset production generated to {$this->publishPath}/production")
         ->assertExitCode(0);
 
-    expect(File::exists("{$this->publishPath}/frankenphp-octane/app.quadlets"))->toBeTrue()
-        ->and(File::exists("{$this->publishPath}/frankenphp-octane/runtimes/Containerfile"))->toBeTrue();
+    expect(File::exists("{$this->publishPath}/production/app.quadlets"))->toBeTrue()
+        ->and(File::exists("{$this->publishPath}/production/runtimes/Containerfile"))->toBeTrue();
 });
 
 it('accepts the preset name as an argument, skipping the prompt', function () {
@@ -35,10 +35,10 @@ it('accepts the preset name as an argument, skipping the prompt', function () {
 it('substitutes placeholders in the generated quadlets file', function () {
     config(['podman.quadlet_prefix' => 'acme']);
 
-    $this->artisan('podman:generate', ['preset' => 'frankenphp-octane'])
+    $this->artisan('podman:generate', ['preset' => 'production'])
         ->assertExitCode(0);
 
-    expect(File::get("{$this->publishPath}/frankenphp-octane/app.quadlets"))->toContain('localhost/acme:latest');
+    expect(File::get("{$this->publishPath}/production/app.quadlets"))->toContain('localhost/acme:latest');
 });
 
 it('passes the uid and gid to the image build', function (string $preset) {
@@ -48,15 +48,15 @@ it('passes the uid and gid to the image build', function (string $preset) {
 
     expect(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
         ->toContain("BuildArg=UID=1234\nBuildArg=GID=5678");
-})->with(['development', 'frankenphp-octane']);
+})->with(['development', 'production']);
 
 it('overrides the working path for this run via --working-path', function () {
     $this->artisan('podman:generate', [
-        'preset' => 'frankenphp-octane',
+        'preset' => 'production',
         '--working-path' => '/srv/my-app',
     ])->assertExitCode(0);
 
-    expect(File::get("{$this->publishPath}/frankenphp-octane/app.quadlets"))->toContain('/srv/my-app');
+    expect(File::get("{$this->publishPath}/production/app.quadlets"))->toContain('/srv/my-app');
     expect(config('podman.working_path'))->toBe('/srv/my-app');
 });
 
@@ -90,7 +90,7 @@ it('does not bind sidecars to the app', function (string $preset) {
     foreach (File::glob("{$this->publishPath}/{$preset}/*.quadlets") as $quadlet) {
         expect(File::get($quadlet))->not->toContain('BindsTo=');
     }
-})->with(['development', 'frankenphp-octane']);
+})->with(['development', 'production']);
 
 it('does not start reverb with the app by default', function (string $preset) {
     $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
@@ -100,7 +100,7 @@ it('does not start reverb with the app by default', function (string $preset) {
     expect(File::exists("{$this->publishPath}/{$preset}/reverb.quadlets"))->toBeTrue()
         ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
         ->not->toContain("{$application}-reverb.container");
-})->with(['development', 'frankenphp-octane']);
+})->with(['development', 'production']);
 
 it('renders the app always-on when on-demand is disabled', function (string $preset) {
     config(['podman.ondemand.enabled' => false]);
@@ -108,7 +108,7 @@ it('renders the app always-on when on-demand is disabled', function (string $pre
     $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
 
     expect(File::get("{$this->publishPath}/{$preset}/app.quadlets"))->toContain('StopWhenUnneeded=no');
-})->with(['development', 'frankenphp-octane']);
+})->with(['development', 'production']);
 
 it('renders the app on-demand by default', function (string $preset) {
     config([
@@ -123,7 +123,7 @@ it('renders the app on-demand by default', function (string $preset) {
         ->toContain('PublishPort=127.0.0.1:19000:8000')
         ->toContain("Notify=healthy\nHealthStartupCmd=")
         ->toContain('HealthStartupInterval=1s');
-})->with(['development', 'frankenphp-octane']);
+})->with(['development', 'production']);
 
 it('renders the on-demand socket in its own preset', function () {
     config([
@@ -164,7 +164,7 @@ it('lets services sleep with the app by default', function (string $preset) {
             ->toContain('StopWhenUnneeded=yes')
             ->not->toContain('PartOf=');
     }
-})->with(['development', 'frankenphp-octane']);
+})->with(['development', 'production']);
 
 it('keeps services running when on-demand is disabled', function () {
     config(['podman.quadlet_prefix' => 'acme', 'podman.ondemand.enabled' => false]);
@@ -189,20 +189,20 @@ it('renders an idle check that stops queue workers, then the scheduler timer', f
         ->toContain('for unit in queue.service horizon.service schedule.timer; do ! systemctl $$scope --quiet is-active acme-$$unit || systemctl $$scope stop acme-$$unit; done');
 });
 
-it('wakes the frankenphp-octane queue worker and scheduler timer with the app', function () {
+it('wakes the production queue worker and scheduler timer with the app', function () {
     config(['podman.quadlet_prefix' => 'acme']);
 
-    $this->artisan('podman:generate', ['preset' => 'frankenphp-octane'])->assertExitCode(0);
+    $this->artisan('podman:generate', ['preset' => 'production'])->assertExitCode(0);
 
-    expect(File::get("{$this->publishPath}/frankenphp-octane/app.quadlets"))
+    expect(File::get("{$this->publishPath}/production/app.quadlets"))
         ->toMatch('/^Wants=.*acme-queue\\.container acme-schedule\\.timer$/m');
 });
 
-it('runs the frankenphp-octane queue worker and scheduler independently of the app', function () {
-    $this->artisan('podman:generate', ['preset' => 'frankenphp-octane'])->assertExitCode(0);
+it('runs the production queue worker and scheduler independently of the app', function () {
+    $this->artisan('podman:generate', ['preset' => 'production'])->assertExitCode(0);
 
     $application = config('podman.quadlet_prefix');
-    $path = "{$this->publishPath}/frankenphp-octane";
+    $path = "{$this->publishPath}/production";
 
     expect(File::get("{$path}/queue.quadlets"))
         ->toContain('WantedBy=default.target')
@@ -252,9 +252,9 @@ it('never removes preset templates that live in the publish path', function () {
 });
 
 it('generates an app key before building the frontend of the production image', function () {
-    $this->artisan('podman:generate', ['preset' => 'frankenphp-octane'])->assertExitCode(0);
+    $this->artisan('podman:generate', ['preset' => 'production'])->assertExitCode(0);
 
-    $containerfile = File::get("{$this->publishPath}/frankenphp-octane/runtimes/Containerfile");
+    $containerfile = File::get("{$this->publishPath}/production/runtimes/Containerfile");
 
     expect(strpos($containerfile, 'key:generate'))->toBeInt()
         ->toBeLessThan(strpos($containerfile, 'pnpm build'));
@@ -271,11 +271,11 @@ it('stops development queue workers with the on-demand app', function (string $w
 })->with(['queue', 'horizon']);
 
 it('keeps production queue workers running while the on-demand app is idle', function (string $worker) {
-    $this->artisan('podman:generate', ['preset' => 'frankenphp-octane'])->assertExitCode(0);
+    $this->artisan('podman:generate', ['preset' => 'production'])->assertExitCode(0);
 
     $application = config('podman.quadlet_prefix');
 
-    expect(File::get("{$this->publishPath}/frankenphp-octane/{$worker}.quadlets"))
+    expect(File::get("{$this->publishPath}/production/{$worker}.quadlets"))
         ->not->toContain("PartOf={$application}.container")
         ->toContain("Requires={$application}-pgsql.container {$application}-valkey.container");
 })->with(['queue', 'horizon']);

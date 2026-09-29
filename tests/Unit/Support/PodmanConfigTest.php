@@ -53,21 +53,21 @@ it('disables when configured', function () {
 });
 
 it('splits the configured comma-separated presets into an array', function () {
-    config(['podman.presets' => 'frankenphp-octane,proxy']);
+    config(['podman.presets' => 'production,proxy']);
 
-    expect($this->config->defaultPresets())->toBe(['frankenphp-octane', 'proxy']);
+    expect($this->config->defaultPresets())->toBe(['production', 'proxy']);
 });
 
 it('accepts the configured presets as a plain array', function () {
-    config(['podman.presets' => ['frankenphp-octane', 'proxy']]);
+    config(['podman.presets' => ['production', 'proxy']]);
 
-    expect($this->config->defaultPresets())->toBe(['frankenphp-octane', 'proxy']);
+    expect($this->config->defaultPresets())->toBe(['production', 'proxy']);
 });
 
 it('trims whitespace and drops empty entries from the configured presets', function () {
-    config(['podman.presets' => ' frankenphp-octane ,, proxy ']);
+    config(['podman.presets' => ' production ,, proxy ']);
 
-    expect($this->config->defaultPresets())->toBe(['frankenphp-octane', 'proxy']);
+    expect($this->config->defaultPresets())->toBe(['production', 'proxy']);
 });
 
 it('returns no default presets when none are configured', function () {

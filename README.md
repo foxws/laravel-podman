@@ -165,6 +165,7 @@ composer test
 
 - [francoism90](https://github.com/foxws)
 - [All Contributors](../../contributors)
+- [Spatie](https://spatie.be): the idle checks follow the design of [spatie/laravel-health](https://github.com/spatie/laravel-health)'s checks
 
 AI, specifically [Claude](https://claude.com/product/claude-code), was used to help build this package. All AI-assisted output is reviewed by me, and I retain final say over everything that is implemented and released.
 

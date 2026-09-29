@@ -149,7 +149,10 @@ it('lets services sleep with the app by default', function (string $preset) {
         ->toContain('StopWhenUnneeded=yes')
         ->toContain("Notify=healthy\nHealthStartupCmd=pg_isready -q -h 127.0.0.1")
         ->and(File::get("{$this->publishPath}/{$preset}/rustfs.quadlets"))
-        ->toContain('StopWhenUnneeded=yes');
+        ->toContain('StopWhenUnneeded=yes')
+        ->and(File::get("{$this->publishPath}/{$preset}/typesense.quadlets"))
+        ->toContain('StopWhenUnneeded=yes')
+        ->not->toContain('PartOf=');
 })->with(['development', 'frankenphp-octane']);
 
 it('keeps services running when on-demand is disabled', function () {

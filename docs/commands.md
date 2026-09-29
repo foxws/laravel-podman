@@ -57,7 +57,7 @@ php artisan podman:s3-setup
 Exits successfully when the app has no work in progress, and fails otherwise. The `ondemand` preset's idle check runs it in a queue worker before stopping the workers. See [Idle checks](ondemand.md#idle-checks).
 
 ```bash
-# Every check for something the app uses (queue, database, broadcast, scout)
+# Every check for something the app uses (queue, database, scout)
 php artisan podman:idle
 
 # Only these checks

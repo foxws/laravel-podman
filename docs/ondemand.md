@@ -100,6 +100,12 @@ lpod install ondemand/my-app-idle.timer --replace
 
 In `frankenphp-octane`, the queue worker and Horizon already work this way.
 
+A worker that keeps running also needs the services its jobs use, such as `rustfs` for uploads or `typesense` for search indexing. Otherwise they [sleep](#sleeping-services) with the app while jobs still use them. Add a `Wants=` line under the worker's `[Unit]`:
+
+```ini
+Wants={{application}}-rustfs.container {{application}}-typesense.container
+```
+
 ## Sleeping services
 
 The database, cache and other services sleep too, once nothing needs them anymore: the app is idle and no jobs are left. Nothing runs until the next request, much like hibernation on a managed platform.
@@ -119,7 +125,7 @@ To keep only one service running, such as the database for a client, publish the
 
 Traffic between containers doesn't pass through the on-demand socket. A service stays up because a running unit needs it, not because of an idle timer, so a query from the app or a worker never hits a stopped database.
 
-**Every service must be needed by something.** A service with `StopWhenUnneeded=yes` that nothing `Requires=` or `Wants=` stops right after it starts. The app `Requires=` the database and cache. Using another service, such as `rustfs`, `typesense` or `meilisearch`? Publish the preset and add it to the app's `Wants=` line (see [Customizing](customizing.md)):
+**Every service must be needed by something.** A service with `StopWhenUnneeded=yes` that nothing `Requires=` or `Wants=` stops right after it starts. The app `Requires=` the database and cache. Using another service, such as `rustfs`, `typesense` or `meilisearch`? Publish the preset and add it to the app's `Wants=` line (see [Customizing](customizing.md)), and to a [kept-running worker's](#keeping-the-queue-worker-running) if its jobs use it:
 
 ```ini
 Wants={{application}}-mailpit.container {{application}}-queue.container {{application}}-schedule.container {{application}}-rustfs.container
@@ -141,7 +147,6 @@ A long job keeps the stack awake until it's done. Delayed jobs count too, so the
 | --- | --- | --- |
 | `queue` | `QUEUE_CONNECTION` isn't `sync` or `null` | Jobs are waiting, running or delayed, on the default queue or any Horizon supervisor's queues |
 | `database` | `DB_CONNECTION` is set | Another client runs a query or holds a transaction open (PostgreSQL, MySQL, MariaDB). Idle connections, like a worker waiting for jobs, don't count |
-| `broadcast` | `BROADCAST_CONNECTION` uses the `reverb` driver | Clients are connected to Reverb. A Reverb server that doesn't answer counts as idle |
 | `scout` | `SCOUT_DRIVER` is a search engine, like `typesense` or `meilisearch` | Queued indexing jobs are left (`scout.queue`) |
 
 Pick checks with `--services`. Unknown names fail, so a typo keeps the workers running rather than stopping them:
@@ -157,7 +162,6 @@ The checks are listed in `config/podman.php`:
     'checks' => [
         QueueCheck::class,
         DatabaseCheck::class,
-        BroadcastCheck::class,
         ScoutCheck::class,
     ],
 ],

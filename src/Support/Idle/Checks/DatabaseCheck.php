@@ -14,7 +14,7 @@ use Illuminate\Support\Facades\DB;
  * a long migration or report. Idle connections, like a worker waiting for
  * its next job, don't count. Only PostgreSQL, MySQL and MariaDB are checked.
  */
-class DatabaseIdleCheck extends IdleCheck
+class DatabaseCheck extends IdleCheck
 {
     protected ?string $connection = null;
 

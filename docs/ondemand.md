@@ -155,10 +155,10 @@ The checks are listed in `config/podman.php`:
 ```php
 'idle' => [
     'checks' => [
-        QueueIdleCheck::class,
-        DatabaseIdleCheck::class,
-        BroadcastIdleCheck::class,
-        ScoutIdleCheck::class,
+        QueueCheck::class,
+        DatabaseCheck::class,
+        BroadcastCheck::class,
+        ScoutCheck::class,
     ],
 ],
 ```
@@ -166,13 +166,13 @@ The checks are listed in `config/podman.php`:
 To configure them, register checks from a service provider. Registered checks replace the config list:
 
 ```php
-use Foxws\Podman\Support\Idle\Checks\DatabaseIdleCheck;
+use Foxws\Podman\Support\Idle\Checks\DatabaseCheck;
 use Foxws\Podman\Support\Idle\PodmanIdle;
-use Foxws\Podman\Support\Idle\Checks\QueueIdleCheck;
+use Foxws\Podman\Support\Idle\Checks\QueueCheck;
 
 app(PodmanIdle::class)->checks([
-    QueueIdleCheck::new()->connection('redis')->queues(['default', 'media']),
-    DatabaseIdleCheck::new(),
+    QueueCheck::new()->connection('redis')->queues(['default', 'media']),
+    DatabaseCheck::new(),
 ]);
 ```
 
@@ -182,7 +182,7 @@ Write your own by extending `IdleCheck`. Give it a `name()`, return an `IdleResu
 use Foxws\Podman\Support\Idle\IdleCheck;
 use Foxws\Podman\Support\Idle\IdleResult;
 
-class ImportIdleCheck extends IdleCheck
+class ImportCheck extends IdleCheck
 {
     public function name(): string
     {

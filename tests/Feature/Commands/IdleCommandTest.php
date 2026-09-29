@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use Foxws\Podman\Support\Idle\Checks\QueueIdleCheck;
+use Foxws\Podman\Support\Idle\Checks\QueueCheck;
 use Foxws\Podman\Support\Idle\PodmanIdle;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
@@ -108,7 +108,7 @@ it('waits for queued scout indexing', function () {
 
 it('prefers registered checks over the config', function () {
     app(PodmanIdle::class)->checks([
-        QueueIdleCheck::new()->queues(['media']),
+        QueueCheck::new()->queues(['media']),
     ]);
 
     Queue::pushOn('default', 'App\\Jobs\\ProcessVideo');

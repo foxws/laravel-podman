@@ -15,7 +15,7 @@ use Throwable;
  * compatible HTTP API. A Reverb server that doesn't answer counts as idle:
  * it sleeps with the app, and nobody can be connected to it then.
  */
-class BroadcastIdleCheck extends IdleCheck
+class BroadcastCheck extends IdleCheck
 {
     protected ?string $connection = null;
 

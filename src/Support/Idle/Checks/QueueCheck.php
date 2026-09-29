@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Queue;
  * connection's queue and every Horizon supervisor's queues, unless given
  * a connection or queues.
  */
-class QueueIdleCheck extends IdleCheck
+class QueueCheck extends IdleCheck
 {
     protected ?string $connection = null;
 

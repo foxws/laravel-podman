@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Config;
  * Busy while queued Scout indexing jobs are left. Without "scout.queue",
  * Scout indexes right away, so there's nothing to wait for.
  */
-class ScoutIdleCheck extends IdleCheck
+class ScoutCheck extends IdleCheck
 {
     public function name(): string
     {
@@ -32,7 +32,7 @@ class ScoutIdleCheck extends IdleCheck
             return IdleResult::idle();
         }
 
-        $check = QueueIdleCheck::new();
+        $check = QueueCheck::new();
 
         if (is_array($queue) && isset($queue['connection'])) {
             $check->connection((string) $queue['connection']);

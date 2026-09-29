@@ -26,17 +26,25 @@ With it on, keep in mind:
 - Scheduled tasks only run while the app is awake. Tasks that must run on time, like nightly backups, need `PODMAN_ONDEMAND_ENABLED=false`.
 - Host ports don't wake a sleeping service. A database client, or an S3 URL requested while the app sleeps, gets no answer.
 
-### 3. Update published presets
+### 3. Rename `frankenphp-octane` to `production`
 
-Skip this step if you haven't published any presets. Otherwise, make these changes to each published `development` or `frankenphp-octane` preset. Compare with the new files in `vendor/foxws/laravel-podman/stubs/{preset}`.
+The `frankenphp-octane` preset is now called `production`. The `development` preset runs FrankenPHP and Octane too, so the old name didn't tell them apart.
+
+- Published it? Rename the folder: `mv containers/stubs/frankenphp-octane containers/stubs/production`.
+- Replace `frankenphp-octane` with `production` in `presets` (or `PODMAN_DEFAULT_PRESETS`), in scripts and CI workflows (e.g. `podman/frankenphp-octane/runtimes/Containerfile`), and in your `lpod install` commands.
+- The unit names don't change, so installed services keep running. Reinstall them from `production/` in step 5, and remove the old output with `rm -r podman/frankenphp-octane`.
+
+### 4. Update published presets
+
+Skip this step if you haven't published any presets. Otherwise, make these changes to each published `development` or `production` preset. Compare with the new files in `vendor/foxws/laravel-podman/stubs/{preset}`.
 
 - **Services** (`pgsql`, `mysql`, `mariadb`, `mongodb`, `valkey`, `redis`, `memcached`, `rustfs`, `meilisearch`, `typesense`, `mailpit`, `reverb`): add `StopWhenUnneeded={{ondemand}}` under `[Unit]`. For `typesense`, `mailpit` and `reverb`, it replaces `PartOf={{application}}.container`.
 - **Health checks:** add the vendor's `Notify=healthy` and `Health*=` block under `[Container]` to `pgsql`, `mysql`, `mariadb`, `mongodb`, `valkey`, `redis`, `rustfs`, `meilisearch`, `typesense` and `mailpit`, so the app waits until they accept connections.
-- **`quadlets/app.quadlets`:** a service with `StopWhenUnneeded=` that nothing needs stops right after it starts. Add every service you use besides the database and cache to `Wants=`, e.g. `{{application}}-rustfs.container`. In `frankenphp-octane`, also add the queue worker (or Horizon) and `{{application}}-schedule.timer`, so they wake with the app.
-- **Queue workers that keep running** (always in `frankenphp-octane`, or a `development` worker you took out of `PartOf=`): add the services their jobs use to a `Wants=` line under `[Unit]`, e.g. `rustfs` for uploads or `mailpit` for queued mail. Otherwise those services sleep with the app mid-job.
-- **`systemd/`:** delete `ondemand.socket` and `ondemand.service`. They live in the `ondemand` preset now. `frankenphp-octane` keeps `schedule.timer`.
+- **`quadlets/app.quadlets`:** a service with `StopWhenUnneeded=` that nothing needs stops right after it starts. Add every service you use besides the database and cache to `Wants=`, e.g. `{{application}}-rustfs.container`. In `production`, also add the queue worker (or Horizon) and `{{application}}-schedule.timer`, so they wake with the app.
+- **Queue workers that keep running** (always in `production`, or a `development` worker you took out of `PartOf=`): add the services their jobs use to a `Wants=` line under `[Unit]`, e.g. `rustfs` for uploads or `mailpit` for queued mail. Otherwise those services sleep with the app mid-job.
+- **`systemd/`:** delete `ondemand.socket` and `ondemand.service`. They live in the `ondemand` preset now. `production` keeps `schedule.timer`.
 
-### 4. Regenerate and reinstall
+### 5. Regenerate and reinstall
 
 ```bash
 php artisan podman:setup
@@ -46,7 +54,7 @@ lpod install ondemand/my-app-idle.timer --replace
 
 The socket keeps its unit name, so installing it from its new path replaces the old one. Then reinstall every service you use with `--replace`, so they pick up `StopWhenUnneeded=` and their health check, e.g. `lpod install development/pgsql.quadlets --replace`.
 
-### 5. Check it
+### 6. Check it
 
 Let the app idle for `PODMAN_ONDEMAND_IDLE_TIMEOUT` (set it to `1min` to try it), then check that everything stopped:
 

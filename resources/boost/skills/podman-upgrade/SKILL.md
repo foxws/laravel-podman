@@ -1,6 +1,6 @@
 ---
 name: podman-upgrade
-description: Upgrade foxws/laravel-podman to v5 (from v4, or from v3 through v4). v5 lets services sleep with the on-demand app, moves the on-demand socket into an "ondemand" preset with an idle check (podman:idle), and must be installed without --dev. v4 made on-demand the default (systemd/ folder, BindsTo= to PartOf=, app health check, frankenphp-octane worker and scheduler changes). Covers updating published presets in containers/stubs without losing customizations, and reinstalling with lpod. Use when upgrading the package, or when published presets still use BindsTo=, lack StopWhenUnneeded={{ondemand}}, or keep ondemand.socket in their systemd/ folder.
+description: Upgrade foxws/laravel-podman to v5 (from v4, or from v3 through v4). v5 lets services sleep with the on-demand app, renames the frankenphp-octane preset to production, moves the on-demand socket into an "ondemand" preset with an idle check (podman:idle), and must be installed without --dev. v4 made on-demand the default (systemd/ folder, BindsTo= to PartOf=, app health check, frankenphp-octane (now production) worker and scheduler changes). Covers updating published presets in containers/stubs without losing customizations, and reinstalling with lpod. Use when upgrading the package, or when published presets still use BindsTo=, lack StopWhenUnneeded={{ondemand}}, keep ondemand.socket in their systemd/ folder, or a frankenphp-octane preset still exists.
 ---
 
 # Upgrading laravel-podman
@@ -27,17 +27,23 @@ Services follow `PODMAN_ONDEMAND_ENABLED`, like the app. Ask the user whether th
 
 To keep everything running, set `PODMAN_ONDEMAND_ENABLED=false`. To keep a single service running, set `StopWhenUnneeded=no` in its published quadlet.
 
-### 3. Update published presets
+### 3. Rename `frankenphp-octane` to `production`
 
-For each published `development` or `frankenphp-octane` preset, compare it with `vendor/foxws/laravel-podman/stubs/{preset}`. **Edit the user's files in place and keep their customizations.**
+- If `containers/stubs/frankenphp-octane` (or that folder under `stubs_path`) exists, rename it to `production` with `git mv`.
+- Replace `frankenphp-octane` with `production` in `presets`/`PODMAN_DEFAULT_PRESETS`, CI workflows (e.g. `podman/frankenphp-octane/runtimes/Containerfile`), scripts and docs in the app.
+- Unit names don't change. Tell the user to reinstall from `production/` and to remove the stale `podman/frankenphp-octane/` output.
+
+### 4. Update published presets
+
+For each published `development` or `production` preset, compare it with `vendor/foxws/laravel-podman/stubs/{preset}`. **Edit the user's files in place and keep their customizations.**
 
 - **Services** (`pgsql`, `mysql`, `mariadb`, `mongodb`, `valkey`, `redis`, `memcached`, `rustfs`, `meilisearch`, `typesense`, `mailpit`, `reverb`, and any service the user added): add `StopWhenUnneeded={{ondemand}}` under `[Unit]`. For `typesense`, `mailpit` and `reverb`, it replaces `PartOf={{application}}.container`.
 - **Health checks:** copy the vendor's `Notify=healthy` + `Health*=` block into `pgsql`, `mysql`, `mariadb`, `mongodb`, `valkey`, `redis`, `rustfs`, `meilisearch`, `typesense` and `mailpit`. Adjust ports if the user changed them.
-- **`app.quadlets` `Wants=`:** every installed service besides what the app `Requires=` must be listed, or it stops right after starting. Check which services the user installs (`lpod list`, or the `.quadlets` they published) and add those. In `frankenphp-octane`, also add the worker they use (`queue` or `horizon`) and `{{application}}-schedule.timer`.
-- **Workers that keep running** (every `frankenphp-octane` worker, and `development` workers without `PartOf=` the app): add a `Wants=` line with the services their jobs use (from the app's code: filesystems → `rustfs`, Scout → `typesense`/`meilisearch`, broadcasting → `reverb`, mail → `mailpit`).
-- **`systemd/`:** delete `ondemand.socket` and `ondemand.service`. The `ondemand` preset provides them now, along with the idle check. Keep `schedule.timer` in `frankenphp-octane`.
+- **`app.quadlets` `Wants=`:** every installed service besides what the app `Requires=` must be listed, or it stops right after starting. Check which services the user installs (`lpod list`, or the `.quadlets` they published) and add those. In `production`, also add the worker they use (`queue` or `horizon`) and `{{application}}-schedule.timer`.
+- **Workers that keep running** (every `production` worker, and `development` workers without `PartOf=` the app): add a `Wants=` line with the services their jobs use (from the app's code: filesystems → `rustfs`, Scout → `typesense`/`meilisearch`, broadcasting → `reverb`, mail → `mailpit`).
+- **`systemd/`:** delete `ondemand.socket` and `ondemand.service`. The `ondemand` preset provides them now, along with the idle check. Keep `schedule.timer` in `production`.
 
-### 4. Verify and hand over
+### 5. Verify and hand over
 
 Run `php artisan podman:setup` (or `podman:generate` for each preset, including `ondemand`), then check:
 

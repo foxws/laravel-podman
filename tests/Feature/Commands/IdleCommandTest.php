@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 use Foxws\Podman\Support\Idle\Checks\QueueCheck;
 use Foxws\Podman\Support\Idle\PodmanIdle;
+use Illuminate\Database\Connection;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
@@ -67,6 +69,42 @@ it('waits for queued scout indexing', function () {
 
     $this->artisan('podman:idle', ['--services' => 'scout'])
         ->expectsOutputToContain('scout: 1 jobs on redis:scout')
+        ->assertExitCode(1);
+});
+
+it('waits for running mongodb operations on the app database', function () {
+    $cursor = Mockery::mock();
+    $cursor->shouldReceive('toArray')->andReturn([['inprog' => [['op' => 'query'], ['op' => 'update']]]]);
+
+    $admin = Mockery::mock();
+    $admin->shouldReceive('command')
+        ->withArgs(fn (array $command): bool => $command['active'] === true && $command['ns'] === ['$regex' => '^laravel\\.'])
+        ->andReturn($cursor);
+
+    $client = Mockery::mock();
+    $client->shouldReceive('selectDatabase')->with('admin')->andReturn($admin);
+
+    $connection = new class(fn () => null, 'laravel', '', ['name' => 'mongodb', 'driver' => 'mongodb']) extends Connection
+    {
+        public mixed $client = null;
+
+        public function getClient(): mixed
+        {
+            return $this->client;
+        }
+    };
+
+    $connection->client = $client;
+
+    DB::extend('mongodb', fn () => $connection);
+
+    config([
+        'database.default' => 'mongodb',
+        'database.connections.mongodb' => ['driver' => 'mongodb', 'database' => 'laravel'],
+    ]);
+
+    $this->artisan('podman:idle', ['--services' => 'database'])
+        ->expectsOutputToContain('database: 2 active queries on mongodb')
         ->assertExitCode(1);
 });
 

@@ -146,7 +146,7 @@ A long job keeps the stack awake until it's done. Delayed jobs count too, so the
 | Check | Used when | Busy while |
 | --- | --- | --- |
 | `queue` | `QUEUE_CONNECTION` isn't `sync` or `null` | Jobs are waiting, running or delayed, on the default queue or any Horizon supervisor's queues |
-| `database` | `DB_CONNECTION` is set | Another client runs a query or holds a transaction open (PostgreSQL, MySQL, MariaDB). Idle connections, like a worker waiting for jobs, don't count |
+| `database` | `DB_CONNECTION` is set | Another client runs a query or holds a transaction open (PostgreSQL, MySQL, MariaDB), or an operation runs on the app's MongoDB database (with `mongodb/laravel-mongodb`). Idle connections, like a worker waiting for jobs, don't count |
 | `scout` | `SCOUT_DRIVER` is a search engine, like `typesense` or `meilisearch` | Queued indexing jobs are left (`scout.queue`), or Meilisearch still processes indexing tasks in the background |
 
 Pick checks with `--services`. Unknown names fail, so a typo keeps the workers running rather than stopping them:

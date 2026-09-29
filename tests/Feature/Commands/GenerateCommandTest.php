@@ -186,6 +186,7 @@ it('renders an idle check that stops queue workers, then the scheduler timer', f
         ->and(File::get("{$this->publishPath}/ondemand/acme-idle.service"))
         ->toContain('[ yes = yes ] && ! systemctl $$scope --quiet is-active acme.service')
         ->toContain('podman exec systemd-acme-$$worker php -d variables_order=EGPCS /app/artisan podman:idle || exit 0')
+        ->toContain('podman:idle || exit 0; ! systemctl $$scope --quiet is-active acme.service || exit 0; for unit')
         ->toContain('for unit in queue.service horizon.service schedule.timer; do ! systemctl $$scope --quiet is-active acme-$$unit || systemctl $$scope stop acme-$$unit; done');
 });
 

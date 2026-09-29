@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 use Foxws\Podman\Support\Idle\Checks\QueueCheck;
 use Foxws\Podman\Support\Idle\PodmanIdle;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\Request;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 
 beforeEach(function () {
@@ -65,6 +68,30 @@ it('waits for queued scout indexing', function () {
     $this->artisan('podman:idle', ['--services' => 'scout'])
         ->expectsOutputToContain('scout: 1 jobs on redis:scout')
         ->assertExitCode(1);
+});
+
+it('waits for meilisearch to process its tasks', function () {
+    config([
+        'scout.driver' => 'meilisearch',
+        'scout.meilisearch' => ['host' => 'http://systemd-acme-meilisearch:7700', 'key' => 'masterKey'],
+    ]);
+
+    Http::fake(['systemd-acme-meilisearch:7700/tasks*' => Http::response(['results' => [], 'total' => 3])]);
+
+    $this->artisan('podman:idle', ['--services' => 'scout'])
+        ->expectsOutputToContain('scout: 3 Meilisearch tasks enqueued or processing')
+        ->assertExitCode(1);
+
+    Http::assertSent(fn (Request $request): bool => $request->hasHeader('Authorization', 'Bearer masterKey')
+        && $request['statuses'] === 'enqueued,processing');
+});
+
+it('treats a sleeping meilisearch server as idle', function () {
+    config(['scout.driver' => 'meilisearch']);
+
+    Http::fake(fn () => throw new ConnectionException('Connection refused'));
+
+    $this->artisan('podman:idle', ['--services' => 'scout'])->assertExitCode(0);
 });
 
 it('prefers registered checks over the config', function () {

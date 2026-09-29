@@ -166,9 +166,9 @@ The checks are listed in `config/podman.php`:
 To configure them, register checks from a service provider. Registered checks replace the config list:
 
 ```php
-use Foxws\Podman\Support\Idle\DatabaseIdleCheck;
+use Foxws\Podman\Support\Idle\Checks\DatabaseIdleCheck;
 use Foxws\Podman\Support\Idle\PodmanIdle;
-use Foxws\Podman\Support\Idle\QueueIdleCheck;
+use Foxws\Podman\Support\Idle\Checks\QueueIdleCheck;
 
 app(PodmanIdle::class)->checks([
     QueueIdleCheck::new()->connection('redis')->queues(['default', 'media']),

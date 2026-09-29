@@ -2,8 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Foxws\Podman\Support\Idle;
+namespace Foxws\Podman\Support\Idle\Checks;
 
+use Foxws\Podman\Support\Idle\IdleCheck;
+use Foxws\Podman\Support\Idle\IdleResult;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
 

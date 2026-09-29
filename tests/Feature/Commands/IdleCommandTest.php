@@ -2,8 +2,8 @@
 
 declare(strict_types=1);
 
+use Foxws\Podman\Support\Idle\Checks\QueueIdleCheck;
 use Foxws\Podman\Support\Idle\PodmanIdle;
-use Foxws\Podman\Support\Idle\QueueIdleCheck;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\Request;
 use Illuminate\Support\Facades\Http;

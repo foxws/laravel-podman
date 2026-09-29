@@ -61,7 +61,7 @@ VolumeName=systemd-{{application}}-valkey
 | `{{configPath}}` | `config_path` (defaults to `working_path`) |
 | `{{runtimePath}}` | The preset's rendered `runtimes/` folder |
 | `{{appUpstream}}` | Where the proxy sends app traffic: `systemd-{app}:8000`, or the on-demand socket |
-| `{{ondemand}}` | `yes` when `ondemand.enabled`, otherwise `no` |
+| `{{ondemand}}` | `yes` when `ondemand.enabled`, otherwise `no`. Used for `StopWhenUnneeded=` on the app and services |
 | `{{ondemandListen}}`, `{{ondemandPort}}`, `{{ondemandIdleTimeout}}` | `ondemand.listen`, `ondemand.port`, `ondemand.idle_timeout` |
 
 Add your own in `config/podman.php`. They also override built-in placeholders:
@@ -92,7 +92,7 @@ Dependency directives: `Requires=` (hard), `Wants=` (soft), `After=` (order only
 
 ### Add a service
 
-Create `containers/stubs/{preset}/quadlets/my-service.quadlets` in the format above, then `podman:generate` and `lpod install {preset}/my-service.quadlets`.
+Create `containers/stubs/{preset}/quadlets/my-service.quadlets` in the format above, then `podman:generate` and `lpod install {preset}/my-service.quadlets`. To let it sleep with the app, add `StopWhenUnneeded={{ondemand}}` under `[Unit]` and add it to the app's `Wants=` line; otherwise it stops right after starting. If queue workers keep running while the app sleeps (always in `frankenphp-octane`) and their jobs use it, add it to their `Wants=` too, or it sleeps while jobs still need it. If it can have work in progress while the app sleeps, write an `IdleCheck` for it (with `name()`, `isEnabled()` and `run()`) and add it to the `idle.checks` config list or `app(PodmanIdle::class)->checks([...])`; `podman:idle` then runs it, or `podman:idle --services=its-name` alone.
 
 ### Memory limit
 
@@ -104,7 +104,7 @@ Publish `proxy`, then edit `containers/stubs/proxy/runtimes/Caddyfile` and `site
 
 ### On-demand (scale-to-zero)
 
-A preset can hold plain systemd units next to `quadlets/`, because Quadlet has no unit type for sockets or timers. Everything in `systemd/*` renders as `{application}-{file}`: the on-demand socket and its `systemd-socket-proxyd` service, and `schedule.timer` in `frankenphp-octane`. On-demand is the default; `PODMAN_ONDEMAND_ENABLED=false` renders `StopWhenUnneeded=no` and points the proxy at the container. Install them with `lpod install {preset}/{application}-ondemand.socket --replace`. The app quadlet stays on-demand ready either way: keep `StopWhenUnneeded={{ondemand}}`, `Notify=healthy` with the `/up` health check, and the `127.0.0.1:{{ondemandPort}}` publish when editing it.
+A preset can hold plain systemd units next to `quadlets/`, because Quadlet has no unit type for sockets or timers. Everything in `systemd/*` renders as `{application}-{file}`. The `ondemand` preset holds only such units, shared by `development` and `frankenphp-octane`: the on-demand socket and its `systemd-socket-proxyd` service, and `idle.timer` with its `idle.service` (while the app sleeps, runs `podman:idle` in a running queue worker or Horizon and, when the app has no work in progress, stops the workers and the scheduler timer if one runs, so services with `StopWhenUnneeded={{ondemand}}` can sleep). `frankenphp-octane` also has `systemd/schedule.timer`. A service with `StopWhenUnneeded=yes` must be in the app's `Requires=` or `Wants=`, or it stops right after starting. On-demand is the default; `PODMAN_ONDEMAND_ENABLED=false` renders `StopWhenUnneeded=no` on the app and services and points the proxy at the container. Install with `lpod install ondemand/{application}-ondemand.socket --replace` and `lpod install ondemand/{application}-idle.timer --replace`. The app quadlet stays on-demand ready either way: keep `StopWhenUnneeded={{ondemand}}`, `Notify=healthy` with the `/up` health check, and the `127.0.0.1:{{ondemandPort}}` publish when editing it.
 
 ### Extra PHP extensions or packages
 

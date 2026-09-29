@@ -1,6 +1,7 @@
 # FileName={{application}}-meilisearch
 [Unit]
 Description=Meilisearch container
+StopWhenUnneeded={{ondemand}}
 
 [Container]
 Image=docker.io/getmeili/meilisearch:v1.54
@@ -10,6 +11,14 @@ Environment=MEILI_MASTER_KEY=masterKeyDevelopment
 Volume={{application}}-meilisearch.volume:/meili_data:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=7700
+Notify=healthy
+HealthStartupCmd=curl -fsS -o /dev/null http://127.0.0.1:7700/health
+HealthStartupInterval=1s
+HealthStartupTimeout=5s
+HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:7700/health
+HealthInterval=1m
+HealthTimeout=5s
+HealthRetries=3
 
 [Service]
 Restart=always

@@ -22,7 +22,7 @@ This package turns your Laravel app's config into [Podman Quadlet](https://docs.
 ## Installation
 
 ```bash
-composer require foxws/laravel-podman --dev
+composer require foxws/laravel-podman
 ```
 
 ```bash
@@ -40,6 +40,7 @@ Using [Laravel Boost](https://github.com/laravel/boost)? Run `php artisan boost:
 | `development`       | App and services, with your working copy mounted for local editing. **Enabled by default.**                                           |
 | `frankenphp-octane` | Production-style image with the app code baked in. Commented out by default.                                                          |
 | `devcontainer`      | [Dev Containers](https://containers.dev/) image for VS Code/JetBrains. See [Devcontainer](devcontainer.md). Commented out by default. |
+| `ondemand`          | Socket that starts the app on its first request, and the idle check that lets it and its services sleep. See [On-demand services](ondemand.md). **Enabled by default.** |
 | `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. **Enabled by default.**                               |
 | `s3`                | CORS policy for S3-compatible storage buckets.                                                                                        |
 
@@ -66,7 +67,7 @@ To change a preset, publish it with `php artisan podman:publish frankenphp-octan
     lpod install development/app.quadlets --replace
     lpod install development/pgsql.quadlets --replace
     lpod install development/valkey.quadlets --replace
-    lpod install development/my-app-ondemand.socket --replace
+    lpod install ondemand/my-app-ondemand.socket --replace
     lpod install proxy/proxy.quadlets --replace
     ```
 

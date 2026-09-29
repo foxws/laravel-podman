@@ -1,6 +1,7 @@
 # FileName={{application}}-rustfs
 [Unit]
 Description=RustFS container
+StopWhenUnneeded={{ondemand}}
 
 [Container]
 Image=docker.io/rustfs/rustfs:latest
@@ -21,6 +22,14 @@ Network={{application}}.network
 Network={{proxy}}.network
 ExposeHostPort=9000
 ExposeHostPort=9001
+Notify=healthy
+HealthStartupCmd=curl -fsS -o /dev/null http://127.0.0.1:9000/health
+HealthStartupInterval=1s
+HealthStartupTimeout=5s
+HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:9000/health
+HealthInterval=1m
+HealthTimeout=5s
+HealthRetries=3
 
 [Service]
 Restart=always

@@ -37,7 +37,8 @@ Upgrading from v3? See [UPGRADING.md](UPGRADING.md).
 - The app starts on its first request and stops again after 10 minutes without traffic ([on-demand services](https://foxws.nl/laravel-podman/ondemand)).
 - Make that shorter or longer with `PODMAN_ONDEMAND_IDLE_TIMEOUT`, e.g. `5min`, `30min` or `2h`.
 - Works behind the bundled proxy or your own, such as a NAS or Nginx on another machine.
-- Turn it off with `PODMAN_ONDEMAND_ENABLED=false` to keep the app running all the time.
+- The database, cache and other services sleep too, once no jobs are left.
+- Turn it off with `PODMAN_ONDEMAND_ENABLED=false` to keep the app and its services running all the time.
 
 **Native to your system**
 
@@ -68,15 +69,15 @@ Upgrading from v3? See [UPGRADING.md](UPGRADING.md).
 ## Installation
 
 ```bash
-composer require foxws/laravel-podman --dev
+composer require foxws/laravel-podman
 php artisan vendor:publish --tag="podman-config"
 ```
 
-The package only renders Quadlet files, so a dev dependency is enough. See [Customizing](https://foxws.nl/laravel-podman/customizing) for every config key.
+Install it as a regular dependency, not with `--dev`: the idle check runs `php artisan podman:idle` inside your production containers too. See [Customizing](https://foxws.nl/laravel-podman/customizing) for every config key.
 
 ## Quick start
 
-1. **Render** the default presets (`development` and `proxy`):
+1. **Render** the default presets (`development`, `ondemand` and `proxy`):
 
     ```bash
     php artisan podman:setup
@@ -95,7 +96,7 @@ The package only renders Quadlet files, so a dev dependency is enough. See [Cust
     lpod install development/app.quadlets --replace
     lpod install development/pgsql.quadlets --replace
     lpod install development/valkey.quadlets --replace
-    lpod install development/my-app-ondemand.socket --replace
+    lpod install ondemand/my-app-ondemand.socket --replace
     lpod install proxy/proxy.quadlets --replace
     ```
 
@@ -124,6 +125,7 @@ Deploying with `frankenphp-octane`? Also set the secrets it expects, such as you
 | `podman:publish PRESET` | Copy a preset into your project to customize it |
 | `podman:generate PRESET` | Render a single preset |
 | `podman:s3-setup` | Create S3 buckets and apply a CORS policy (needs `aws/aws-sdk-php`) |
+| `podman:idle` | Succeed when the app has no work in progress, for stopping idle queue workers |
 
 Everything else, like installing, starting, removing and setting secrets, is done with [`lpod`](https://foxws.nl/laravel-podman/lpod):
 
@@ -163,6 +165,7 @@ composer test
 
 - [francoism90](https://github.com/foxws)
 - [All Contributors](../../contributors)
+- [Spatie](https://spatie.be): the idle checks follow the design of [spatie/laravel-health](https://github.com/spatie/laravel-health)'s checks
 
 AI, specifically [Claude](https://claude.com/product/claude-code), was used to help build this package. All AI-assisted output is reviewed by me, and I retain final say over everything that is implemented and released.
 

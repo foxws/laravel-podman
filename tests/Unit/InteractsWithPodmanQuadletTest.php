@@ -12,6 +12,7 @@ it('lists the presets available in the vendor stubs directory', function () {
         'devcontainer' => 'devcontainer',
         'development' => 'development',
         'frankenphp-octane' => 'frankenphp-octane',
+        'ondemand' => 'ondemand',
         'proxy' => 'proxy',
         's3' => 's3',
     ]);
@@ -26,6 +27,7 @@ it('merges presets discovered in the configured stubs path with the vendor ones'
         'devcontainer' => 'devcontainer',
         'development' => 'development',
         'frankenphp-octane' => 'frankenphp-octane',
+        'ondemand' => 'ondemand',
         'php-container' => 'php-container',
         'proxy' => 'proxy',
         's3' => 's3',

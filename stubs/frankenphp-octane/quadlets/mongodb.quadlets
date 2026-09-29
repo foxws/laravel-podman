@@ -1,6 +1,7 @@
 # FileName={{application}}-mongodb
 [Unit]
 Description=MongoDB container
+StopWhenUnneeded={{ondemand}}
 
 [Container]
 Image=docker.io/library/mongo:8
@@ -10,6 +11,14 @@ Secret={{application}}-mongodb-password,type=env,target=MONGO_INITDB_ROOT_PASSWO
 Volume={{application}}-mongodb.volume:/data/db:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=27017
+Notify=healthy
+HealthStartupCmd=mongosh --quiet --eval 'db.runCommand({ping: 1}).ok'
+HealthStartupInterval=1s
+HealthStartupTimeout=5s
+HealthCmd=mongosh --quiet --eval 'db.runCommand({ping: 1}).ok'
+HealthInterval=1m
+HealthTimeout=5s
+HealthRetries=3
 
 [Service]
 Restart=always

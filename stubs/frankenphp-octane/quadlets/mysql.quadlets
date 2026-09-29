@@ -1,6 +1,7 @@
 # FileName={{application}}-mysql
 [Unit]
 Description=MySQL container
+StopWhenUnneeded={{ondemand}}
 
 [Container]
 Image=docker.io/library/mysql:26
@@ -14,6 +15,14 @@ ShmSize=256m
 Volume={{application}}-mysql.volume:/var/lib/mysql:rw,Z,U
 Network={{application}}.network
 ExposeHostPort=3306
+Notify=healthy
+HealthStartupCmd=mysqladmin ping -h 127.0.0.1 --silent
+HealthStartupInterval=1s
+HealthStartupTimeout=5s
+HealthCmd=mysqladmin ping -h 127.0.0.1 --silent
+HealthInterval=1m
+HealthTimeout=5s
+HealthRetries=3
 
 [Service]
 Restart=always

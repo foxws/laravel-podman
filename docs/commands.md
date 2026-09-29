@@ -52,6 +52,18 @@ Creates S3 buckets and adds a CORS policy to the ones browsers read from. Needs 
 php artisan podman:s3-setup
 ```
 
+## `podman:idle`
+
+Exits successfully when the app has no work in progress, and fails otherwise. The `ondemand` preset's idle check runs it in a queue worker before stopping the workers. See [Idle checks](ondemand.md#idle-checks).
+
+```bash
+# Every check for something the app uses (queue, database, scout)
+php artisan podman:idle
+
+# Only these checks
+php artisan podman:idle --services=queue,database
+```
+
 ## Backing up volumes
 
 `lpod remove` and `lpod uninstall` delete the service's volumes, and there's no undo. Back up anything you want to keep first (`pgsql`, `valkey`, `rustfs`, `typesense`, `mailpit`):

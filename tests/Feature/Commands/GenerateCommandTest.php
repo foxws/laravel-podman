@@ -113,24 +113,90 @@ it('renders the app always-on when on-demand is disabled', function (string $pre
 it('renders the app on-demand by default', function (string $preset) {
     config([
         'podman.quadlet_prefix' => 'acme',
-        'podman.ondemand.listen' => '0.0.0.0:9000',
         'podman.ondemand.port' => 19000,
-        'podman.ondemand.idle_timeout' => '5min',
     ]);
 
     $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
 
-    expect(File::get("{$this->publishPath}/{$preset}/acme-ondemand.socket"))
-        ->toContain('ListenStream=0.0.0.0:9000')
-        ->and(File::get("{$this->publishPath}/{$preset}/acme-ondemand.service"))
-        ->toContain('Requires=acme.service acme-ondemand.socket')
-        ->toContain('--exit-idle-time=5min 127.0.0.1:19000')
-        ->and(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
+    expect(File::get("{$this->publishPath}/{$preset}/app.quadlets"))
         ->toContain('StopWhenUnneeded=yes')
         ->toContain('PublishPort=127.0.0.1:19000:8000')
         ->toContain("Notify=healthy\nHealthStartupCmd=")
         ->toContain('HealthStartupInterval=1s');
 })->with(['development', 'frankenphp-octane']);
+
+it('renders the on-demand socket in its own preset', function () {
+    config([
+        'podman.quadlet_prefix' => 'acme',
+        'podman.ondemand.listen' => '0.0.0.0:9000',
+        'podman.ondemand.port' => 19000,
+        'podman.ondemand.idle_timeout' => '5min',
+    ]);
+
+    $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/ondemand/acme-ondemand.socket"))
+        ->toContain('ListenStream=0.0.0.0:9000')
+        ->and(File::get("{$this->publishPath}/ondemand/acme-ondemand.service"))
+        ->toContain('Requires=acme.service acme-ondemand.socket')
+        ->toContain('--exit-idle-time=5min 127.0.0.1:19000');
+});
+
+it('lets services sleep with the app by default', function (string $preset) {
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/{$preset}/pgsql.quadlets"))
+        ->toContain('StopWhenUnneeded=yes')
+        ->toContain("Notify=healthy\nHealthStartupCmd=pg_isready -q -h 127.0.0.1")
+        ->and(File::get("{$this->publishPath}/{$preset}/rustfs.quadlets"))
+        ->toContain('StopWhenUnneeded=yes')
+        ->and(File::get("{$this->publishPath}/{$preset}/typesense.quadlets"))
+        ->toContain('StopWhenUnneeded=yes')
+        ->not->toContain('PartOf=');
+
+    foreach (['pgsql', 'mysql', 'mariadb', 'mongodb', 'valkey', 'redis', 'rustfs', 'typesense', 'meilisearch', 'mailpit'] as $service) {
+        expect(File::get("{$this->publishPath}/{$preset}/{$service}.quadlets"))
+            ->toContain("Notify=healthy\nHealthStartupCmd=");
+    }
+
+    foreach (['mailpit', 'reverb'] as $service) {
+        expect(File::get("{$this->publishPath}/{$preset}/{$service}.quadlets"))
+            ->toContain('StopWhenUnneeded=yes')
+            ->not->toContain('PartOf=');
+    }
+})->with(['development', 'frankenphp-octane']);
+
+it('keeps services running when on-demand is disabled', function () {
+    config(['podman.quadlet_prefix' => 'acme', 'podman.ondemand.enabled' => false]);
+
+    $this->artisan('podman:generate', ['preset' => 'development'])->assertExitCode(0);
+    $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/development/pgsql.quadlets"))->toContain('StopWhenUnneeded=no')
+        ->and(File::get("{$this->publishPath}/ondemand/acme-idle.service"))->toContain('[ no = yes ]');
+});
+
+it('renders an idle check that stops queue workers, then the scheduler timer', function () {
+    config(['podman.quadlet_prefix' => 'acme']);
+
+    $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/ondemand/acme-idle.timer"))
+        ->toContain('WantedBy=timers.target')
+        ->and(File::get("{$this->publishPath}/ondemand/acme-idle.service"))
+        ->toContain('[ yes = yes ] && ! systemctl $$scope --quiet is-active acme.service')
+        ->toContain('podman exec systemd-acme-$$worker php -d variables_order=EGPCS /app/artisan podman:idle || exit 0')
+        ->toContain('for unit in queue.service horizon.service schedule.timer; do ! systemctl $$scope --quiet is-active acme-$$unit || systemctl $$scope stop acme-$$unit; done');
+});
+
+it('wakes the frankenphp-octane queue worker and scheduler timer with the app', function () {
+    config(['podman.quadlet_prefix' => 'acme']);
+
+    $this->artisan('podman:generate', ['preset' => 'frankenphp-octane'])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/frankenphp-octane/app.quadlets"))
+        ->toMatch('/^Wants=.*acme-queue\\.container acme-schedule\\.timer$/m');
+});
 
 it('runs the frankenphp-octane queue worker and scheduler independently of the app', function () {
     $this->artisan('podman:generate', ['preset' => 'frankenphp-octane'])->assertExitCode(0);
@@ -141,8 +207,6 @@ it('runs the frankenphp-octane queue worker and scheduler independently of the a
     expect(File::get("{$path}/queue.quadlets"))
         ->toContain('WantedBy=default.target')
         ->not->toContain("{$application}.container")
-        ->and(File::get("{$path}/app.quadlets"))
-        ->not->toContain("{$application}-queue.container")
         ->and(File::get("{$path}/schedule.quadlets"))
         ->toContain('artisan schedule:run')
         ->toContain('Type=oneshot')

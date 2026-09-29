@@ -36,19 +36,21 @@ PODMAN_ONDEMAND_ENABLED=false
 
 | Config key | Env variable | Default | Description |
 | --- | --- | --- | --- |
-| `ondemand.enabled` | `PODMAN_ONDEMAND_ENABLED` | `true` | Render presets on-demand |
+| `ondemand.enabled` | `PODMAN_ONDEMAND_ENABLED` | `true` | Render presets on-demand, including [sleeping services](#sleeping-services) |
 | `ondemand.listen` | `PODMAN_ONDEMAND_LISTEN` | `8000` | Where the socket listens (systemd `ListenStream=`), e.g. `8000` or `192.168.1.10:8000` |
 | `ondemand.port` | `PODMAN_ONDEMAND_PORT` | `18000` | Loopback port the app is published on for the socket proxy |
 | `ondemand.idle_timeout` | `PODMAN_ONDEMAND_IDLE_TIMEOUT` | `10min` | How long the app may be idle before it stops |
 
 Running several apps on one host? Give each its own `listen` and `port`.
 
-Render and install as usual. The socket and its proxy service are plain systemd units, because Quadlet has no unit type for them. They live in the preset's `systemd/` folder and are rendered next to the `.quadlets` files:
+Render and install as usual. The socket, its proxy service and the [idle check](#the-idle-check) are plain systemd units, because Quadlet has no unit type for them. They live in the `ondemand` preset, which works with both `development` and `frankenphp-octane`:
 
 ```bash
 php artisan podman:generate development
+php artisan podman:generate ondemand
 lpod install development/app.quadlets --replace
-lpod install development/my-app-ondemand.socket --replace
+lpod install ondemand/my-app-ondemand.socket --replace
+lpod install ondemand/my-app-idle.timer --replace
 ```
 
 `lpod install` copies the socket and its proxy service to `~/.config/systemd/user/` and enables the socket. On a server, also run `loginctl enable-linger` once, so the socket listens after a reboot without logging in.
@@ -59,16 +61,14 @@ With the `proxy` preset, regenerate it too. Caddy then sends app traffic to the 
 
 | Service | `development` | `frankenphp-octane` |
 | --- | --- | --- |
-| Vite, Reverb, Inertia SSR | Stop with the app | Stop with the app |
-| Queue worker / Horizon | Stops with the app ([opt out](#keeping-the-queue-worker-running)) | Keeps running, starts at boot |
-| Scheduler | Stops with the app | A timer runs `schedule:run` every minute |
-| Database, cache | Keep running | Keep running |
+| Vite, Inertia SSR | Stop with the app | Stop with the app |
+| Queue worker / Horizon | Stops with the app ([opt out](#keeping-the-queue-worker-running)) | Starts at boot, stops once no jobs are left ([idle check](#the-idle-check)) |
+| Scheduler | Stops with the app | A timer runs `schedule:run` every minute while the app is awake |
+| Database, cache, Reverb, Mailpit, other services | [Sleep](#sleeping-services) once nothing needs them | [Sleep](#sleeping-services) once nothing needs them |
 
-The presets are the same with on-demand on or off. Only `StopWhenUnneeded=` on the app changes (`{{ondemand}}` renders `yes` or `no`), along with where the `proxy` preset sends traffic. The socket units are always rendered, but only take effect once installed. Sidecars use `PartOf=` the app rather than `BindsTo=`: `BindsTo=` would count as needing the app and keep it running.
+The presets are the same with on-demand on or off. Only `StopWhenUnneeded=` on the app and services changes (`{{ondemand}}` renders `yes` or `no`), along with where the `proxy` preset sends traffic. The socket and timer units are always rendered, but only take effect once installed. Sidecars use `PartOf=` the app rather than `BindsTo=`: `BindsTo=` would count as needing the app and keep it running.
 
 ### Keeping the queue worker running
-
-In `frankenphp-octane`, the queue worker and Horizon always run: they start at boot and keep running while the app is idle.
 
 In `development`, the queue worker and Horizon are `PartOf=` the app, so they stop when it goes idle. A job still running then gets `TimeoutStopSec=` (60 seconds) to finish before it's killed, and is retried on the next start.
 
@@ -90,14 +90,126 @@ Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
 ```
 
-The app still starts the worker through its `Wants=` line, but no longer stops it. Regenerate and reinstall the worker:
+The app still starts the worker through its `Wants=` line, but no longer stops it. Regenerate and reinstall the worker, and install the [idle check](#the-idle-check) so it stops once its jobs are done:
 
 ```bash
 php artisan podman:generate development
 lpod install development/queue.quadlets --replace   # or horizon.quadlets
+lpod install ondemand/my-app-idle.timer --replace
 ```
 
-Stop it yourself with `systemctl --user stop my-app-queue`.
+In `frankenphp-octane`, the queue worker and Horizon already work this way.
+
+A worker that keeps running also needs the services its jobs use, such as `rustfs` for uploads, `typesense` for search indexing, `reverb` for broadcast events or `mailpit` for queued mail. Otherwise they [sleep](#sleeping-services) with the app while jobs still use them. Add a `Wants=` line under the worker's `[Unit]`:
+
+```ini
+Wants={{application}}-rustfs.container {{application}}-typesense.container
+```
+
+## Sleeping services
+
+The database, cache and other services sleep too, once nothing needs them anymore: the app is idle and no jobs are left. Nothing runs until the next request, much like hibernation on a managed platform.
+
+`PODMAN_ONDEMAND_ENABLED=false` keeps the app and every service running. Do that when something outside the app needs them, such as a database client, a backup job or a public S3 bucket (see [caveats](#caveats)).
+
+To keep only one service running, such as the database for a client, publish the preset and set `StopWhenUnneeded=no` in that service's quadlet.
+
+### How it works
+
+`{{ondemand}}` renders `StopWhenUnneeded=yes` on the database, cache, search and storage services. systemd then stops a service once no running unit `Requires=` or `Wants=` it anymore:
+
+1. The app goes idle and stops, along with its sidecars.
+2. The [idle check](#the-idle-check) stops the queue workers once no jobs are left, and the `frankenphp-octane` scheduler timer.
+3. Nothing needs the database and cache anymore, so they stop too.
+4. The next request starts the app, which starts the services, workers and scheduler timer it `Requires=` or `Wants=`. The services report ready through a health check (`Notify=healthy`), so the app doesn't connect before they accept connections.
+
+Traffic between containers doesn't pass through the on-demand socket. A service stays up because a running unit needs it, not because of an idle timer, so a query from the app or a worker never hits a stopped database.
+
+**Every service must be needed by something.** A service with `StopWhenUnneeded=yes` that nothing `Requires=` or `Wants=` stops right after it starts. The app `Requires=` the database and cache. Using another service, such as `rustfs`, `typesense` or `meilisearch`? Publish the preset and add it to the app's `Wants=` line (see [Customizing](customizing.md)), and to a [kept-running worker's](#keeping-the-queue-worker-running) if its jobs use it:
+
+```ini
+Wants={{application}}-mailpit.container {{application}}-queue.container {{application}}-schedule.container {{application}}-rustfs.container
+```
+
+### The idle check
+
+Queue workers that keep running while the app is idle would keep the database and cache awake. The `ondemand` preset's idle check (`lpod install ondemand/my-app-idle.timer`) handles this for both `development` and `frankenphp-octane`.
+
+Once a minute, while the app is asleep, it runs `php artisan podman:idle` in a running queue worker or Horizon. If the app has no work in progress, it stops the workers and the scheduler timer, if one is running (`frankenphp-octane`). The next request starts them again through the app's `Wants=` line, which lists `queue` and, in `frankenphp-octane`, `schedule.timer`. Using Horizon? Put `horizon` on that line instead of `queue`.
+
+A long job keeps the stack awake until it's done. Delayed jobs count too, so they run on time. If `podman:idle` fails or doesn't exist, for example because the package was installed with `--dev` and the production image leaves it out, the workers keep running. The check does nothing when `PODMAN_ONDEMAND_ENABLED=false`.
+
+#### Idle checks
+
+`podman:idle` runs every check for something your app uses, going by its config, much like [Laravel Health](https://spatie.be/docs/laravel-health) checks:
+
+| Check | Used when | Busy while |
+| --- | --- | --- |
+| `queue` | `QUEUE_CONNECTION` isn't `sync` or `null` | Jobs are waiting, running or delayed, on the default queue or any Horizon supervisor's queues |
+| `database` | `DB_CONNECTION` is set | Another client runs a query or holds a transaction open (PostgreSQL, MySQL, MariaDB), or an operation runs on the app's MongoDB database (with `mongodb/laravel-mongodb`). Idle connections, like a worker waiting for jobs, don't count |
+| `scout` | `SCOUT_DRIVER` is a search engine, like `typesense` or `meilisearch` | Queued indexing jobs are left (`scout.queue`), or Meilisearch still processes indexing tasks in the background |
+
+Pick checks with `--services`. Unknown names fail, so a typo keeps the workers running rather than stopping them:
+
+```bash
+php artisan podman:idle --services=queue,database
+```
+
+You can change the checks in two ways. To add or remove checks, edit the list in `config/podman.php` (publish it with `php artisan vendor:publish --tag="podman-config"`). The list takes class names, so each check runs with its defaults:
+
+```php
+'idle' => [
+    'checks' => [
+        QueueCheck::class,
+        DatabaseCheck::class,
+        ScoutCheck::class,
+    ],
+],
+```
+
+To configure a check, like the queues it watches, register the checks from a service provider's `boot()` method instead. Registered checks replace the config list, so include every check you want:
+
+```php
+use Foxws\Podman\Support\Idle\Checks\DatabaseCheck;
+use Foxws\Podman\Support\Idle\Checks\QueueCheck;
+use Foxws\Podman\Support\Idle\PodmanIdle;
+
+app(PodmanIdle::class)->checks([
+    QueueCheck::new()->connection('redis')->queues(['default', 'media']),
+    DatabaseCheck::new(),
+]);
+```
+
+Write your own by extending `IdleCheck`. Give it a `name()`, return an `IdleResult` from `run()`, and optionally override `isEnabled()`:
+
+```php
+use Foxws\Podman\Support\Idle\IdleCheck;
+use Foxws\Podman\Support\Idle\IdleResult;
+
+class ImportCheck extends IdleCheck
+{
+    public function name(): string
+    {
+        return 'imports';
+    }
+
+    public function run(): IdleResult
+    {
+        $running = Import::query()->whereNull('finished_at')->count();
+
+        return $running === 0
+            ? IdleResult::idle()
+            : IdleResult::busy("{$running} imports running");
+    }
+}
+```
+
+### Caveats
+
+- **Cold start.** The first request after idling also waits for the services, which adds a few seconds.
+- **The scheduler doesn't run while the stack sleeps.** Tasks that must run on time, like nightly backups or reports, need `PODMAN_ONDEMAND_ENABLED=false`.
+- **Host ports don't wake anything.** A database client, or a request to RustFS or Mailpit through the `proxy` preset, can't start a sleeping service. Open the app first, e.g. with `lpod my-app open`. Starting the service by hand doesn't help: nothing needs it, so systemd stops it again.
+- **Health checks.** Every service reports ready through a health check, except Memcached (it starts right away) and Reverb. Those count as started as soon as their container runs.
 
 ## External proxies
 

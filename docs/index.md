@@ -29,9 +29,9 @@ composer require foxws/laravel-podman
 php artisan vendor:publish --tag="podman-config"
 ```
 
-The package only renders files, so a dev dependency is enough. See [Customizing](customizing.md) for all config keys.
+Install it as a regular dependency, not with `--dev`. The idle check runs `php artisan podman:idle` inside your production containers. See [Customizing](customizing.md) for all config keys.
 
-Using [Laravel Boost](https://github.com/laravel/boost)? Run `php artisan boost:install` (or `boost:update`) after installing, and your AI agent gets skills for `lpod`, presets and S3 setup.
+If you use [Laravel Boost](https://github.com/laravel/boost), run `php artisan boost:install` (or `boost:update`) after installing. Your AI agent then gets skills for `lpod`, presets, S3 setup and upgrading.
 
 ## Presets
 
@@ -40,7 +40,7 @@ Using [Laravel Boost](https://github.com/laravel/boost)? Run `php artisan boost:
 | `development`       | App and services, with your working copy mounted for local editing. **Enabled by default.**                                           |
 | `production`        | [FrankenPHP](https://frankenphp.dev/) and [Octane](https://laravel.com/docs/octane) image with the app code baked in, for servers. Commented out by default. |
 | `devcontainer`      | [Dev Containers](https://containers.dev/) image for VS Code/JetBrains. See [Devcontainer](devcontainer.md). Commented out by default. |
-| `ondemand`          | Socket that starts the app on its first request, and the idle check that lets it and its services sleep. See [On-demand services](ondemand.md). **Enabled by default.** |
+| `ondemand`          | Socket that starts the app on its first request, so it and its services can sleep when idle. See [On-demand services](ondemand.md). **Enabled by default.** |
 | `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. **Enabled by default.**                               |
 | `s3`                | CORS policy for S3-compatible storage buckets.                                                                                        |
 
@@ -68,7 +68,10 @@ To change a preset, publish it with `php artisan podman:publish production`. See
     lpod install development/valkey.quadlets --replace
     lpod install ondemand/my-app-ondemand.socket --replace
     lpod install proxy/proxy.quadlets --replace
+    lpod idle enable my-app
     ```
+
+    Replace `my-app` with your app's name (`APP_NAME`, kebab-cased).
 
 4. **Open** your app. The first request starts it:
 
@@ -87,9 +90,9 @@ lpod install development/vite.quadlets --replace
 lpod my-app-vite up
 ```
 
-Deploying with `production`? Also set the secrets it expects, such as your `.env` and database password, with `lpod my-app secrets` and `lpod my-app-pgsql secrets`.
+For `production`, also set the secrets it expects, such as your `.env` and the database password, with `lpod my-app secrets` and `lpod my-app-pgsql secrets`.
 
-No PHP on the host? See [Setting up without PHP](host-setup.md).
+To render presets on a host without PHP, see [Setting up without PHP](host-setup.md).
 
 ## Commands
 
@@ -99,6 +102,7 @@ No PHP on the host? See [Setting up without PHP](host-setup.md).
 | `podman:publish PRESET`  | Copy a preset into your project so you can edit it               |
 | `podman:generate PRESET` | Render a single preset                                           |
 | `podman:s3-setup`        | Create S3 buckets and a CORS policy (needs `aws/aws-sdk-php`)    |
+| `podman:idle`            | Succeed when the app has no work in progress. The idle check runs it |
 
 Everything else (installing, starting, removing, secrets) is done with [`lpod`](lpod.md). See [Commands](commands.md) for all flags.
 

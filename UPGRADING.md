@@ -1,10 +1,29 @@
 # Upgrading
 
+## From 5.0 to 5.1
+
+The idle check moved into [`lpod`](docs/lpod.md) v2.2.0. The `ondemand` preset still renders the old `my-app-idle.timer`, but it's deprecated.
+
+1. Upgrade `lpod`. Version 2.1 has no `self-update` yet, so run the installer:
+
+    ```bash
+    curl -fsSL https://github.com/foxws/lpod/releases/latest/download/install.sh | bash
+    ```
+
+2. Swap the old timer for the new one:
+
+    ```bash
+    lpod remove my-app-idle.timer
+    lpod idle enable my-app
+    ```
+
+3. If you added a worker to a published `idle.service`, list it in `LPOD_IDLE_WORKERS` instead. See [the idle check](docs/ondemand.md#stopping-another-worker).
+
 ## From v4 to v5
 
 v5 lets the whole stack sleep, not just the app. Once the app is idle and no work is left, the queue workers, the scheduler timer and every service stop too: the database, cache, search, storage, Mailpit and Reverb. The next request starts them again. See [Sleeping services](docs/ondemand.md#sleeping-services).
 
-Using an AI agent with [Laravel Boost](https://github.com/laravel/boost)? Run `php artisan boost:update` after upgrading, then ask it to upgrade laravel-podman. The `podman-upgrade` skill walks it through the steps below, including your published presets.
+If you use an AI agent with [Laravel Boost](https://github.com/laravel/boost), run `php artisan boost:update` after upgrading, then ask it to upgrade laravel-podman. The `podman-upgrade` skill walks it through the steps below, including your published presets.
 
 ### 1. Update the package
 
@@ -52,9 +71,9 @@ lpod install ondemand/my-app-ondemand.socket --replace
 lpod idle enable my-app
 ```
 
-The idle check is part of [`lpod`](docs/lpod.md) v2.2.0 or later. Upgrade it by running its installer again (`curl -fsSL https://github.com/foxws/lpod/releases/latest/download/install.sh | bash`). If you installed `my-app-idle.timer` on an earlier v5 release, remove it first with `lpod remove my-app-idle.timer`. If you added a worker to it, list that worker in `LPOD_IDLE_WORKERS` instead (see [the idle check](docs/ondemand.md#the-idle-check)).
-
-The socket keeps its unit name, so installing it from its new path replaces the old one. Then reinstall every service you use with `--replace`, so they pick up `StopWhenUnneeded=` and their health check, e.g. `lpod install development/pgsql.quadlets --replace`.
+- `lpod idle enable` needs `lpod` v2.2.0 or later. Upgrade it by running its installer again: `curl -fsSL https://github.com/foxws/lpod/releases/latest/download/install.sh | bash`.
+- The socket keeps its unit name, so installing it from its new path replaces the old one.
+- Reinstall every service you use with `--replace`, so they pick up `StopWhenUnneeded=` and their health check, e.g. `lpod install development/pgsql.quadlets --replace`.
 
 ### 6. Check it
 

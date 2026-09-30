@@ -42,6 +42,7 @@ For each published `development` or `production` preset, compare it with `vendor
 - **`app.quadlets` `Wants=`:** every installed service besides what the app `Requires=` must be listed, or it stops right after starting. Check which services the user installs (`lpod list`, or the `.quadlets` they published) and add those. In `production`, also add the worker they use (`queue` or `horizon`) and `{{application}}-schedule.timer`.
 - **Workers that keep running** (every `production` worker, and `development` workers without `PartOf=` the app): add a `Wants=` line with the services their jobs use (from the app's code: filesystems → `rustfs`, Scout → `typesense`/`meilisearch`, broadcasting → `reverb`, mail → `mailpit`).
 - **`systemd/`:** delete `ondemand.socket` and `ondemand.service`. The `ondemand` preset provides them now, along with the idle check. Keep `schedule.timer` in `production`.
+- **Published `ondemand` preset** (`containers/stubs/ondemand`, from an earlier v5 release): replace `systemd/idle.service` with the vendor copy. The one-line `sh -c` script became one `ExecCondition=` per check and uses the `{{systemctl}}` placeholder. Re-add any worker the user added to the old script as its own check and stop line, copied from the `queue` lines.
 
 ### 5. Verify and hand over
 

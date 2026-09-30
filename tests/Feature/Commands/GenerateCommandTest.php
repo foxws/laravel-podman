@@ -192,9 +192,9 @@ it('renders an idle check that stops the queue workers, then the scheduler timer
             ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-queue.service || exec podman exec systemd-acme-queue php -d variables_order=EGPCS /app/artisan podman:idle'
             ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-horizon.service || exec podman exec systemd-acme-horizon php -d variables_order=EGPCS /app/artisan podman:idle'
             ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme.service'
-            ExecStart=-systemctl --user stop acme-queue.service
-            ExecStart=-systemctl --user stop acme-horizon.service
-            ExecStart=-systemctl --user stop acme-schedule.timer
+            ExecStart=-systemctl --user stop --no-block acme-queue.service
+            ExecStart=-systemctl --user stop --no-block acme-horizon.service
+            ExecStart=-systemctl --user stop --no-block acme-schedule.timer
             UNIT);
 });
 
@@ -204,7 +204,7 @@ it('renders an idle check for the system service manager when installed as root'
     $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
 
     expect(File::get("{$this->publishPath}/ondemand/acme-idle.service"))
-        ->toContain('ExecStart=-systemctl stop acme-schedule.timer')
+        ->toContain('ExecStart=-systemctl stop --no-block acme-schedule.timer')
         ->not->toContain('--user');
 });
 

@@ -3,8 +3,10 @@ Description=Laravel idle check
 
 [Service]
 Type=oneshot
+TimeoutStartSec=50
 ExecCondition=/usr/bin/test {{ondemand}} = yes
 ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}.service'
+ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-schedule.service'
 ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-queue.service || exec podman exec systemd-{{application}}-queue php -d variables_order=EGPCS /app/artisan podman:idle'
 ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-horizon.service || exec podman exec systemd-{{application}}-horizon php -d variables_order=EGPCS /app/artisan podman:idle'
 ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}.service'

@@ -147,7 +147,8 @@ it('lets services sleep with the app by default', function (string $preset) {
 
     expect(File::get("{$this->publishPath}/{$preset}/pgsql.quadlets"))
         ->toContain('StopWhenUnneeded=yes')
-        ->toContain("Notify=healthy\nHealthStartupCmd=pg_isready -q -h 127.0.0.1")
+        ->toContain("Notify=healthy\nHealthStartupCmd=pg_isready -q -h 127.0.0.1 -U \"\$\$POSTGRES_USER\" -d postgres")
+        ->toContain("HealthCmd=pg_isready -q -h 127.0.0.1 -U \"\$\$POSTGRES_USER\" -d postgres")
         ->and(File::get("{$this->publishPath}/{$preset}/rustfs.quadlets"))
         ->toContain('StopWhenUnneeded=yes')
         ->and(File::get("{$this->publishPath}/{$preset}/typesense.quadlets"))

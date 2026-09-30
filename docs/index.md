@@ -54,11 +54,10 @@ To change a preset, publish it with `php artisan podman:publish production`. See
     php artisan podman:setup
     ```
 
-2. **Install [`lpod`](lpod.md)** once per host. It's a single bash script and doesn't need PHP:
+2. **Install [`lpod`](lpod.md)** once per host. It's a single bash script and doesn't need PHP. Run the installer again to upgrade:
 
     ```bash
-    curl -fsSL -o ~/.local/bin/lpod https://github.com/foxws/lpod/releases/latest/download/lpod
-    chmod +x ~/.local/bin/lpod
+    curl -fsSL https://github.com/foxws/lpod/releases/latest/download/install.sh | bash
     ```
 
 3. **Install** the rendered services:

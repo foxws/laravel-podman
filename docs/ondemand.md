@@ -43,14 +43,14 @@ PODMAN_ONDEMAND_ENABLED=false
 
 Running several apps on one host? Give each its own `listen` and `port`.
 
-Render and install as usual. The socket, its proxy service and the [idle check](#the-idle-check) are plain systemd units, because Quadlet has no unit type for them. They live in the `ondemand` preset, which works with both `development` and `production`:
+Render and install as usual. The socket and its proxy service are plain systemd units, because Quadlet has no unit type for them. They live in the `ondemand` preset, which works with both `development` and `production`. The [idle check](#the-idle-check) comes with `lpod`:
 
 ```bash
 php artisan podman:generate development
 php artisan podman:generate ondemand
 lpod install development/app.quadlets --replace
 lpod install ondemand/my-app-ondemand.socket --replace
-lpod install ondemand/my-app-idle.timer --replace
+lpod idle enable my-app
 ```
 
 `lpod install` copies the socket and its proxy service to `~/.config/systemd/user/` and enables the socket. On a server, also run `loginctl enable-linger` once, so the socket listens after a reboot without logging in.
@@ -95,7 +95,7 @@ The app still starts the worker through its `Wants=` line, but no longer stops i
 ```bash
 php artisan podman:generate development
 lpod install development/queue.quadlets --replace   # or horizon.quadlets
-lpod install ondemand/my-app-idle.timer --replace
+lpod idle enable my-app
 ```
 
 In `production`, the queue worker and Horizon already work this way.
@@ -139,11 +139,26 @@ After={{application}}-pgsql.container {{application}}-valkey.container {{applica
 
 ### The idle check
 
-Queue workers that keep running while the app is idle would keep the database and cache awake. The `ondemand` preset's idle check (`lpod install ondemand/my-app-idle.timer`) handles this for both `development` and `production`.
+Queue workers that keep running while the app is idle would keep the database and cache awake. The idle check handles this for both `development` and `production`. It's part of [`lpod`](lpod.md) (v2.2.0 or later), which runs it for each app you enable:
+
+```bash
+lpod idle enable my-app    # runs lpod-idle@my-app.timer every minute
+lpod idle my-app           # run the check once
+journalctl --user -u lpod-idle@my-app
+```
 
 Once a minute, while the app is asleep, it runs `php artisan podman:idle` in each running queue worker or Horizon. If the app has no work in progress, it stops the workers and the scheduler timer, if one is running (`production`). A worker that isn't running is skipped, so the scheduler timer still stops. While a scheduled `schedule:run` is still running, the check waits for the next minute, so jobs it dispatches still find a worker. Before stopping anything, it checks again that the app is still asleep, so a request that wakes the app during the check keeps its workers running. The next request starts them again through the app's `Wants=` line, which lists `queue` and, in `production`, `schedule.timer`. Using Horizon? Put `horizon` on that line instead of `queue`.
 
-A long job keeps the stack awake until it's done. Delayed jobs count too, so they run on time. If `podman:idle` fails or doesn't exist, for example because the package was installed with `--dev` and the production image leaves it out, the workers keep running. The check does nothing when `PODMAN_ONDEMAND_ENABLED=false`.
+To check and stop another worker that keeps running, such as `my-app-imports`, add it with a drop-in (`systemctl --user edit lpod-idle@my-app.service`):
+
+```ini
+[Service]
+Environment=LPOD_IDLE_WORKERS=imports
+```
+
+On an older `lpod`, the `ondemand` preset still renders the check as `my-app-idle.timer` (`lpod install ondemand/my-app-idle.timer --replace`). It works the same way, but is deprecated and will be removed in the next major version. Don't install both.
+
+A long job keeps the stack awake until it's done. Delayed jobs count too, so they run on time. If `podman:idle` fails or doesn't exist, for example because the package was installed with `--dev` and the production image leaves it out, the workers keep running. The check does nothing unless the app's on-demand socket is installed, so it's a no-op with `PODMAN_ONDEMAND_ENABLED=false`.
 
 #### Idle checks
 

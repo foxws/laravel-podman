@@ -43,15 +43,16 @@ Skip this step if you haven't published any presets. Otherwise, make these chang
 - **`quadlets/app.quadlets`:** a service with `StopWhenUnneeded=` that nothing needs stops right after it starts. Add every service you use besides the database and cache to `Wants=`, e.g. `{{application}}-rustfs.container`. In `production`, also add the queue worker (or Horizon) and `{{application}}-schedule.timer`, so they wake with the app.
 - **Queue workers that keep running** (always in `production`, or a `development` worker you took out of `PartOf=`): add the services their jobs use to a `Wants=` line under `[Unit]`, e.g. `rustfs` for uploads or `mailpit` for queued mail. Otherwise those services sleep with the app mid-job.
 - **`systemd/`:** delete `ondemand.socket` and `ondemand.service`. They live in the `ondemand` preset now. `production` keeps `schedule.timer`.
-- **`ondemand`**, if you published it on an earlier v5 release: replace `systemd/idle.service` with the package's copy. It now runs one `ExecCondition=` per check. If you added a worker to the old script, add a check and stop line for it, copied from the `queue` lines.
 
 ### 5. Regenerate and reinstall
 
 ```bash
 php artisan podman:setup
 lpod install ondemand/my-app-ondemand.socket --replace
-lpod install ondemand/my-app-idle.timer --replace
+lpod idle enable my-app
 ```
+
+The idle check is part of [`lpod`](docs/lpod.md) v2.2.0 or later. Upgrade it by running its installer again (`curl -fsSL https://github.com/foxws/lpod/releases/latest/download/install.sh | bash`). If you installed `my-app-idle.timer` on an earlier v5 release, remove it first with `lpod remove my-app-idle.timer`. If you added a worker to it, list that worker in `LPOD_IDLE_WORKERS` instead (see [the idle check](docs/ondemand.md#the-idle-check)).
 
 The socket keeps its unit name, so installing it from its new path replaces the old one. Then reinstall every service you use with `--replace`, so they pick up `StopWhenUnneeded=` and their health check, e.g. `lpod install development/pgsql.quadlets --replace`.
 

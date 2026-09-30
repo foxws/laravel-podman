@@ -10,11 +10,10 @@ order: 2
 ## Installation
 
 ```bash
-curl -fsSL -o ~/.local/bin/lpod https://github.com/foxws/lpod/releases/latest/download/lpod
-chmod +x ~/.local/bin/lpod
+curl -fsSL https://github.com/foxws/lpod/releases/latest/download/install.sh | bash
 ```
 
-To pin a version, download a tagged release instead, e.g. `.../releases/download/v0.1.0/lpod`. Check the installed version with `lpod --version`.
+The installer puts `lpod` and `lpod-setup` in `~/.local/bin` and writes the systemd templates for the [idle check](ondemand.md#the-idle-check). Run it again to upgrade. To pin a version, set `LPOD_VERSION`, e.g. `LPOD_VERSION=v2.2.0`. Check the installed version with `lpod --version`. See [installing by hand](https://github.com/foxws/lpod/blob/main/docs/installation.md) for the alternative.
 
 ## Usage
 

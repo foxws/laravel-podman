@@ -1,3 +1,5 @@
+# Deprecated: lpod v2.2.0 and later run this check with "lpod idle enable {{application}}".
+# Install one or the other, not both. Removed in the next major version.
 [Unit]
 Description=Laravel idle check
 
@@ -10,6 +12,6 @@ ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-sche
 ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-queue.service || exec podman exec systemd-{{application}}-queue php -d variables_order=EGPCS /app/artisan podman:idle'
 ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-horizon.service || exec podman exec systemd-{{application}}-horizon php -d variables_order=EGPCS /app/artisan podman:idle'
 ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}.service'
-ExecStart=-{{systemctl}} stop {{application}}-queue.service
-ExecStart=-{{systemctl}} stop {{application}}-horizon.service
-ExecStart=-{{systemctl}} stop {{application}}-schedule.timer
+ExecStart=-{{systemctl}} stop --no-block {{application}}-queue.service
+ExecStart=-{{systemctl}} stop --no-block {{application}}-horizon.service
+ExecStart=-{{systemctl}} stop --no-block {{application}}-schedule.timer

@@ -83,7 +83,7 @@ Install it as a regular dependency, not with `--dev`: the idle check runs `php a
     php artisan podman:setup
     ```
 
-2. **Install [`lpod`](https://github.com/foxws/lpod)** once per host. It's a single bash script and doesn't need PHP. Run the installer again to upgrade:
+2. **Install [`lpod`](https://github.com/foxws/lpod)** once per host. It's a single bash script and doesn't need PHP. Upgrade it later with `lpod self-update`:
 
     ```bash
     curl -fsSL https://github.com/foxws/lpod/releases/latest/download/install.sh | bash

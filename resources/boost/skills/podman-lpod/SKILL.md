@@ -67,6 +67,7 @@ After changing a `.quadlets` file or its template, regenerate and reinstall with
 lpod idle enable my-app              # stop workers and the scheduler timer once the sleeping app is idle
 lpod idle my-app                     # run the check once
 lpod idle disable my-app
+lpod self-update                     # upgrade lpod in place (v2.2.0 and later)
 journalctl --user -u lpod-idle@my-app
 ```
 

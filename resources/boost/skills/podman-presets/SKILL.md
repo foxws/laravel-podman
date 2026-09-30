@@ -105,7 +105,17 @@ Publish `proxy`, then edit `containers/stubs/proxy/runtimes/Caddyfile` and `site
 
 ### On-demand (scale-to-zero)
 
-A preset can hold plain systemd units next to `quadlets/`, because Quadlet has no unit type for sockets or timers. Everything in `systemd/*` renders as `{application}-{file}`. The `ondemand` preset holds only such units, shared by `development` and `production`: the on-demand socket and its `systemd-socket-proxyd` service. The idle check is part of `lpod` (`lpod idle enable {application}`): while the app sleeps, it runs `podman:idle` in each running queue worker or Horizon and, when the app has no work in progress, stops the workers and the scheduler timer if one runs, so services with `StopWhenUnneeded={{ondemand}}` can sleep. A worker you add that keeps running while the app sleeps goes in `LPOD_IDLE_WORKERS`, set in a drop-in on `lpod-idle@{application}.service`. The preset's deprecated `idle.timer`/`idle.service` are only for older `lpod`. `production` also has `systemd/schedule.timer`. A service with `StopWhenUnneeded=yes` must be in the app's `Requires=` or `Wants=`, or it stops right after starting. On-demand is the default; `PODMAN_ONDEMAND_ENABLED=false` renders `StopWhenUnneeded=no` on the app and services and points the proxy at the container. Install with `lpod install ondemand/{application}-ondemand.socket --replace` and `lpod idle enable {application}`. The app quadlet stays on-demand ready either way: keep `StopWhenUnneeded={{ondemand}}`, `Notify=healthy` with the `/up` health check, and the `127.0.0.1:{{ondemandPort}}` publish when editing it.
+On by default. `PODMAN_ONDEMAND_ENABLED=false` renders `StopWhenUnneeded=no` everywhere and points the proxy straight at the container.
+
+- **Socket:** the `ondemand` preset (shared by `development` and `production`) holds the socket and its `systemd-socket-proxyd` service. Files in a preset's `systemd/` folder are plain systemd units, rendered as `{application}-{file}`; `production` also has `systemd/schedule.timer`.
+- **Idle check:** part of `lpod`. While the app sleeps, it runs `podman:idle` in the running queue worker or Horizon, and once nothing is in progress, stops the workers and the scheduler timer. Add another worker with `Environment=LPOD_IDLE_WORKERS=imports` in a drop-in on `lpod-idle@{application}.service`. The preset's `idle.timer`/`idle.service` are deprecated, for older `lpod` only.
+- **Sleeping services:** a service with `StopWhenUnneeded={{ondemand}}` stops once no running unit needs it, so it must be in the app's `Requires=` or `Wants=`, or it stops right after starting.
+- **App quadlet:** when editing it, keep `StopWhenUnneeded={{ondemand}}`, `Notify=healthy` with the `/up` health check, and the `127.0.0.1:{{ondemandPort}}` publish.
+
+```bash
+lpod install ondemand/{application}-ondemand.socket --replace
+lpod idle enable {application}
+```
 
 ### Extra PHP extensions or packages
 

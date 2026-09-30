@@ -173,21 +173,36 @@ it('keeps services running when on-demand is disabled', function () {
     $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
 
     expect(File::get("{$this->publishPath}/development/pgsql.quadlets"))->toContain('StopWhenUnneeded=no')
-        ->and(File::get("{$this->publishPath}/ondemand/acme-idle.service"))->toContain('[ no = yes ]');
+        ->and(File::get("{$this->publishPath}/ondemand/acme-idle.service"))->toContain('ExecCondition=/usr/bin/test no = yes');
 });
 
-it('renders an idle check that stops queue workers, then the scheduler timer', function () {
-    config(['podman.quadlet_prefix' => 'acme']);
+it('renders an idle check that stops the queue worker, then the scheduler timer', function () {
+    config(['podman.quadlet_prefix' => 'acme', 'podman.quadlet_uid' => 1000]);
 
     $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
 
     expect(File::get("{$this->publishPath}/ondemand/acme-idle.timer"))
         ->toContain('WantedBy=timers.target')
         ->and(File::get("{$this->publishPath}/ondemand/acme-idle.service"))
-        ->toContain('[ yes = yes ] && ! systemctl $$scope --quiet is-active acme.service')
-        ->toContain('podman exec systemd-acme-$$worker php -d variables_order=EGPCS /app/artisan podman:idle || exit 0')
-        ->toContain('podman:idle || exit 0; ! systemctl $$scope --quiet is-active acme.service || exit 0; for unit')
-        ->toContain('for unit in queue.service horizon.service schedule.timer; do ! systemctl $$scope --quiet is-active acme-$$unit || systemctl $$scope stop acme-$$unit; done');
+        ->toContain(<<<'UNIT'
+            ExecCondition=/usr/bin/test yes = yes
+            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme.service'
+            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-queue.service || exec podman exec systemd-acme-queue php -d variables_order=EGPCS /app/artisan podman:idle'
+            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme.service'
+            ExecStart=-systemctl --user stop acme-queue.service
+            ExecStart=-systemctl --user stop acme-schedule.timer
+            UNIT);
+});
+
+it('renders an idle check for Horizon in the system service manager', function () {
+    config(['podman.quadlet_prefix' => 'acme', 'podman.quadlet_uid' => 0, 'podman.ondemand.worker' => 'horizon']);
+
+    $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/ondemand/acme-idle.service"))
+        ->toContain("ExecCondition=/bin/sh -c '! systemctl --quiet is-active acme-horizon.service || exec podman exec systemd-acme-horizon php")
+        ->toContain('ExecStart=-systemctl stop acme-horizon.service')
+        ->not->toContain('--user');
 });
 
 it('wakes the production queue worker and scheduler timer with the app', function () {

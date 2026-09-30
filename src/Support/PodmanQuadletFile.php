@@ -27,6 +27,7 @@ class PodmanQuadletFile
             '{{appHost}}' => $this->config->domain(),
             '{{appUid}}' => (string) $this->config->uid(),
             '{{appGid}}' => (string) $this->config->gid(),
+            '{{systemctl}}' => $this->config->systemctl(),
             '{{application}}' => $this->config->prefix(),
             '{{proxy}}' => $this->config->proxy(),
             '{{workingPath}}' => $this->path->workingPath(),
@@ -37,6 +38,7 @@ class PodmanQuadletFile
             '{{ondemandListen}}' => $this->config->onDemandListen(),
             '{{ondemandPort}}' => (string) $this->config->onDemandPort(),
             '{{ondemandIdleTimeout}}' => $this->config->onDemandIdleTimeout(),
+            '{{ondemandWorker}}' => $this->config->onDemandWorker(),
             ...$this->config->customSubstitutions(),
         ];
     }

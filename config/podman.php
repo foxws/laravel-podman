@@ -205,6 +205,10 @@ return [
     | idle and no jobs are left. A sleeping stack skips scheduled tasks, and
     | the first request after idling waits for every service to start.
     |
+    | "worker" is the queue worker the idle check runs "podman:idle" in and
+    | stops while the app sleeps: "queue" or "horizon". It defaults to
+    | "horizon" when Laravel Horizon is installed, "queue" otherwise.
+    |
     */
 
     'ondemand' => [
@@ -215,6 +219,8 @@ return [
         'port' => env('PODMAN_ONDEMAND_PORT', 18000),
 
         'idle_timeout' => env('PODMAN_ONDEMAND_IDLE_TIMEOUT', '10min'),
+
+        'worker' => env('PODMAN_ONDEMAND_WORKER'),
     ],
 
     /*

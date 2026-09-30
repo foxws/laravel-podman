@@ -8,6 +8,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Illuminate\Support\Uri;
+use Laravel\Horizon\Horizon;
 
 /**
  * Typed access to the "podman" config values used while rendering presets.
@@ -49,6 +50,15 @@ class PodmanConfig
         }
 
         return function_exists('posix_getgid') ? posix_getgid() : 1000;
+    }
+
+    /**
+     * The systemctl command for the service manager the units are installed
+     * in: the system manager for root, the user's own manager otherwise.
+     */
+    public function systemctl(): string
+    {
+        return $this->uid() === 0 ? 'systemctl' : 'systemctl --user';
     }
 
     /**
@@ -136,6 +146,21 @@ class PodmanConfig
     public function onDemandIdleTimeout(): string
     {
         return (string) Config::get('podman.ondemand.idle_timeout');
+    }
+
+    /**
+     * The queue worker the idle check runs "podman:idle" in and stops:
+     * "horizon" when Laravel Horizon is installed, "queue" otherwise.
+     */
+    public function onDemandWorker(): string
+    {
+        $worker = Config::get('podman.ondemand.worker');
+
+        if (filled($worker)) {
+            return (string) $worker;
+        }
+
+        return class_exists(Horizon::class) ? 'horizon' : 'queue';
     }
 
     /**

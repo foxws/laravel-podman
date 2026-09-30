@@ -40,6 +40,7 @@ PODMAN_ONDEMAND_ENABLED=false
 | `ondemand.listen` | `PODMAN_ONDEMAND_LISTEN` | `8000` | Where the socket listens (systemd `ListenStream=`), e.g. `8000` or `192.168.1.10:8000` |
 | `ondemand.port` | `PODMAN_ONDEMAND_PORT` | `18000` | Loopback port the app is published on for the socket proxy |
 | `ondemand.idle_timeout` | `PODMAN_ONDEMAND_IDLE_TIMEOUT` | `10min` | How long the app may be idle before it stops |
+| `ondemand.worker` | `PODMAN_ONDEMAND_WORKER` | `horizon` with Laravel Horizon installed, otherwise `queue` | The worker the [idle check](#the-idle-check) runs `podman:idle` in and stops |
 
 Running several apps on one host? Give each its own `listen` and `port`.
 
@@ -141,7 +142,7 @@ After={{application}}-pgsql.container {{application}}-valkey.container {{applica
 
 Queue workers that keep running while the app is idle would keep the database and cache awake. The `ondemand` preset's idle check (`lpod install ondemand/my-app-idle.timer`) handles this for both `development` and `production`.
 
-Once a minute, while the app is asleep, it runs `php artisan podman:idle` in a running queue worker or Horizon. If the app has no work in progress, it stops the workers and the scheduler timer, if one is running (`production`). Before stopping anything, it checks again that the app is still asleep, so a request that wakes the app during the check keeps its workers running. The next request starts them again through the app's `Wants=` line, which lists `queue` and, in `production`, `schedule.timer`. Using Horizon? Put `horizon` on that line instead of `queue`.
+Once a minute, while the app is asleep, it runs `php artisan podman:idle` in the queue worker, or in Horizon when it's installed (`ondemand.worker`). If the app has no work in progress, it stops the worker and the scheduler timer, if one is running (`production`). A worker that isn't running has no work in progress, so the scheduler timer still stops. Before stopping anything, it checks again that the app is still asleep, so a request that wakes the app during the check keeps its workers running. The next request starts them again through the app's `Wants=` line, which lists `queue` and, in `production`, `schedule.timer`. Using Horizon? Put `horizon` on that line instead of `queue`.
 
 A long job keeps the stack awake until it's done. Delayed jobs count too, so they run on time. If `podman:idle` fails or doesn't exist, for example because the package was installed with `--dev` and the production image leaves it out, the workers keep running. The check does nothing when `PODMAN_ONDEMAND_ENABLED=false`.
 

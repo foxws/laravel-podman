@@ -3,5 +3,9 @@ Description=Laravel idle check
 
 [Service]
 Type=oneshot
-ExecCondition=/bin/sh -c 'scope=--user; [ "$$(id -u)" -ne 0 ] || scope=; [ {{ondemand}} = yes ] && ! systemctl $$scope --quiet is-active {{application}}.service'
-ExecStart=/bin/sh -c 'scope=--user; [ "$$(id -u)" -ne 0 ] || scope=; worker=; for unit in queue horizon; do ! systemctl $$scope --quiet is-active {{application}}-$$unit.service || worker=$$unit; done; [ -z "$$worker" ] || podman exec systemd-{{application}}-$$worker php -d variables_order=EGPCS /app/artisan podman:idle || exit 0; ! systemctl $$scope --quiet is-active {{application}}.service || exit 0; for unit in queue.service horizon.service schedule.timer; do ! systemctl $$scope --quiet is-active {{application}}-$$unit || systemctl $$scope stop {{application}}-$$unit; done'
+ExecCondition=/usr/bin/test {{ondemand}} = yes
+ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}.service'
+ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-{{ondemandWorker}}.service || exec podman exec systemd-{{application}}-{{ondemandWorker}} php -d variables_order=EGPCS /app/artisan podman:idle'
+ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}.service'
+ExecStart=-{{systemctl}} stop {{application}}-{{ondemandWorker}}.service
+ExecStart=-{{systemctl}} stop {{application}}-schedule.timer

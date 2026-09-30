@@ -121,3 +121,23 @@ it('reads the port from the on-demand listen address', function (string $listen)
 
     expect($this->config->onDemandListenPort())->toBe('9000');
 })->with(['9000', '0.0.0.0:9000', '[::]:9000']);
+
+it('uses the user service manager unless the units are installed as root', function () {
+    config(['podman.quadlet_uid' => 1000]);
+
+    expect($this->config->systemctl())->toBe('systemctl --user');
+
+    config(['podman.quadlet_uid' => 0]);
+
+    expect($this->config->systemctl())->toBe('systemctl');
+});
+
+it('defaults the on-demand worker to the queue worker without Horizon', function () {
+    expect($this->config->onDemandWorker())->toBe('queue');
+});
+
+it('uses the configured on-demand worker', function () {
+    config(['podman.ondemand.worker' => 'horizon']);
+
+    expect($this->config->onDemandWorker())->toBe('horizon');
+});

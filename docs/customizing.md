@@ -51,6 +51,7 @@ A preset is a folder with two directories: `quadlets/` for the `*.quadlets` file
 | `{{workingPath}}` | `working_path` |
 | `{{configPath}}` | `config_path` (same as `working_path` unless set) |
 | `{{runtimePath}}` | The preset's rendered `runtimes/` folder, e.g. `podman/production/runtimes` |
+| `{{systemctl}}` | `systemctl --user`, or `systemctl` when `quadlet_uid` is `0` (root) |
 
 `{{configPath}}` is useful for keeping a service's config outside the project, for example in your own `proxy.quadlets`:
 

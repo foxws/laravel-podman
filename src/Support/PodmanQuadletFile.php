@@ -27,6 +27,7 @@ class PodmanQuadletFile
             '{{appHost}}' => $this->config->domain(),
             '{{appUid}}' => (string) $this->config->uid(),
             '{{appGid}}' => (string) $this->config->gid(),
+            '{{systemctl}}' => $this->config->systemctl(),
             '{{application}}' => $this->config->prefix(),
             '{{proxy}}' => $this->config->proxy(),
             '{{workingPath}}' => $this->path->workingPath(),

@@ -52,6 +52,15 @@ class PodmanConfig
     }
 
     /**
+     * The systemctl command for the service manager the units are installed
+     * in: the system manager for root, the user's own manager otherwise.
+     */
+    public function systemctl(): string
+    {
+        return $this->uid() === 0 ? 'systemctl' : 'systemctl --user';
+    }
+
+    /**
      * @return array<int, string>
      */
     public function defaultPresets(): array

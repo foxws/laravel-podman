@@ -121,3 +121,13 @@ it('reads the port from the on-demand listen address', function (string $listen)
 
     expect($this->config->onDemandListenPort())->toBe('9000');
 })->with(['9000', '0.0.0.0:9000', '[::]:9000']);
+
+it('uses the user service manager unless the units are installed as root', function () {
+    config(['podman.quadlet_uid' => 1000]);
+
+    expect($this->config->systemctl())->toBe('systemctl --user');
+
+    config(['podman.quadlet_uid' => 0]);
+
+    expect($this->config->systemctl())->toBe('systemctl');
+});

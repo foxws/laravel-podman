@@ -131,13 +131,3 @@ it('uses the user service manager unless the units are installed as root', funct
 
     expect($this->config->systemctl())->toBe('systemctl');
 });
-
-it('defaults the on-demand worker to the queue worker without Horizon', function () {
-    expect($this->config->onDemandWorker())->toBe('queue');
-});
-
-it('uses the configured on-demand worker', function () {
-    config(['podman.ondemand.worker' => 'horizon']);
-
-    expect($this->config->onDemandWorker())->toBe('horizon');
-});

@@ -38,7 +38,6 @@ class PodmanQuadletFile
             '{{ondemandListen}}' => $this->config->onDemandListen(),
             '{{ondemandPort}}' => (string) $this->config->onDemandPort(),
             '{{ondemandIdleTimeout}}' => $this->config->onDemandIdleTimeout(),
-            '{{ondemandWorker}}' => $this->config->onDemandWorker(),
             ...$this->config->customSubstitutions(),
         ];
     }

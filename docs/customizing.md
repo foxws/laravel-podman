@@ -5,9 +5,12 @@ order: 1
 
 # Customizing
 
-You customize the package in two places: `config/podman.php` (publish it with `php artisan vendor:publish --tag="podman-config"`) and the preset template files.
+You customize the package in two places:
 
-## Config keys
+- **`config/podman.php`**, for names, paths and on/off switches. Publish it with `php artisan vendor:publish --tag="podman-config"`.
+- **The preset templates**, for the services themselves: images, dependencies, memory limits and build files.
+
+## Config
 
 | Key | Env variable | Default | Purpose |
 | --- | --- | --- | --- |
@@ -23,21 +26,32 @@ You customize the package in two places: `config/podman.php` (publish it with `p
 | `presets` | `PODMAN_DEFAULT_PRESETS` | see `config/podman.php` | Presets that `podman:setup` renders |
 | `s3_buckets` | `PODMAN_S3_BUCKETS` | see `config/podman.php` | Buckets `podman:s3-setup` creates. See [S3 Buckets](s3.md) |
 | `s3_cors_buckets` | `PODMAN_S3_CORS_BUCKETS` | see `config/podman.php` | Which of those buckets get the CORS policy |
-| `substitutions` | *(none)* | `[]` | Your own `{{placeholder}}` values. See [Custom substitutions](#custom-substitutions) |
+| `substitutions` | *(none)* | `[]` | Your own `{{placeholder}}` values. See [Your own placeholders](#your-own-placeholders) |
 | `ondemand.*` | `PODMAN_ONDEMAND_*` | enabled | Start the app on its first request and stop it when idle. See [On-demand services](ondemand.md) |
 
 `presets`, `s3_buckets` and `s3_cors_buckets` take a PHP array or a comma-separated string.
 
-## Custom presets
+## Presets and templates
 
-A preset is a folder with two directories: `quadlets/` for the `*.quadlets` files and `runtimes/` for build files. If `stubs_path/{preset}` exists, it's used instead of the bundled preset. It replaces the whole preset; files are not merged one by one.
+A preset is a folder with two directories: `quadlets/` for the `*.quadlets` files, and `runtimes/` for build files such as the `Containerfile`, `entrypoint.sh`, PHP ini and Caddy templates.
 
-- **Change a service:** run `php artisan podman:publish production`, then edit `containers/stubs/production/quadlets/pgsql.quadlets`.
-- **Add a service:** create `containers/stubs/production/quadlets/my-service.quadlets` in the same `# FileName=...` / `---` format. Then run `php artisan podman:generate production` and `lpod install production/my-service.quadlets`.
-- **Change build files:** same idea, in `runtimes/` (`Containerfile`, `entrypoint.sh`, PHP ini, Caddy templates).
-- **New preset:** create `containers/stubs/my-preset/quadlets/` and `containers/stubs/my-preset/runtimes/`.
+To change a preset, publish it to `stubs_path` (default `containers/stubs`) and edit the copy:
 
-`podman:publish` leaves placeholders as they are. `podman:generate` fills them in:
+```bash
+php artisan podman:publish production
+# edit containers/stubs/production/quadlets/pgsql.quadlets
+php artisan podman:generate production
+lpod install production/pgsql.quadlets --replace
+```
+
+A published preset replaces the bundled one completely. Files aren't merged one by one, so the published folder must hold every file the preset needs.
+
+- **Add a service:** create `containers/stubs/production/quadlets/my-service.quadlets` in the same `# FileName=...` / `---` format as the others. Then generate the preset and run `lpod install production/my-service.quadlets`.
+- **Create a new preset:** create `containers/stubs/my-preset/quadlets/` and `containers/stubs/my-preset/runtimes/`.
+
+### Placeholders
+
+Templates contain `{{placeholder}}` tokens. `podman:publish` leaves them as they are, and `podman:generate` fills them in:
 
 | Placeholder | Value |
 | --- | --- |
@@ -46,12 +60,13 @@ A preset is a folder with two directories: `quadlets/` for the `*.quadlets` file
 | `{{appEnv}}` | `app.env` |
 | `{{appName}}` | `app.name` |
 | `{{appUrl}}` | `app.url` |
-| `{{appHost}}` | Host part of `app.url` |
+| `{{appHost}}` | The host part of `app.url` |
 | `{{appUid}}`/`{{appGid}}` | `quadlet_uid`/`quadlet_gid` |
 | `{{workingPath}}` | `working_path` |
-| `{{configPath}}` | `config_path` (same as `working_path` unless set) |
+| `{{configPath}}` | `config_path` (the same as `working_path` unless set) |
 | `{{runtimePath}}` | The preset's rendered `runtimes/` folder, e.g. `podman/production/runtimes` |
 | `{{systemctl}}` | `systemctl --user`, or `systemctl` when `quadlet_uid` is `0` (root) |
+| `{{ondemand}}`, `{{ondemandListen}}`, `{{ondemandPort}}`, `{{ondemandIdleTimeout}}`, `{{appUpstream}}` | [On-demand](ondemand.md) settings |
 
 `{{configPath}}` is useful for keeping a service's config outside the project, for example in your own `proxy.quadlets`:
 
@@ -59,9 +74,9 @@ A preset is a folder with two directories: `quadlets/` for the `*.quadlets` file
 Volume={{configPath}}/{{proxy}}:/etc/caddy:rw,z,U
 ```
 
-## Custom substitutions
+### Your own placeholders
 
-Add your own placeholders with `substitutions`. It's plain PHP, so `env()` works:
+Add your own placeholders with `substitutions` in `config/podman.php`. It's plain PHP, so `env()` works:
 
 ```php
 'substitutions' => [
@@ -73,11 +88,11 @@ Add your own placeholders with `substitutions`. It's plain PHP, so `env()` works
 Environment=API_ENDPOINT={{apiEndpoint}}
 ```
 
-You can also override a built-in placeholder such as `{{appHost}}` this way. `substitutions` always wins.
+A substitution with the same name as a built-in placeholder, such as `{{appHost}}`, replaces it.
 
-## Available services
+## Services
 
-Every preset except `devcontainer` and `s3` includes `app` plus these services. Pick one per category; they replace each other.
+Every preset except `devcontainer` and `s3` includes `app` plus these services. Use one per category.
 
 | Category | Services (default first) |
 | --- | --- |
@@ -90,9 +105,11 @@ Every preset except `devcontainer` and `s3` includes `app` plus these services. 
 
 `queue` runs a plain `php artisan queue:work` worker, which works with any queue connection. If your app uses [Laravel Horizon](https://laravel.com/docs/horizon) (Redis or Valkey queues only), use `horizon` instead. See [Replacing the queue worker with Horizon](#replacing-the-queue-worker-with-horizon).
 
-`production` also includes `schedule` and `inertia-ssr`, which always run alongside the app. `reverb` ([Laravel Reverb](https://laravel.com/docs/reverb)) is included too, but doesn't start by default. See [Adding Reverb](#adding-reverb).
+`production` also includes `schedule` and `inertia-ssr`, which run alongside the app. `reverb` ([Laravel Reverb](https://laravel.com/docs/reverb)) is included too, but doesn't start by default. See [Adding Reverb](#adding-reverb).
 
-## Swapping a service
+In `production`, the queue worker and Horizon start at boot, and `systemd/schedule.timer` runs `schedule:run` every minute. Install the timer with `lpod install production/my-app-schedule.timer`.
+
+### Swapping the database or cache
 
 `app.quadlets` names its database and cache in its `[Unit]` section. To switch, publish the preset:
 
@@ -115,7 +132,7 @@ lpod install production/mysql.quadlets --replace
 lpod install production/app.quadlets --replace
 ```
 
-Then update `.env` (`DB_CONNECTION`, `DB_HOST`, ...) so Laravel connects to the new service.
+Then update `.env` (`DB_CONNECTION`, `DB_HOST` and so on) so Laravel connects to the new service. Quadlet names containers `systemd-{unit}`, so the host is, for example, `systemd-my-app-mysql`.
 
 ### Replacing the queue worker with Horizon
 
@@ -151,7 +168,7 @@ lpod install production/reverb.quadlets --replace
 lpod install production/app.quadlets --replace
 ```
 
-### `[Unit]` directives
+### How services depend on each other
 
 | Directive | Meaning | Used for |
 | --- | --- | --- |
@@ -161,26 +178,22 @@ lpod install production/app.quadlets --replace
 | `PartOf=` | Stopping or restarting the target also stops or restarts this unit | `vite`/`inertia-ssr`, and `horizon`/`queue`/`schedule` in `development` → `app` |
 | `BindsTo=` | Like `Requires=`, and also stops when the target stops. Not used: it counts as needing the target, which keeps an [on-demand](ondemand.md) app running | |
 
-In `production`, the queue worker and Horizon start at boot on their own (`[Install]`), and a `systemd/schedule.timer` runs `schedule:run` every minute. Install it with `lpod install production/my-app-schedule.timer`.
+## Other tasks
 
-## Increasing a service's memory limit
+### Increasing a service's memory limit
 
-```bash
-php artisan podman:publish production
-```
-
-Add `Memory=` under `[Container]` in `containers/stubs/production/quadlets/pgsql.quadlets`, then:
+Publish the preset, add `Memory=1G` under `[Container]` in that service's quadlet, for example `containers/stubs/production/quadlets/pgsql.quadlets`, then regenerate and reinstall it:
 
 ```bash
 php artisan podman:generate production
 lpod install production/pgsql.quadlets --replace
 ```
 
-## Multiple apps on one host
+### Running several apps on one host
 
-Pass `--application=` to `lpod install` (needs Podman 6+). Each app then gets its own install folder.
+Pass `--application=` to `lpod install` (needs Podman 6 or later), so each app gets its own install folder. With on-demand services, also give each app its own `ondemand.listen` and `ondemand.port`.
 
-## Proxying services without the `proxy` preset
+### Proxying services without the `proxy` preset
 
 `production` runs [Octane with FrankenPHP](https://laravel.com/docs/octane#frankenphp), which has Caddy built in. This is separate from the `proxy` preset's Caddy container (see [Proxy](proxy.md)).
 
@@ -213,7 +226,7 @@ With `AWS_URL=https://s3.laravel.test`, `VITE_REVERB_HOST=ws.laravel.test` and `
 
 Add or remove entries to match the services you use.
 
-Notes:
+A few things to know:
 
 - Use `env()` here, not `config()`. Config files can't rely on each other's load order.
 - An entry with an empty hostname or upstream (unset env var) is skipped.

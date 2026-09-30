@@ -5,7 +5,9 @@ order: 2
 
 # `lpod` CLI
 
-`lpod` is a bash script for managing [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) services. It doesn't need PHP, Composer or this package. It combines `podman exec`, `podman quadlet` and `systemctl` in one command, and passes unknown commands on to `podman`. Source and releases are at [foxws/lpod](https://github.com/foxws/lpod).
+`lpod` is a bash script for managing [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) services. It wraps `podman exec`, `podman quadlet` and `systemctl`, and passes unknown commands on to `podman`. It doesn't need PHP, Composer or this package.
+
+The source and releases are at [foxws/lpod](https://github.com/foxws/lpod).
 
 ## Installation
 
@@ -13,7 +15,22 @@ order: 2
 curl -fsSL https://github.com/foxws/lpod/releases/latest/download/install.sh | bash
 ```
 
-The installer puts `lpod` and `lpod-setup` in `~/.local/bin` and writes the systemd templates for the [idle check](ondemand.md#the-idle-check). Upgrade with `lpod self-update`, or `lpod self-update v2.2.0` for a specific release. To pin a version on the first install, set `LPOD_VERSION`, e.g. `LPOD_VERSION=v2.2.0`. Check the installed version with `lpod --version`. See [installing by hand](https://github.com/foxws/lpod/blob/main/docs/installation.md) for the alternative.
+The installer:
+
+- puts `lpod` and `lpod-setup` in `~/.local/bin`, or `/usr/local/bin` as root;
+- checks the downloads against the release's checksums;
+- writes the systemd templates for the [idle check](ondemand.md#the-idle-check);
+- offers to enable linger, so your services start at boot.
+
+To install a specific version, set `LPOD_VERSION`, e.g. `LPOD_VERSION=v2.2.0`. You can also [install it by hand](https://github.com/foxws/lpod/blob/main/docs/installation.md).
+
+### Upgrading
+
+```bash
+lpod --version
+lpod self-update           # the latest release
+lpod self-update v2.2.0    # or a specific one
+```
 
 ## Usage
 
@@ -21,7 +38,7 @@ The installer puts `lpod` and `lpod-setup` in `~/.local/bin` and writes the syst
 lpod SERVICE COMMAND [options] [arguments]
 ```
 
-`SERVICE` is a Quadlet service name, like your app or `pgsql`. These commands don't take a service: `setup`, `install`, `remove`, `uninstall`, `list`, `print`, `reload`.
+`SERVICE` is a Quadlet service name, like your app or `pgsql`. These commands don't take a service: `setup`, `install`, `remove`, `uninstall`, `list`, `print`, `reload`, `idle` and `self-update`.
 
 Quadlet names the container `systemd-SERVICE` (e.g. `systemd-my-app`). `lpod` adds that prefix for you, so always use the plain name.
 
@@ -98,6 +115,14 @@ All of these except `reload` accept the same flags as `podman quadlet` (`--repla
 
 > **Warning:** `remove` and `uninstall` also delete the service's volumes. See [Backing up volumes](commands.md#backing-up-volumes).
 
+### On-demand idle check
+
+| Command | Description |
+| --- | --- |
+| `lpod idle enable APP` | Run the [idle check](ondemand.md#the-idle-check) for the app every minute |
+| `lpod idle disable APP` | Stop running it |
+| `lpod idle APP` | Run the check once |
+
 ### Secrets
 
 `lpod app secrets` asks for a value for each `Secret=` line in the installed unit:
@@ -124,4 +149,4 @@ Each secret is asked only once, even if it's used more than once. For `env` secr
 
 ## `lpod-setup`
 
-`lpod-setup` comes with `lpod` and renders presets in a throwaway container, for hosts with Podman but no PHP. `lpod setup` runs it. See [Setting up without PHP](host-setup.md).
+`lpod-setup` comes with `lpod`. It renders presets in a throwaway container, for hosts that have Podman but no PHP. Run it as `lpod setup`. See [Setting up without PHP](host-setup.md).

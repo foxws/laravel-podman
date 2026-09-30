@@ -5,13 +5,7 @@ order: 2
 
 # CI: Building a Container Image
 
-An example GitHub Actions workflow. It renders a preset's `Containerfile` with `podman:generate`, then builds and pushes a multi-arch image with `buildah`. Copy it to your app's `.github/workflows/` and change the preset name and paths to match.
-
-The `devcontainer` preset doesn't need this. It has no placeholders and no app code, so it builds straight from this repo. [`build-devcontainer.yml`](../.github/workflows/build-devcontainer.yml) publishes it to `ghcr.io/foxws/laravel-podman-devcontainer` (see [Devcontainer](devcontainer.md)):
-
-- Each build is tagged by PHP version and variant, e.g. `php-8.5` and `php-8.5-ai`. The `variant` matrix maps to the Containerfile's `base`/`ai` stages.
-- The PHP version marked `default: true` also gets the `main`, commit-sha and `latest` tags.
-- To build another PHP version, add it to the `php:` matrix.
+This is an example GitHub Actions workflow for your app. It renders a preset's `Containerfile` with `podman:generate`, then builds and pushes a multi-arch image with `buildah`. Copy it to your app's `.github/workflows/`, and change the preset name and paths to match.
 
 ## Prerequisites
 
@@ -192,9 +186,17 @@ jobs:
 
 | Change | What to do |
 | --- | --- |
-| Different preset | Replace `production` in the `podman:generate` step and the `containerfiles:` path (see [Customizing](customizing.md#custom-presets)) |
+| Different preset | Replace `production` in the `podman:generate` step and the `containerfiles:` path (see [Customizing](customizing.md#presets-and-templates)) |
 | One architecture only | Remove the matrix and the `merge` job, and push directly from `build` |
 | Other registry than GHCR | Change the login step and the `REGISTRY`/`IMAGE` env vars. `buildah` and `podman` work with any OCI registry |
+
+## The devcontainer image
+
+The `devcontainer` preset doesn't need this workflow. It has no placeholders and no app code, so it builds straight from this repo. [`build-devcontainer.yml`](../.github/workflows/build-devcontainer.yml) publishes it to `ghcr.io/foxws/laravel-podman-devcontainer` (see [Devcontainer](devcontainer.md)):
+
+- Each build is tagged by PHP version and variant, e.g. `php-8.5` and `php-8.5-ai`. The `variant` matrix maps to the Containerfile's `base`/`ai` stages.
+- The PHP version marked `default: true` also gets the `main`, commit-sha and `latest` tags.
+- To build another PHP version, add it to the `php:` matrix.
 
 ## Links
 

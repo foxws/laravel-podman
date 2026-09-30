@@ -67,11 +67,18 @@ After changing a `.quadlets` file or its template, regenerate and reinstall with
 lpod idle enable my-app              # stop workers and the scheduler timer once the sleeping app is idle
 lpod idle my-app                     # run the check once
 lpod idle disable my-app
-lpod self-update                     # upgrade lpod in place (v2.2.0 and later)
 journalctl --user -u lpod-idle@my-app
 ```
 
-Extra workers to check and stop go in `LPOD_IDLE_WORKERS`, set in a drop-in on `lpod-idle@my-app.service`. Install or upgrade `lpod` with `curl -fsSL https://github.com/foxws/lpod/releases/latest/download/install.sh | bash`; `lpod idle` needs v2.2.0 or later.
+Needs `lpod` v2.2.0 or later. Extra workers to check and stop go in `LPOD_IDLE_WORKERS`, set in a drop-in on `lpod-idle@my-app.service`.
+
+## Installing and upgrading lpod
+
+```bash
+curl -fsSL https://github.com/foxws/lpod/releases/latest/download/install.sh | bash
+lpod --version
+lpod self-update                     # v2.2.0 and later
+```
 
 ## Destructive commands
 

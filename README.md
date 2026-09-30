@@ -9,7 +9,7 @@ Run your Laravel app and its services as [Podman Quadlet](https://docs.podman.io
 
 The package renders ready-to-use presets from your app's config: the app on Octane and FrankenPHP, a database, cache, queue worker, search, object storage, a mail catcher and a Caddy proxy. You install them with one command each. There's no all-in-one runtime and no lock-in: the output is plain Quadlet files you can read, change or replace.
 
-Upgrading from v3? See [UPGRADING.md](UPGRADING.md).
+Upgrading from an earlier major version? See [UPGRADING.md](UPGRADING.md).
 
 ## Features
 
@@ -34,11 +34,10 @@ Upgrading from v3? See [UPGRADING.md](UPGRADING.md).
 
 **Scale to zero**
 
-- The app starts on its first request and stops again after 10 minutes without traffic ([on-demand services](https://foxws.nl/laravel-podman/ondemand)).
-- Make that shorter or longer with `PODMAN_ONDEMAND_IDLE_TIMEOUT`, e.g. `5min`, `30min` or `2h`.
-- Works behind the bundled proxy or your own, such as a NAS or Nginx on another machine.
+- The app starts on its first request and stops after 10 minutes without traffic ([on-demand services](https://foxws.nl/laravel-podman/ondemand)). Change the timeout with `PODMAN_ONDEMAND_IDLE_TIMEOUT`, e.g. `5min`, `30min` or `2h`.
 - The database, cache and other services sleep too, once no jobs are left.
-- Turn it off with `PODMAN_ONDEMAND_ENABLED=false` to keep the app and its services running all the time.
+- Works behind the bundled proxy or your own, such as a NAS or Nginx on another machine.
+- Set `PODMAN_ONDEMAND_ENABLED=false` to keep everything running all the time.
 
 **Native to your system**
 
@@ -97,6 +96,7 @@ Install it as a regular dependency, not with `--dev`: the idle check runs `php a
     lpod install development/valkey.quadlets --replace
     lpod install ondemand/my-app-ondemand.socket --replace
     lpod install proxy/proxy.quadlets --replace
+    lpod idle enable my-app
     ```
 
 4. **Open** your app. The first request starts it:
@@ -107,14 +107,14 @@ Install it as a regular dependency, not with `--dev`: the idle check runs `php a
 
 5. **Trust the proxy's local certificate** once. See [Proxy](https://foxws.nl/laravel-podman/proxy#trusting-the-local-certificate).
 
-Working on frontend assets? Run `pnpm install`, then add the Vite dev server:
+For frontend work, run `pnpm install` and add the Vite dev server:
 
 ```bash
 lpod install development/vite.quadlets --replace
 lpod my-app-vite up
 ```
 
-Deploying with `production`? Also set the secrets it expects, such as your `.env` and database password, with `lpod my-app secrets` and `lpod my-app-pgsql secrets`.
+For `production`, also set the secrets it expects, such as your `.env` and the database password, with `lpod my-app secrets` and `lpod my-app-pgsql secrets`.
 
 ## Commands
 

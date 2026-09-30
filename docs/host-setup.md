@@ -5,13 +5,30 @@ order: 1
 
 # Setting up without PHP on the host
 
-`podman:setup` and `podman:generate` only render files. You can delete and regenerate the output any time, so don't commit it.
+`podman:setup` and `podman:generate` only render files, so the server that runs your services doesn't need PHP or this package. There are three ways to get the rendered files onto it.
 
-**Usual workflow:** render on your dev machine with `php artisan podman:setup`, copy the `podman/` folder to the server, and install it there with [`lpod`](lpod.md). The server needs neither PHP nor this package.
+## Render elsewhere and copy the files
 
-## No PHP anywhere
+This is the usual way. Render on your dev machine or in CI, copy the `podman/` folder to the server, and install it there with [`lpod`](lpod.md):
 
-If the machine you render on has no PHP either, run Composer and Artisan in throwaway containers. These are the same `composer` and `php:8.5-cli` images `lpod setup` uses:
+```bash
+php artisan podman:setup
+rsync -a podman/ server:my-app/podman/
+```
+
+## Render on the server with `lpod setup`
+
+`lpod setup` runs Composer and Artisan in throwaway containers on the server. Add `--install` to install the rendered services right away, and `--secrets` to also set their secrets:
+
+```bash
+lpod setup --install --secrets
+```
+
+Run it from a checkout of the project. It installs `vendor/` itself with `composer install --no-dev`, then runs `php artisan podman:setup`.
+
+## Render by hand in containers
+
+This is what `lpod setup` does for you. It uses the same `composer` and `php:8.5-cli` images:
 
 ```bash
 # vendor/ must exist before "podman:setup" can run
@@ -60,11 +77,9 @@ VolumeName=systemd-acme-valkey
 lpod install production/valkey.quadlets --replace
 ```
 
-Good to know:
+Notes:
 
 - `PODMAN_WORKING_PATH` (or `--working-path=`) sets the host path written into the rendered files. The container itself always renders from `/var/www/html`.
 - `--userns=keep-id -u "$(id -u):$(id -g)"` makes you, not root, the owner of the generated files. Keep `:Z` on SELinux hosts.
-- `lpod setup` runs the commands above for you. Add `--install` to install right away, or `--secrets` to also set secrets.
-- `lpod setup` still needs this project's `vendor/`, because it runs `php artisan podman:setup`. That's why copying pre-rendered files is the usual way to deploy.
 
 See [`lpod` CLI](lpod.md) for all commands.

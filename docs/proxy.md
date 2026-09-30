@@ -47,7 +47,7 @@ lpod proxy restart
 
 | Subdomain | Routes to |
 | --- | --- |
-| (root) | The app (`app`) |
+| (root) | The app, through its [on-demand socket](ondemand.md) when on-demand is on |
 | `vite.` | Vite dev server |
 | `ws.` | Reverb (WebSockets) |
 | `s3.` | RustFS (S3 API) |
@@ -85,8 +85,14 @@ lpod proxy export-cert   # writes ~/proxy.crt (pass a path to override)
 # macOS
 sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ~/proxy.crt
 
-# Linux (Arch/Debian/Ubuntu)
+# Debian, Ubuntu
 sudo cp ~/proxy.crt /usr/local/share/ca-certificates/caddy.crt && sudo update-ca-certificates
+
+# Fedora, RHEL
+sudo cp ~/proxy.crt /etc/pki/ca-trust/source/anchors/caddy.crt && sudo update-ca-trust
+
+# Arch
+sudo trust anchor ~/proxy.crt
 ```
 
 You don't need this in production. Use a real domain in `APP_URL` and `sites/*.Caddyfile`, and Caddy gets a Let's Encrypt certificate automatically.

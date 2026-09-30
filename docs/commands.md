@@ -5,9 +5,9 @@ order: 1
 
 # Command Reference
 
-These Artisan commands only render files. They never call `podman`, so they work anywhere PHP runs. If you leave out the preset name, you'll be asked to pick one.
+`podman:setup`, `podman:publish` and `podman:generate` only render files. They never call `podman`, so they work anywhere PHP runs. If you leave out the preset name, you're asked to pick one.
 
-Installing, starting and removing services is done with [`lpod`](lpod.md). The rendered output goes to `podman/` by default. Don't commit it; you can regenerate it any time.
+The rendered output goes to `podman/` by default. Don't commit it: you can regenerate it any time. Installing, starting and removing services is done with [`lpod`](lpod.md).
 
 ## `podman:setup`
 
@@ -54,7 +54,7 @@ php artisan podman:s3-setup
 
 ## `podman:idle`
 
-Exits successfully when the app has no work in progress, and fails otherwise. The `ondemand` preset's idle check runs it in a queue worker before stopping the workers. See [Idle checks](ondemand.md#idle-checks).
+Exits successfully when the app has no work in progress, and fails otherwise. `lpod`'s [idle check](ondemand.md#the-idle-check) runs it in the queue worker before stopping the workers. See [What counts as work in progress](ondemand.md#what-counts-as-work-in-progress).
 
 ```bash
 # Every check for something the app uses (queue, database, scout)
@@ -69,11 +69,11 @@ php artisan podman:idle --services=queue,database
 `lpod remove` and `lpod uninstall` delete the service's volumes, and there's no undo. Back up anything you want to keep first (`pgsql`, `valkey`, `rustfs`, `typesense`, `mailpit`):
 
 ```bash
-# Archive any named volume
-podman volume export laravel-pgsql -o pgsql-backup.tar
+# Archive a volume. Quadlet names them systemd-{app}-{service}, check with "podman volume ls"
+podman volume export systemd-my-app-pgsql -o pgsql-backup.tar
 
 # For databases, a dump is usually easier to restore elsewhere
 lpod my-app run pg_dump -U postgres -d laravel > backup.sql
 ```
 
-To restore, run `podman volume import laravel-pgsql pgsql-backup.tar`, or import the dump.
+To restore, run `podman volume import systemd-my-app-pgsql pgsql-backup.tar`, or import the dump.

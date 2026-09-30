@@ -89,11 +89,22 @@ After={{application}}-mysql.container {{application}}-redis.container
 
 Then regenerate, install the new service and `app.quadlets` with `--replace`, and update `.env` (`DB_CONNECTION`, `DB_HOST`, `REDIS_HOST`, ...). Quadlet names containers `systemd-{unit}`, so the host is e.g. `systemd-my-app-mysql`.
 
-Dependency directives: `Requires=` (hard), `Wants=` (soft), `After=` (order only), `PartOf=` (stop/restart with target). Don't use `BindsTo=` on the app: it keeps an on-demand app from stopping. In `development`, `queue`/`horizon` are `PartOf=` the app and stop when it goes idle; to keep one running, replace its app `After=`/`PartOf=` with `Requires=`/`After=` on the database and cache, as in `production`.
+Dependency directives:
+
+- `Requires=`: hard dependency. `Wants=`: soft dependency. `After=`: start order only. `PartOf=`: stop or restart with the target.
+- Don't use `BindsTo=` on the app. It counts as needing the app, so an on-demand app never stops.
+- In `development`, `queue`/`horizon` are `PartOf=` the app and stop when it goes idle. To keep one running, replace its app `After=`/`PartOf=` with `Requires=`/`After=` on the database and cache, as in `production`.
 
 ### Add a service
 
-Create `containers/stubs/{preset}/quadlets/my-service.quadlets` in the format above, then `podman:generate` and `lpod install {preset}/my-service.quadlets`. To let it sleep with the app, add `StopWhenUnneeded={{ondemand}}` under `[Unit]` and add it to the app's `Wants=` line; otherwise it stops right after starting. `Wants=` doesn't make the app wait for it: if the first request after waking needs it (storage, search), also add it to the app's `After=` line, and to a kept-running worker's. If queue workers keep running while the app sleeps (always in `production`) and their jobs use it, add it to their `Wants=` too, or it sleeps while jobs still need it. If it can have work in progress while the app sleeps, write an `IdleCheck` for it (with `name()`, `isEnabled()` and `run()`) and add it to the `idle.checks` config list or `app(PodmanIdle::class)->checks([...])`; `podman:idle` then runs it, or `podman:idle --services=its-name` alone.
+Create `containers/stubs/{preset}/quadlets/my-service.quadlets` in the format above, then run `podman:generate` and `lpod install {preset}/my-service.quadlets`.
+
+To let it sleep with the app:
+
+- Add `StopWhenUnneeded={{ondemand}}` under `[Unit]`, and add the service to the app's `Wants=` line. Without `Wants=`, it stops right after starting.
+- If the first request after waking needs it (storage, search), also add it to the app's `After=` line. `Wants=` alone doesn't make the app wait.
+- If queue workers keep running while the app sleeps (always in `production`) and their jobs use it, add it to the workers' `Wants=` and `After=` too.
+- If it can have work in progress while the app sleeps, write an `IdleCheck` for it (`name()`, `isEnabled()`, `run()`) and add it to the `idle.checks` config list or `app(PodmanIdle::class)->checks([...])`. `podman:idle` then runs it; `podman:idle --services=its-name` runs it alone.
 
 ### Memory limit
 

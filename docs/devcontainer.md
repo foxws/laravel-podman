@@ -15,13 +15,14 @@ It's commented out by default. Add it to `presets` in `config/podman.php`, or ge
 php artisan podman:generate devcontainer
 ```
 
-This writes a `Containerfile`, `entrypoint.sh` and four devcontainer configs to `podman/devcontainer/runtimes/`. Your editor looks for `.devcontainer/devcontainer.json`, so install the config you want there with [`lpod`](lpod.md):
+This writes a `Containerfile`, `entrypoint.sh` and four devcontainer configs to `podman/devcontainer/runtimes/`. Your editor looks for `.devcontainer/devcontainer.json`, so copy the config you want there:
 
 ```bash
-lpod install devcontainer/devcontainer.json
+mkdir -p .devcontainer
+cp podman/devcontainer/runtimes/devcontainer.json .devcontainer/devcontainer.json
 ```
 
-After running `podman:generate devcontainer` again, install it with `--replace` and rebuild the container in your editor.
+After running `podman:generate devcontainer` again, copy it again and rebuild the container in your editor.
 
 The config holds your UID and GID, so add `/.devcontainer` to `.gitignore` instead of committing it.
 
@@ -36,7 +37,7 @@ Pick prebuilt or local, and with or without AI tools:
 | `devcontainer-ai.json` | Prebuilt `php-8.5-ai` image | You want the [AI tools](#ai-variant) without building |
 | `devcontainer-local-ai.json` | Builds the `ai` stage locally (`--target=ai`) | You want the AI tools and a local build |
 
-To switch, install another config with `--replace`, e.g. `lpod install devcontainer/devcontainer-ai.json --replace`.
+To switch, copy another config over `.devcontainer/devcontainer.json`.
 
 ## What's inside
 

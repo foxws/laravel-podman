@@ -114,7 +114,6 @@ This works on the running `pgsql`, `mysql`, `mariadb` and `mongodb` services. `l
 | ----------------------------------------- | -------------------------------------------------- |
 | `lpod install PRESET/SERVICE.quadlets` | Install a rendered Quadlet                       |
 | `lpod install PRESET/UNIT.socket`      | Install and enable a rendered socket or timer (see [On-demand services](ondemand.md)) |
-| `lpod install devcontainer/CONFIG.json` | Copy a rendered config to `.devcontainer/devcontainer.json` (see [Devcontainer](devcontainer.md)) |
 | `lpod remove NAME`                     | Remove an installed Quadlet, socket or timer      |
 | `lpod uninstall APPLICATION`           | Remove an application and all of its Quadlets     |
 | `lpod list`                            | List installed Quadlets                           |

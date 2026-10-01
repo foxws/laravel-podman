@@ -62,6 +62,8 @@ Quadlet names the container `systemd-SERVICE` (e.g. `systemd-my-app`). `lpod` ad
 | `lpod app php ...`           | Run PHP                                     |
 | `lpod app composer ...`      | Run Composer                                |
 | `lpod app debug ARTISAN...` | Run an Artisan command with Xdebug enabled |
+| `lpod app xdebug on [MODE]` | Turn [Xdebug](#xdebug) on for web requests and workers |
+| `lpod app xdebug off`        | Turn Xdebug off again                      |
 | `lpod app tinker`             | Start a Tinker session                      |
 
 ### Node, npm, pnpm, Yarn & Bun
@@ -122,6 +124,27 @@ All of these except `reload` accept the same flags as `podman quadlet` (`--repla
 | `lpod idle enable APP` | Run the [idle check](ondemand.md#the-idle-check) for the app every minute |
 | `lpod idle disable APP` | Stop running it |
 | `lpod idle APP` | Run the check once |
+
+### Xdebug
+
+The `development` image has Xdebug with `xdebug.mode=off`, so it costs nothing until you turn it on:
+
+```bash
+lpod my-app xdebug on                 # or a mode, e.g. "debug,profile"
+lpod my-app xdebug off
+lpod my-app debug queue:work          # one Artisan command
+```
+
+`xdebug on` adds a Quadlet drop-in that sets `XDEBUG_MODE`, and restarts the app. Sessions start for requests with `XDEBUG_TRIGGER` or `XDEBUG_SESSION`, e.g. from a browser extension. Xdebug connects to `host.containers.internal:9003`, so your editor on the host must listen on port 9003. Only the `development` image includes Xdebug.
+
+### Troubleshooting
+
+`lpod doctor` checks the host and prints how to fix what's missing, without changing anything:
+
+- Podman 5.6 or newer, with `podman quadlet`, and a reachable systemd manager;
+- for rootless services: linger, `/etc/subuid` and `/etc/subgid`, and whether the proxy may use ports 80 and 443;
+- the idle check's templates, the proxy's local certificate, and whether `APP_URL` resolves;
+- failed services.
 
 ### Secrets
 

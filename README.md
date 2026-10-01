@@ -15,7 +15,7 @@ Upgrading from an earlier major version? See [UPGRADING.md](UPGRADING.md).
 
 **Presets for every stage**
 
-- **`development`**: your working copy mounted live, Octane with file watching, and an optional Vite dev server.
+- **`development`**: your working copy mounted live, Octane with file watching, Xdebug (off until you turn it on), and an optional Vite dev server.
 - **`production`**: a FrankenPHP and Octane image with your code baked in, Inertia SSR, and the queue worker and scheduler running independently of the app.
 - **`devcontainer`**: a [Dev Containers](https://containers.dev/) image for VS Code and JetBrains, with an optional AI variant (Claude Code, Codex, Laravel LSP).
 - **`proxy`**: [Caddy](https://caddyserver.com/) in front of everything, with HTTPS (local certificates in development, Let's Encrypt in production) and subdomains for Vite, Reverb, S3 and Mailpit.
@@ -55,6 +55,7 @@ Upgrading from an earlier major version? See [UPGRADING.md](UPGRADING.md).
 **Tooling**
 
 - [`lpod`](https://github.com/foxws/lpod), a small CLI for installing services and running Artisan, Composer, Node and tests inside your containers.
+- `lpod` also turns Xdebug on and off, and checks your host with `lpod doctor`.
 - `podman:s3-setup` creates your S3 buckets and applies a CORS policy.
 - Render presets on a host without PHP with `lpod setup`.
 - An example CI workflow builds and pushes a multi-arch production image.

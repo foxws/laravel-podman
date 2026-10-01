@@ -25,6 +25,7 @@ lpod my-app composer require foo/bar
 lpod my-app php -v
 lpod my-app tinker
 lpod my-app debug queue:work         # Artisan with Xdebug enabled
+lpod my-app xdebug on | off          # Xdebug for web requests (development image), restarts the app
 
 lpod my-app test                     # php artisan test
 lpod my-app pest --filter=UserTest
@@ -47,6 +48,10 @@ lpod my-app up | down | restart | status
 lpod my-app secrets                  # prompt for the unit's Secret= values
 lpod my-app open                     # open APP_URL in the browser
 ```
+
+## Troubleshooting the host
+
+Run `lpod doctor` when services don't start or the proxy doesn't answer. It checks Podman, systemd, linger, subordinate IDs, unprivileged ports, the idle templates, the proxy's certificate, `APP_URL` and failed services, and prints fixes. Fixes with `sudo` are for the user to run.
 
 ## Installing rendered services
 
@@ -86,7 +91,7 @@ lpod self-update                     # v2.2.0 and later
 
 ```bash
 podman volume export systemd-my-app-pgsql -o pgsql-backup.tar
-lpod my-app run pg_dump -U postgres -d laravel > backup.sql
+lpod my-app-pgsql run sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > backup.sql
 ```
 
 Check the real volume name with `podman volume ls` before exporting.

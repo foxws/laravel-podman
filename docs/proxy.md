@@ -103,5 +103,7 @@ You don't need this in production. Use a real domain in `APP_URL` and `sites/*.C
 | --- | --- |
 | Certificate not trusted | Import the CA certificate again (see above) and restart your browser |
 | Connection refused | Check `lpod proxy status`, and make sure nothing else uses ports 80/443 |
+| Proxy fails to start rootless, "permission denied" on port 80 | Allow rootless containers to use ports from 80: `echo 'net.ipv4.ip_unprivileged_port_start=80' \| sudo tee /etc/sysctl.d/99-lpod.conf && sudo sysctl --system` |
+| Not sure what's wrong | Run `lpod doctor`. It checks the ports, the certificate, `APP_URL` and more, and prints how to fix them |
 | 404 or wrong container | Check that `sites/laravel.Caddyfile` matches `APP_URL`, and that the service is installed and running |
 | Changes don't apply | Run `lpod proxy restart`. If you edited `containers/stubs/`, run `podman:generate proxy` first |

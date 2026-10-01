@@ -25,6 +25,7 @@ lpod my-app composer require foo/bar
 lpod my-app php -v
 lpod my-app tinker
 lpod my-app debug queue:work         # Artisan with Xdebug enabled
+lpod my-app xdebug on | off          # Xdebug for web requests (development image), restarts the app
 
 lpod my-app test                     # php artisan test
 lpod my-app pest --filter=UserTest
@@ -47,6 +48,21 @@ lpod my-app up | down | restart | status
 lpod my-app secrets                  # prompt for the unit's Secret= values
 lpod my-app open                     # open APP_URL in the browser
 ```
+
+## Databases
+
+For the `pgsql`, `mysql`, `mariadb` and `mongodb` services, while they run (needs `lpod` v2.3.0 or later):
+
+```bash
+lpod my-app-pgsql client             # psql, mysql, mariadb or mongosh, already logged in
+lpod my-app-pgsql client -c 'select count(*) from users'
+lpod my-app-pgsql backup             # to ~/.local/share/lpod/backups (LPOD_BACKUP_PATH)
+lpod my-app-pgsql restore FILE       # overwrites data: ask the user first; --force skips the prompt
+```
+
+## Troubleshooting the host
+
+Run `lpod doctor` when services don't start or the proxy doesn't answer. It checks Podman, systemd, linger, subordinate IDs, unprivileged ports, the idle templates, the proxy's certificate, `APP_URL` and failed services, and prints fixes. Fixes with `sudo` are for the user to run.
 
 ## Installing rendered services
 
@@ -82,11 +98,13 @@ lpod self-update                     # v2.2.0 and later
 
 ## Destructive commands
 
-`lpod remove NAME` and `lpod uninstall APPLICATION` delete the service's Podman volumes (databases, uploads, search indexes). There is no undo. Never run them without the user's explicit confirmation. Offer a backup first:
+`lpod remove NAME` and `lpod uninstall APPLICATION` delete the service's Podman volumes (databases, uploads, search indexes). There is no undo. Never run them without the user's explicit confirmation, and never pass `--no-backup` unless the user asks.
+
+They dump the running databases they remove first (`lpod` v2.3.0 or later). For other volumes, or a stopped database, offer a backup first:
 
 ```bash
-podman volume export systemd-my-app-pgsql -o pgsql-backup.tar
-lpod my-app run pg_dump -U postgres -d laravel > backup.sql
+lpod my-app-pgsql backup
+podman volume export systemd-my-app-rustfs -o rustfs-backup.tar
 ```
 
 Check the real volume name with `podman volume ls` before exporting.

@@ -66,14 +66,21 @@ php artisan podman:idle --services=queue,database
 
 ## Backing up volumes
 
-`lpod remove` and `lpod uninstall` delete the service's volumes, and there's no undo. Back up anything you want to keep first (`pgsql`, `valkey`, `rustfs`, `typesense`, `mailpit`):
+`lpod remove` and `lpod uninstall` delete the service's volumes, and there's no undo.
+
+Databases (`pgsql`, `mysql`, `mariadb`, `mongodb`) are dumped with `lpod`, to `~/.local/share/lpod/backups` by default. `remove` and `uninstall` do this for the running databases they remove, unless you pass `--no-backup`:
 
 ```bash
-# Archive a volume. Quadlet names them systemd-{app}-{service}, check with "podman volume ls"
-podman volume export systemd-my-app-pgsql -o pgsql-backup.tar
-
-# For databases, a dump is usually easier to restore elsewhere
-lpod my-app run pg_dump -U postgres -d laravel > backup.sql
+lpod my-app-pgsql backup
+lpod my-app-pgsql restore     # lists the backups
+lpod my-app-pgsql restore ~/.local/share/lpod/backups/my-app-pgsql-20261001-120000.sql.gz
 ```
 
-To restore, run `podman volume import systemd-my-app-pgsql pgsql-backup.tar`, or import the dump.
+For the other services (`valkey`, `rustfs`, `typesense`, `meilisearch`, `mailpit`), archive the volume. Quadlet names them `systemd-{app}-{service}`; check with `podman volume ls`:
+
+```bash
+podman volume export systemd-my-app-rustfs -o rustfs-backup.tar
+podman volume import systemd-my-app-rustfs rustfs-backup.tar
+```
+
+Database backups need `lpod` v2.3.0 or later. See [`lpod` CLI](lpod.md#databases).

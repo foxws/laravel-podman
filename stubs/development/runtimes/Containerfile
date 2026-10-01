@@ -70,7 +70,7 @@ RUN cp ${PHP_INI_DIR}/php.ini-development ${PHP_INI_DIR}/php.ini
 RUN install-php-extensions @composer \
     apcu bcmath exif ffi gd \
     igbinary imagick inotify intl pcntl \
-    pdo_pgsql redis sockets uv zip
+    pdo_pgsql redis sockets uv xdebug zip
 
 # Install additional PHP extensions if specified
 RUN if [ -n "$PHP_EXTENSIONS" ]; then \

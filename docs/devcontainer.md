@@ -15,14 +15,15 @@ It's commented out by default. Add it to `presets` in `config/podman.php`, or ge
 php artisan podman:generate devcontainer
 ```
 
-This writes a `Containerfile`, `entrypoint.sh` and four devcontainer configs to `podman/devcontainer/runtimes/`. Your editor looks for `.devcontainer/devcontainer.json`, so symlink the config you want:
+This writes a `Containerfile`, `entrypoint.sh` and four devcontainer configs to `podman/devcontainer/runtimes/`. Your editor looks for `.devcontainer/devcontainer.json`, so install the config you want there with [`lpod`](lpod.md):
 
 ```bash
-mkdir -p .devcontainer
-ln -sf ../podman/devcontainer/runtimes/devcontainer.json .devcontainer/devcontainer.json
+lpod install devcontainer/devcontainer.json
 ```
 
-With a symlink, re-running `podman:generate devcontainer` updates it automatically.
+After running `podman:generate devcontainer` again, install it with `--replace` and rebuild the container in your editor.
+
+The config holds your UID and GID, so add `/.devcontainer` to `.gitignore` instead of committing it.
 
 ## Choosing a config
 
@@ -35,7 +36,7 @@ Pick prebuilt or local, and with or without AI tools:
 | `devcontainer-ai.json` | Prebuilt `php-8.5-ai` image | You want the [AI tools](#ai-variant) without building |
 | `devcontainer-local-ai.json` | Builds the `ai` stage locally (`--target=ai`) | You want the AI tools and a local build |
 
-To switch, point the symlink at another config.
+To switch, install another config with `--replace`, e.g. `lpod install devcontainer/devcontainer-ai.json --replace`.
 
 ## What's inside
 
@@ -44,7 +45,7 @@ Debian (`php:8.5-cli`) with:
 - `default-mysql-client`, a PostgreSQL client (`POSTGRES_VERSION`) and `sqlite3`
 - PHP extensions: `apcu bcmath exif ffi gd igbinary imagick intl pcntl pdo_mysql pdo_pgsql pdo_sqlite redis sockets zip`, plus any in the `PHP_EXTENSIONS` build arg
 - Node.js (`NODE_VERSION`) with `pnpm` and `yarn` through Corepack, and `bun`
-- `cpx` (like `npx`, for Composer packages), `gh` and `awscli`
+- `cpx` (like `npx`, for Composer packages), `gh`, `awscli` and `shellcheck`
 
 ## AI variant
 

@@ -55,7 +55,7 @@ Upgrading from an earlier major version? See [UPGRADING.md](UPGRADING.md).
 **Tooling**
 
 - [`lpod`](https://github.com/foxws/lpod), a small CLI for installing services and running Artisan, Composer, Node and tests inside your containers.
-- `lpod` also opens, backs up and restores your databases, turns Xdebug on and off, and checks your host with `lpod doctor`.
+- `lpod` also opens your database's client, turns Xdebug on and off, and checks your host with `lpod doctor`.
 - `podman:s3-setup` creates your S3 buckets and applies a CORS policy.
 - Render presets on a host without PHP with `lpod setup`.
 - An example CI workflow builds and pushes a multi-arch production image.

@@ -68,15 +68,11 @@ Quadlet names the container `systemd-SERVICE` (e.g. `systemd-my-app`). `lpod` ad
 
 ### Databases
 
-These work on the `pgsql`, `mysql`, `mariadb` and `mongodb` services, while they run. `lpod` logs in with the credentials in the container's environment, from plain values or Podman secrets.
-
 | Command | Description |
 | --- | --- |
-| `lpod my-app-pgsql client ...` | Open `psql`, `mysql`, `mariadb` or `mongosh` |
-| `lpod my-app-pgsql backup [FILE]` | Dump the database, to `~/.local/share/lpod/backups` by default |
-| `lpod my-app-pgsql restore FILE` | Load a dump. Asks first, unless you pass `--force` |
+| `lpod my-app-pgsql client ...` | Open `psql`, `mysql`, `mariadb` or `mongosh`, already logged in |
 
-SQL dumps hold the app's database (`POSTGRES_DB`, `MYSQL_DATABASE`) and are gzipped when the file name ends in `.gz`. MongoDB dumps are gzipped archives of every database except `admin` and `config`.
+This works on the running `pgsql`, `mysql`, `mariadb` and `mongodb` services. `lpod` logs in with the credentials in the container's environment, from plain values or Podman secrets. Extra arguments go to the client, e.g. `lpod my-app-pgsql client -c 'select 1'`.
 
 ### Node, npm, pnpm, Yarn & Bun
 
@@ -128,7 +124,7 @@ SQL dumps hold the app's database (`POSTGRES_DB`, `MYSQL_DATABASE`) and are gzip
 
 All of these except `reload` accept the same flags as `podman quadlet` (`--replace`, `--application`, `--force`, `--ignore`, ...).
 
-> **Warning:** `remove` and `uninstall` also delete the service's volumes. They back up the running databases first, unless you pass `--no-backup`. See [Backing up volumes](commands.md#backing-up-volumes).
+> **Warning:** `remove` and `uninstall` also delete the service's volumes. See [Backing up volumes](commands.md#backing-up-volumes).
 
 ### On-demand idle check
 
@@ -178,7 +174,6 @@ Each secret is asked only once, even if it's used more than once. For `env` secr
 | ---------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `LPOD_PODMAN_BINARY` | `podman`       | Podman binary to use                                                                                            |
 | `LPOD_PUBLISH_PATH`  | `podman`       | Where `install` looks for rendered `.quadlets` files                                                            |
-| `LPOD_BACKUP_PATH`   | `~/.local/share/lpod/backups` | Where `lpod SERVICE backup` writes dumps                                                          |
 | `APP_PORT`            | `80`           | Port for `lpod SERVICE open`                                                                                    |
 | `APP_USER`            | `$(id -u)`     | User for commands run in the container. Empty means the image's default user. `root-shell`/`root-bash` always use `root` |
 

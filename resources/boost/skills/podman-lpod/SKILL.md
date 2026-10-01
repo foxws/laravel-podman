@@ -56,8 +56,6 @@ For the `pgsql`, `mysql`, `mariadb` and `mongodb` services, while they run (need
 ```bash
 lpod my-app-pgsql client             # psql, mysql, mariadb or mongosh, already logged in
 lpod my-app-pgsql client -c 'select count(*) from users'
-lpod my-app-pgsql backup             # to ~/.local/share/lpod/backups (LPOD_BACKUP_PATH)
-lpod my-app-pgsql restore FILE       # overwrites data: ask the user first; --force skips the prompt
 ```
 
 ## Troubleshooting the host
@@ -98,13 +96,11 @@ lpod self-update                     # v2.2.0 and later
 
 ## Destructive commands
 
-`lpod remove NAME` and `lpod uninstall APPLICATION` delete the service's Podman volumes (databases, uploads, search indexes). There is no undo. Never run them without the user's explicit confirmation, and never pass `--no-backup` unless the user asks.
-
-They dump the running databases they remove first (`lpod` v2.3.0 or later). For other volumes, or a stopped database, offer a backup first:
+`lpod remove NAME` and `lpod uninstall APPLICATION` delete the service's Podman volumes (databases, uploads, search indexes). There is no undo. Never run them without the user's explicit confirmation. Offer a backup first:
 
 ```bash
-lpod my-app-pgsql backup
-podman volume export systemd-my-app-rustfs -o rustfs-backup.tar
+podman volume export systemd-my-app-pgsql -o pgsql-backup.tar
+podman exec systemd-my-app-pgsql sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > backup.sql
 ```
 
 Check the real volume name with `podman volume ls` before exporting.

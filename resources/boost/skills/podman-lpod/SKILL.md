@@ -91,7 +91,7 @@ lpod self-update                     # v2.2.0 and later
 
 ```bash
 podman volume export systemd-my-app-pgsql -o pgsql-backup.tar
-podman exec systemd-my-app-pgsql sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > backup.sql
+lpod my-app-pgsql run sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > backup.sql
 ```
 
 Check the real volume name with `podman volume ls` before exporting.

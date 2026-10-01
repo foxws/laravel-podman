@@ -73,7 +73,7 @@ php artisan podman:idle --services=queue,database
 podman volume export systemd-my-app-pgsql -o pgsql-backup.tar
 
 # For databases, a dump is usually easier to restore elsewhere
-podman exec systemd-my-app-pgsql sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > backup.sql
+lpod my-app-pgsql run sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > backup.sql
 ```
 
 To restore, run `podman volume import systemd-my-app-pgsql pgsql-backup.tar`, or import the dump.

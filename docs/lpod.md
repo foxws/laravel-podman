@@ -66,14 +66,6 @@ Quadlet names the container `systemd-SERVICE` (e.g. `systemd-my-app`). `lpod` ad
 | `lpod app xdebug off`        | Turn Xdebug off again                      |
 | `lpod app tinker`             | Start a Tinker session                      |
 
-### Databases
-
-| Command | Description |
-| --- | --- |
-| `lpod my-app-pgsql client ...` | Open `psql`, `mysql`, `mariadb` or `mongosh`, already logged in |
-
-This works on the running `pgsql`, `mysql`, `mariadb` and `mongodb` services. `lpod` logs in with the credentials in the container's environment, from plain values or Podman secrets. Extra arguments go to the client, e.g. `lpod my-app-pgsql client -c 'select 1'`.
-
 ### Node, npm, pnpm, Yarn & Bun
 
 | Command            | Description |

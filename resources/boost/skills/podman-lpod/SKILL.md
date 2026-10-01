@@ -49,15 +49,6 @@ lpod my-app secrets                  # prompt for the unit's Secret= values
 lpod my-app open                     # open APP_URL in the browser
 ```
 
-## Databases
-
-For the `pgsql`, `mysql`, `mariadb` and `mongodb` services, while they run (needs `lpod` v2.3.0 or later):
-
-```bash
-lpod my-app-pgsql client             # psql, mysql, mariadb or mongosh, already logged in
-lpod my-app-pgsql client -c 'select count(*) from users'
-```
-
 ## Troubleshooting the host
 
 Run `lpod doctor` when services don't start or the proxy doesn't answer. It checks Podman, systemd, linger, subordinate IDs, unprivileged ports, the idle templates, the proxy's certificate, `APP_URL` and failed services, and prints fixes. Fixes with `sudo` are for the user to run.

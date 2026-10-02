@@ -33,11 +33,17 @@ If you use an AI agent with [Laravel Boost](https://github.com/laravel/boost), r
 
 ### 1. Update the package
 
-Install it as a regular dependency, not with `--dev`. The idle check runs `php artisan podman:idle` inside your containers, and production images are built without dev dependencies:
+If you run production in these containers, install it as a regular dependency, not with `--dev`. The idle check runs `php artisan podman:idle` inside your containers, and production images are built without dev dependencies:
 
 ```bash
 composer remove foxws/laravel-podman --dev
 composer require foxws/laravel-podman:^5.0
+```
+
+If you only use it for development and deploy elsewhere, keep it in `require-dev`:
+
+```bash
+composer require foxws/laravel-podman:^5.0 --dev
 ```
 
 If you published `config/podman.php`, copy the new `idle` block from the [package config](config/podman.php). If you set `presets` (or `PODMAN_DEFAULT_PRESETS`), add `ondemand` to it: the on-demand socket moved into this new preset.

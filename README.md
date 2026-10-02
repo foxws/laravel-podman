@@ -73,7 +73,7 @@ composer require foxws/laravel-podman
 php artisan vendor:publish --tag="podman-config"
 ```
 
-Install it as a regular dependency, not with `--dev`: the idle check runs `php artisan podman:idle` inside your production containers too. See [Customizing](https://foxws.nl/laravel-podman/customizing) for every config key.
+If you run production in these containers, install it as a regular dependency, not with `--dev`: the idle check runs `php artisan podman:idle` inside them, and production images are built without dev dependencies. If you only use it for development and deploy elsewhere, `--dev` is preferred. Where it is installed but shouldn't touch services, set `PODMAN_ENABLED=false`: `podman:generate`, `podman:setup`, `podman:publish` and `podman:s3-setup` then refuse to run. See [Customizing](https://foxws.nl/laravel-podman/customizing) for every config key.
 
 ## Quick start
 

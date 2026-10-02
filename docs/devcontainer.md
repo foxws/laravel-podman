@@ -39,6 +39,24 @@ Pick prebuilt or local, and with or without AI tools:
 
 To switch, copy another config over `.devcontainer/devcontainer.json`.
 
+## Mounting host folders
+
+Only `~/.ssh` is mounted by default, read-only, so Git can use your SSH keys. The configs list other host folders under `mounts` as comments. Uncomment the ones you use:
+
+| Folder | For | Configs |
+| --- | --- | --- |
+| `~/.config/gh` | GitHub CLI (`gh`) login | All |
+| `~/.aws` | AWS CLI credentials | All |
+| `~/.config/cloud` | Laravel Cloud CLI login | All |
+| `~/.claude`, `~/.claude.json` | Claude Code login | `ai` |
+| `~/.codex` | OpenAI Codex CLI login | `ai` |
+
+They're commented out because Podman won't start the container when a mounted folder doesn't exist on your host. Before uncommenting one, check that it exists.
+
+`devcontainer.json` allows comments, so you can leave the others in place.
+
+On a desktop with a keyring, such as GNOME, `gh auth login` stores the token in the keyring instead of in `~/.config/gh`. The mount then has no token to share. Run `gh auth login --insecure-storage` on your host to store it in `~/.config/gh/hosts.yml` instead.
+
 ## What's inside
 
 Debian (`php:8.5-cli`) with:
@@ -94,7 +112,7 @@ Claude Code uses `laravel-lsp` through the `laravel-lsp` plugin from [laravel/ag
 
 ### Login persistence
 
-The `ai` configs mount `~/.claude`, `~/.claude.json` and `~/.codex` from your host, so you stay logged in after rebuilding the container.
+To stay logged in after rebuilding the container, uncomment the `~/.claude` and `~/.claude.json` mounts, or `~/.codex`, in your config. See [Mounting host folders](#mounting-host-folders).
 
 Create `~/.claude.json` before the first start if it doesn't exist:
 
@@ -106,7 +124,7 @@ Otherwise Podman creates a directory with that name, and Claude Code can't use i
 
 ### Using API keys instead
 
-To keep your host logins out of the container, remove the `.claude`/`.codex` mounts from your config and set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` in `containerEnv`.
+To keep your host logins out of the container, leave the `.claude`/`.codex` mounts commented out and set `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` in `containerEnv`.
 
 API keys are billed separately, per token. A Claude.ai or ChatGPT subscription doesn't include one, so you need an account at [console.anthropic.com](https://console.anthropic.com) or [platform.openai.com](https://platform.openai.com).
 

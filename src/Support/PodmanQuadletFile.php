@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Foxws\Podman\Support;
 
+use Foxws\Podman\Exceptions\QuadletRenderException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -75,7 +76,7 @@ class PodmanQuadletFile
 
     public function removeSelinuxVolumeFlags(string $contents): string
     {
-        return preg_replace_callback(
+        $result = preg_replace_callback(
             '/^Volume=(.*)$/m',
             function (array $matches): string {
                 $segments = Str::of($matches[1])->explode(':');
@@ -84,7 +85,7 @@ class PodmanQuadletFile
                     return "Volume={$matches[1]}";
                 }
 
-                $options = Str::of($segments->get(2))
+                $options = Str::of($segments->get(2, ''))
                     ->explode(',')
                     ->diff(['Z', 'z', 'U']);
 
@@ -96,5 +97,7 @@ class PodmanQuadletFile
             },
             $contents,
         );
+
+        return $result ?? throw QuadletRenderException::volumeFlagsNotRemoved(preg_last_error_msg());
     }
 }

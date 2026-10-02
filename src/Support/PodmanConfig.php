@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Foxws\Podman\Support;
 
+use Foxws\Podman\Exceptions\InvalidAppUrlException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
@@ -16,7 +17,10 @@ class PodmanConfig
 {
     public function domain(): string
     {
-        return Uri::of(Config::string('app.url'))->host();
+        $url = Config::string('app.url');
+
+        return Uri::of($url)->host()
+            ?? throw InvalidAppUrlException::missingHost($url);
     }
 
     public function prefix(): string

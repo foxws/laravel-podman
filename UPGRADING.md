@@ -1,5 +1,11 @@
 # Upgrading
 
+## From 5.2 to 5.3
+
+The devcontainer configs now mount only `~/.ssh` by default. The `ai` configs no longer mount `~/.claude`, `~/.claude.json` and `~/.codex`. They're listed as comments with the new `~/.config/gh`, `~/.aws` and `~/.config/cloud` mounts, because Podman won't start the container when one of them doesn't exist on your host.
+
+Your `.devcontainer/devcontainer.json` doesn't change until you copy a regenerated config over it. When you do, uncomment the mounts you used before. See [Mounting host folders](docs/devcontainer.md#mounting-host-folders).
+
 ## From 5.0 to 5.1
 
 The idle check moved into [`lpod`](docs/lpod.md) v2.2.0. The `ondemand` preset still renders the old `my-app-idle.timer`, but it's deprecated.

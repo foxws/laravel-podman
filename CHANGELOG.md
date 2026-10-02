@@ -2,6 +2,22 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 5.3.0 - 2026-10-02
+
+### Upgrading
+
+The devcontainer configs now mount only `~/.ssh` by default. The `ai` configs no longer mount `~/.claude`, `~/.claude.json` and `~/.codex`: they're listed as comments, with new `~/.config/gh`, `~/.aws` and `~/.config/cloud` mounts. Uncomment the ones you use when you copy a regenerated config. See [UPGRADING.md](https://github.com/foxws/laravel-podman/blob/main/UPGRADING.md#from-52-to-53).
+
+`PodmanConfig::domain()` now throws `InvalidAppUrlException` when `APP_URL` has no host (e.g. `example.test` without `https://`), instead of a `TypeError`.
+
+### What's Changed
+
+* Make devcontainer host mounts opt-in, and add gh, AWS and Laravel Cloud mounts by @francoism90 in https://github.com/foxws/laravel-podman/pull/47
+* docs: add the foxws.nl homepage group and a hero lead by @francoism90 in https://github.com/foxws/laravel-podman/pull/48
+* Raise PHPStan to level 8, and explain an APP_URL without a host by @francoism90 in https://github.com/foxws/laravel-podman/pull/49
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/5.2.0...5.3.0
+
 ## 5.2.0 - 2026-10-01
 
 ### What's Changed
@@ -71,12 +87,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -103,6 +121,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -138,6 +157,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -150,6 +170,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

@@ -5,10 +5,15 @@ metadata:
   group: deploy
   eyebrow: "Containers · Podman Quadlet · systemd"
   desc: "Turn your Laravel app's config into Podman Quadlet containers systemd can manage."
+  lead: "Run your Laravel app and its services as Podman containers that systemd manages, in development and production. When nobody is using them, they sleep."
   requires: "PHP ^8.4"
   laravel: "11.x / 12.x / 13.x"
   runtime: "Podman (Quadlet)"
   licence: MIT
+  used_by:
+    name: Stry
+    desc: "A self-hosted video streaming app."
+    href: "https://github.com/francoism90/stry"
 ---
 
 # Introduction

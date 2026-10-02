@@ -30,7 +30,7 @@ composer require foxws/laravel-podman
 php artisan vendor:publish --tag="podman-config"
 ```
 
-Install it as a regular dependency, not with `--dev`. The idle check runs `php artisan podman:idle` inside your production containers. See [Customizing](customizing.md) for all config keys.
+If you run production in these containers, install it as a regular dependency, not with `--dev`. The idle check runs `php artisan podman:idle` inside them, and production images are built without dev dependencies. If you only use it for development and deploy elsewhere, `--dev` is fine. See [Customizing](customizing.md) for all config keys.
 
 If you use [Laravel Boost](https://github.com/laravel/boost), run `php artisan boost:install` (or `boost:update`) after installing. Your AI agent then gets skills for `lpod`, presets, S3 setup and upgrading.
 

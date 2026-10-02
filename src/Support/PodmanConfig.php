@@ -4,11 +4,11 @@ declare(strict_types=1);
 
 namespace Foxws\Podman\Support;
 
+use Foxws\Podman\Exceptions\InvalidAppUrlException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Illuminate\Support\Uri;
-use RuntimeException;
 
 /**
  * Typed access to the "podman" config values used while rendering presets.
@@ -20,7 +20,7 @@ class PodmanConfig
         $url = Config::string('app.url');
 
         return Uri::of($url)->host()
-            ?? throw new RuntimeException("APP_URL must be a full URL with a scheme and host, like https://example.test, but is \"{$url}\".");
+            ?? throw InvalidAppUrlException::missingHost($url);
     }
 
     public function prefix(): string

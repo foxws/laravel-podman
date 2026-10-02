@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Foxws\Podman\Support;
 
+use Foxws\Podman\Exceptions\QuadletRenderException;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
-use RuntimeException;
 
 class PodmanQuadletFile
 {
@@ -98,6 +98,6 @@ class PodmanQuadletFile
             $contents,
         );
 
-        return $result ?? throw new RuntimeException('Removing SELinux volume flags failed: '.preg_last_error_msg());
+        return $result ?? throw QuadletRenderException::volumeFlagsNotRemoved(preg_last_error_msg());
     }
 }

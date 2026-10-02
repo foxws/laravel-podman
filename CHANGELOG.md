@@ -2,6 +2,18 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 5.3.1 - 2026-10-02
+
+### Upgrading
+
+The development entrypoint no longer runs `optimize:clear` on every start, so the application cache (rate limiters, locks, `Cache::forever()` values) survives a container restart. It now clears only leftover config, route and event caches. Apps that published the development preset keep the old behaviour until they copy the new block into `containers/stubs/development/runtimes/entrypoint.sh`.
+
+### What's Changed
+
+* Keep the application cache when a development container starts by @francoism90 in https://github.com/foxws/laravel-podman/pull/50
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/5.3.0...5.3.1
+
 ## 5.3.0 - 2026-10-02
 
 ### Upgrading
@@ -88,12 +100,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -121,6 +135,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -158,6 +173,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -170,6 +186,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

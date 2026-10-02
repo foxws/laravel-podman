@@ -16,8 +16,10 @@ class PodmanQuadletPath
 {
     public function vendorPath(): string
     {
+        // Composer knows no install path when the package isn't installed
+        // through it, e.g. in its own test suite, so fall back to its root.
         return Str::rtrim(
-            InstalledVersions::getInstallPath('foxws/laravel-podman'),
+            InstalledVersions::getInstallPath('foxws/laravel-podman') ?? dirname(__DIR__, 2),
             '/',
         );
     }

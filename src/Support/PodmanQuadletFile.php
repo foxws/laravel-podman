@@ -7,6 +7,7 @@ namespace Foxws\Podman\Support;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use RuntimeException;
 
 class PodmanQuadletFile
 {
@@ -75,7 +76,7 @@ class PodmanQuadletFile
 
     public function removeSelinuxVolumeFlags(string $contents): string
     {
-        return preg_replace_callback(
+        $result = preg_replace_callback(
             '/^Volume=(.*)$/m',
             function (array $matches): string {
                 $segments = Str::of($matches[1])->explode(':');
@@ -84,7 +85,7 @@ class PodmanQuadletFile
                     return "Volume={$matches[1]}";
                 }
 
-                $options = Str::of($segments->get(2))
+                $options = Str::of($segments->get(2, ''))
                     ->explode(',')
                     ->diff(['Z', 'z', 'U']);
 
@@ -96,5 +97,7 @@ class PodmanQuadletFile
             },
             $contents,
         );
+
+        return $result ?? throw new RuntimeException('Removing SELinux volume flags failed: '.preg_last_error_msg());
     }
 }

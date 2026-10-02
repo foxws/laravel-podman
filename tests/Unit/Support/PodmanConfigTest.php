@@ -26,6 +26,12 @@ it('resolves the domain from the app url', function () {
     expect($this->config->domain())->toBe('example.test');
 });
 
+it('explains that the app url needs a scheme and host', function () {
+    config(['app.url' => 'example.test']);
+
+    $this->config->domain();
+})->throws(RuntimeException::class, 'APP_URL must be a full URL with a scheme and host');
+
 it('kebab-cases the configured quadlet prefix', function () {
     config(['podman.quadlet_prefix' => 'My App']);
 

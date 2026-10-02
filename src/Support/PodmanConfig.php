@@ -8,6 +8,7 @@ use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Illuminate\Support\Uri;
+use RuntimeException;
 
 /**
  * Typed access to the "podman" config values used while rendering presets.
@@ -16,7 +17,10 @@ class PodmanConfig
 {
     public function domain(): string
     {
-        return Uri::of(Config::string('app.url'))->host();
+        $url = Config::string('app.url');
+
+        return Uri::of($url)->host()
+            ?? throw new RuntimeException("APP_URL must be a full URL with a scheme and host, like https://example.test, but is \"{$url}\".");
     }
 
     public function prefix(): string

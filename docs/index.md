@@ -11,9 +11,12 @@ metadata:
   runtime: "Podman (Quadlet)"
   licence: MIT
   used_by:
-    name: Stry
-    desc: "A self-hosted video streaming app."
-    href: "https://github.com/francoism90/stry"
+    - name: Stry
+      desc: "A self-hosted video streaming app."
+      href: "https://github.com/francoism90/stry"
+    - name: foxws.nl
+      desc: "This site."
+      href: "https://foxws.nl"
 ---
 
 # Introduction

@@ -2,6 +2,7 @@
 title: Introduction
 metadata:
   role: Containers
+  group: deploy
   eyebrow: "Containers · Podman Quadlet · systemd"
   desc: "Turn your Laravel app's config into Podman Quadlet containers systemd can manage."
   requires: "PHP ^8.4"

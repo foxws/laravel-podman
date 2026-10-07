@@ -48,6 +48,7 @@ Only `~/.ssh` is mounted by default, read-only, so Git can use your SSH keys. Th
 | `~/.config/gh` | GitHub CLI (`gh`) login | All |
 | `~/.aws` | AWS CLI credentials | All |
 | `~/.config/cloud` | Laravel Cloud CLI login | All |
+| `~/workspace` | Other projects, such as packages you develop alongside the app, at `/workspace` | All |
 | `~/.claude`, `~/.claude.json` | Claude Code login | `ai` |
 | `~/.codex` | OpenAI Codex CLI login | `ai` |
 
@@ -56,6 +57,32 @@ They're commented out because Podman won't start the container when a mounted fo
 `devcontainer.json` allows comments, so you can leave the others in place.
 
 On a desktop with a keyring, such as GNOME, `gh auth login` stores the token in the keyring instead of in `~/.config/gh`. The mount then has no token to share. Run `gh auth login --insecure-storage` on your host to store it in `~/.config/gh/hosts.yml` instead.
+
+### SELinux
+
+The workspace mount has no `Z` flag. `--security-opt=label=disable` in `runArgs` already lets the devcontainer read and write your project without relabeling it. `Z` would give the project folder a label private to the devcontainer, and the `development` services that mount the same folder (with `z`) would then get "permission denied" until they're restarted.
+
+If you added `,Z` to `workspaceMount` in your own config, remove it and rebuild the container.
+
+## Podman and lpod
+
+The devcontainer has no Podman, `lpod` or systemd. Run those in a terminal on your host, from the project folder:
+
+```bash
+lpod install development/app.quadlets --replace
+lpod my-app restart
+```
+
+Everything else runs in the devcontainer directly: `php artisan`, `composer`, `pnpm` and tests. It joins the app's `systemd-{application}` network (created by `initializeCommand`), so the database, cache and other services in `.env` are reachable by their container names.
+
+`php artisan podman:generate` also works in the devcontainer. The configs set `PODMAN_WORKING_PATH` to `${localWorkspaceFolder}`, so the rendered files mount your host's project folder, not `/app`.
+
+The devcontainer doesn't run Podman in Podman or mount the host's Podman socket, on purpose:
+
+- A nested Podman has its own containers and no access to your host's systemd, so it can't manage the app's Quadlet services.
+- The host socket would let anything in the container, including an AI agent, control every container and volume of your user, including database volumes.
+
+With [Laravel Boost](https://github.com/laravel/boost), the package's `podman-lpod` skill tells AI agents in the devcontainer to give you the host commands instead of running them.
 
 ## What's inside
 

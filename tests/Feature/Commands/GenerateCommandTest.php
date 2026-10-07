@@ -188,11 +188,11 @@ it('renders an idle check that stops the queue workers, then the scheduler timer
         ->toContain(<<<'UNIT'
             TimeoutStartSec=50
             ExecCondition=/usr/bin/test yes = yes
-            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme.service'
+            ExecCondition=/bin/sh -c 'case "$$(systemctl --user is-active acme.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
             ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-schedule.service'
             ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-queue.service || exec podman exec systemd-acme-queue php -d variables_order=EGPCS /app/artisan podman:idle'
             ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-horizon.service || exec podman exec systemd-acme-horizon php -d variables_order=EGPCS /app/artisan podman:idle'
-            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme.service'
+            ExecCondition=/bin/sh -c 'case "$$(systemctl --user is-active acme.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
             ExecStart=-systemctl --user stop --no-block acme-queue.service
             ExecStart=-systemctl --user stop --no-block acme-horizon.service
             ExecStart=-systemctl --user stop --no-block acme-schedule.timer

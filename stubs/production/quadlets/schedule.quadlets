@@ -15,7 +15,7 @@ Environment=APP_OPTIMIZE=false
 UserNS=keep-id
 ShmSize=128m
 Secret={{application}}-env,target=/app/.env,mode=0400,uid={{appUid}},gid={{appGid}}
-Volume={{application}}-cache.volume:/cache:rw,z
+Volume={{application}}-cache.volume:/cache:rw
 Network={{application}}.network
 
 [Service]

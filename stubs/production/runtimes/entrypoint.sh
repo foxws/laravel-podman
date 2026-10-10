@@ -17,14 +17,16 @@ if [ "$(id -u)" = '0' ]; then
         usermod -o -u "${PUID}" docker
     fi
 
-    # The image's own directories follow the renumbered user, and Podman's
-    # Volume=...,U chowns volumes to the image's declared USER, which is root
-    # (see above) -- not to PUID/PGID, so both need redoing. Only when the
-    # top-level directory is still owned by someone else: containers start
-    # often (the scheduler runs every minute), and /cache can be large.
+    # The image's own directories follow the renumbered user, and so must
+    # volumes written by anything running as root, such as `podman exec`
+    # without --user. Only when the top-level directory is still owned by
+    # someone else: containers start often (the scheduler runs every minute),
+    # and /cache can be large. PODMAN_CHOWN_PATHS adds folders to check on
+    # their own (space-separated), for subfolders the app must be able to
+    # write to even when the volume above them looks fine.
     # Skipped for /media and /import: those are host bind mounts that already
     # line up via UserNS=keep-id.
-    for dir in /app/storage /app/bootstrap/cache /config /data /cache; do
+    for dir in /app/storage /app/bootstrap/cache /config /data /cache ${PODMAN_CHOWN_PATHS:-}; do
         if [ -d "${dir}" ] && [ "$(stat -c '%u:%g' "${dir}")" != "${PUID}:${PGID}" ]; then
             chown -R docker:docker "${dir}"
         fi

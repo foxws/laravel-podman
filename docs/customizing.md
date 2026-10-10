@@ -189,6 +189,17 @@ php artisan podman:generate production
 lpod install production/pgsql.quadlets --replace
 ```
 
+### Keeping more folders writable
+
+When the `production` image starts, it gives `/app/storage`, `/app/bootstrap/cache`, `/config`, `/data` and `/cache` back to the app user if something else owns them, for example after a `podman exec` without `--user`, which runs as root. It only checks the top folder of each, so a root-owned folder deeper inside isn't fixed. If your app writes to such a folder, list it in `PODMAN_CHOWN_PATHS` (space-separated) under `[Container]` in each quadlet that runs the app image:
+
+```ini
+[Container]
+Environment="PODMAN_CHOWN_PATHS=/cache/temp /cache/temp/media"
+```
+
+Then regenerate and reinstall the services.
+
 ### Running several apps on one host
 
 Pass `--application=` to `lpod install` (needs Podman 6 or later), so each app gets its own install folder. With on-demand services, also give each app its own `ondemand.listen` and `ondemand.port`.

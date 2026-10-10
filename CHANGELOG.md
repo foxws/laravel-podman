@@ -2,6 +2,14 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 5.4.1 - 2026-10-10
+
+### What's Changed
+
+* Stop relabeling and chowning the shared named volumes by @francoism90 in https://github.com/foxws/laravel-podman/pull/56
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/5.4.0...5.4.1
+
 ## 5.4.0 - 2026-10-10
 
 ### What's Changed
@@ -138,12 +146,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -176,6 +186,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -223,6 +234,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -235,6 +247,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

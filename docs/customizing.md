@@ -189,6 +189,18 @@ php artisan podman:generate production
 lpod install production/pgsql.quadlets --replace
 ```
 
+### Volume flags
+
+The presets only add SELinux and ownership flags to a mount where they're needed:
+
+| Mount | Flags | Why |
+| --- | --- | --- |
+| Named volumes shared by the app's services (`/config`, `/data`, `/cache`) | none | Podman's SELinux policy already labels named volumes for containers. On first use, Podman also gives the volume the owner of the folder in the image. `z` and `U` would walk the whole volume on every start, and the scheduler starts a container every minute. |
+| Your working copy (`/app` in `development`) | `z` | Host folders need a container label. The `development` app also has `U`, which gives files back to you if something changed their owner. |
+| A volume used by one service, such as the database | `Z,U` | `Z` gives it a label private to that container. `U` hands it to the user the image runs as. |
+
+Don't use `Z` on a mount that several containers share: the last container to start would lock the others out. If a named volume ends up with the wrong label, for example after copying a backup into it from the host, run `restorecon -R ~/.local/share/containers/storage/volumes` (or `/var/lib/containers/storage/volumes` for system-wide installs).
+
 ### Keeping more folders writable
 
 When the `production` image starts, it gives `/app/storage`, `/app/bootstrap/cache`, `/config`, `/data` and `/cache` back to the app user if something else owns them, for example after a `podman exec` without `--user`, which runs as root. It only checks the top folder of each, so a root-owned folder deeper inside isn't fixed. If your app writes to such a folder, list it in `PODMAN_CHOWN_PATHS` (space-separated) under `[Container]` in each quadlet that runs the app image:

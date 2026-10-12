@@ -90,7 +90,7 @@ Debian (`php:8.5-cli`) with:
 
 - `default-mysql-client`, a PostgreSQL client (`POSTGRES_VERSION`) and `sqlite3`
 - PHP extensions: `apcu bcmath exif ffi gd igbinary imagick intl pcntl pdo_mysql pdo_pgsql pdo_sqlite redis sockets zip`, plus any in the `PHP_EXTENSIONS` build arg
-- Node.js (`NODE_VERSION`) with `pnpm` and `yarn` through Corepack, and `bun`
+- Node.js (`NODE_VERSION`) with `pnpm`, `yarn` and `bun`
 - `cpx` (like `npx`, for Composer packages), `gh`, `awscli` and `shellcheck`
 
 ## AI variant

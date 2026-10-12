@@ -90,13 +90,12 @@ COPY podman/development/runtimes/php-development.ini /usr/local/etc/php/conf.d/x
 
 # Node.js Configuration
 #
-# corepack runs as root and respects FrankenPHP's XDG_CONFIG_HOME=/config
+# pnpm runs as root and respects FrankenPHP's XDG_CONFIG_HOME=/config
 # and XDG_DATA_HOME=/data, writing files there as root even though both
 # were chowned to "docker" earlier -- re-chown so the "docker" user can
 # read them.
-RUN npm install -g npm@latest corepack@latest svgo@latest \
+RUN npm install -g npm@latest pnpm@latest svgo@latest \
     && mkdir -p ${PNPM_HOME}/store \
-    && corepack enable && corepack prepare pnpm@latest --activate \
     && pnpm config set store-dir ${PNPM_HOME}/store \
     && chown -R docker:docker ${PNPM_HOME} /config /data
 

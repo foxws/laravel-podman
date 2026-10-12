@@ -73,11 +73,8 @@ RUN COMPOSER_HOME=/usr/local/share/composer composer global require cpx/cpx:^2.0
     && ln -s /usr/local/share/composer/vendor/bin/cpx /usr/local/bin/cpx
 
 # Node.js Configuration
-RUN npm install -g npm@latest corepack@latest svgo@latest \
+RUN npm install -g npm@latest pnpm@latest yarn@latest svgo@latest \
     && mkdir -p ${PNPM_HOME}/store \
-    && corepack enable \
-    && corepack prepare pnpm@latest --activate \
-    && corepack prepare yarn@stable --activate \
     && pnpm config set store-dir ${PNPM_HOME}/store
 
 # Install Bun -- the npm package needs a postinstall script npm blocks by default

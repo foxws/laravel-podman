@@ -32,7 +32,15 @@ php artisan vendor:publish --tag="podman-config"
 
 If you run production in these containers, install it as a regular dependency, not with `--dev`. The idle check runs `php artisan podman:idle` inside them, and production images are built without dev dependencies. If you only use it for development and deploy elsewhere, `--dev` is preferred. Where it is installed but shouldn't touch services, set `PODMAN_ENABLED=false`: `podman:generate`, `podman:setup`, `podman:publish` and `podman:s3-setup` then refuse to run. See [Customizing](customizing.md) for all config keys.
 
-If you use [Laravel Boost](https://github.com/laravel/boost), run `php artisan boost:install` (or `boost:update`) after installing. Your AI agent then gets skills for `lpod`, presets, S3 setup and upgrading.
+> [!TIP]
+> Let your AI agent do the hard parts. This package ships [Laravel Boost](https://laravel.com/docs/boost) skills (`podman-lpod`, `podman-presets`, `podman-s3` and `podman-upgrade`) that teach your agent how to install, configure and use Laravel Podman. Install Boost and select the skills when prompted:
+>
+> ```bash
+> composer require laravel/boost --dev
+> php artisan boost:install
+> ```
+>
+> Already using Boost? Run `php artisan boost:update --discover` to pick up the skills. Then just ask, for example: *"Switch the database to PostgreSQL and create an S3 bucket with a CORS policy."*
 
 ## Presets
 

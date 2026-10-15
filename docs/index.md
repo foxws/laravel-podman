@@ -52,6 +52,7 @@ If you run production in these containers, install it as a regular dependency, n
 | `ondemand`          | Socket that starts the app on its first request, so it and its services can sleep when idle. See [On-demand services](ondemand.md). **Enabled by default.** |
 | `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. **Enabled by default.**                               |
 | `s3`                | CORS policy for S3-compatible storage buckets.                                                                                        |
+| `installer`         | One-time installer for your app, built on [podman-installer](https://github.com/foxws/podman-installer). See [Installer](installer.md). |
 
 To change a preset, publish it with `php artisan podman:publish production`. See [Customizing](customizing.md).
 

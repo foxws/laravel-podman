@@ -153,7 +153,7 @@ lpod my-app shell
 The full documentation is at [foxws.nl/laravel-podman](https://foxws.nl/laravel-podman/commands):
 
 - **Getting started:** [Commands](https://foxws.nl/laravel-podman/commands), [`lpod` CLI](https://foxws.nl/laravel-podman/lpod)
-- **Configuration:** [Customizing](https://foxws.nl/laravel-podman/customizing), [Devcontainer](https://foxws.nl/laravel-podman/devcontainer), [Proxy](https://foxws.nl/laravel-podman/proxy), [S3 Buckets](https://foxws.nl/laravel-podman/s3), [On-demand services](https://foxws.nl/laravel-podman/ondemand)
+- **Configuration:** [Customizing](https://foxws.nl/laravel-podman/customizing), [Devcontainer](https://foxws.nl/laravel-podman/devcontainer), [Proxy](https://foxws.nl/laravel-podman/proxy), [S3 Buckets](https://foxws.nl/laravel-podman/s3), [On-demand services](https://foxws.nl/laravel-podman/ondemand), [Installer](https://foxws.nl/laravel-podman/installer)
 - **Advanced:** [Setting up without PHP](https://foxws.nl/laravel-podman/host-setup), [CI: Building a Container Image](https://foxws.nl/laravel-podman/ci-build)
 - **Reference:** [Comparison with Sail, Herd and others](https://foxws.nl/laravel-podman/comparison)
 

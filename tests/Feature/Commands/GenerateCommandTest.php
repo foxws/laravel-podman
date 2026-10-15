@@ -299,3 +299,20 @@ it('keeps production queue workers running while the on-demand app is idle', fun
         ->not->toContain("PartOf={$application}.container")
         ->toContain("Requires={$application}-pgsql.container {$application}-valkey.container");
 })->with(['queue', 'horizon']);
+
+it('renders an installer for the app', function () {
+    config(['podman.quadlet_prefix' => 'acme', 'app.name' => 'Acme']);
+
+    $this->artisan('podman:generate', ['preset' => 'installer'])->assertExitCode(0);
+
+    $runtimes = "{$this->publishPath}/installer/runtimes";
+
+    expect(File::get("{$runtimes}/Containerfile"))
+        ->toContain('FROM ghcr.io/foxws/podman-installer:1')
+        ->toContain('podman build -t acme-installer')
+        ->and(File::get("{$runtimes}/installer/manifest.yml"))
+        ->toContain('name: "Acme"')
+        ->toContain('container: systemd-acme')
+        ->and(File::get("{$runtimes}/installer/finish.md"))
+        ->toContain('lpod acme status');
+});

@@ -1,0 +1,38 @@
+# The steps of the installer for {{appName}}. See
+# https://github.com/foxws/podman-installer#the-manifest for every option.
+name: "{{appName}}"
+
+steps:
+  - id: welcome
+    file: welcome.md
+
+  - id: requirements
+    type: requirements
+    file: requirements.md
+
+  - id: migrate
+    type: command
+    file: migrate.md
+    run:
+      container: systemd-{{application}}
+      command: [php, artisan, migrate, --force, --no-interaction]
+
+  # Creates the first admin with your app's own command, with the password
+  # on stdin so it stays out of the process list. Laravel has no such command
+  # itself, so adapt this to yours.
+  #
+  # - id: admin
+  #   type: command
+  #   file: admin.md
+  #   inputs:
+  #     - { name: name, label: Name }
+  #     - { name: email, label: Email, type: email, rules: required|email }
+  #     - { name: password, label: Password, type: password, rules: required|min:12 }
+  #   run:
+  #     container: systemd-{{application}}
+  #     command: [php, artisan, users:create, --no-interaction, "--name={name}", "--email={email}", --password-stdin]
+  #     stdin: "{password}"
+  #     skip_if: [php, artisan, users:exists]
+
+  - id: finish
+    file: finish.md

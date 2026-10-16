@@ -51,7 +51,7 @@ Your `.devcontainer/devcontainer.json` doesn't change until you copy a regenerat
 
 ## From 5.0 to 5.1
 
-The idle check moved into [`lpod`](docs/lpod.md) v2.2.0. The `ondemand` preset still renders the old `my-app-idle.timer`, but it's deprecated.
+The idle check moved into [`lpod`](docs/lpod.md) v2.2.0. The `ondemand` preset still renders `my-app-idle.timer`, for hosts without lpod (see [Without lpod](docs/ondemand.md#without-lpod)). If you use lpod, switch to its idle check:
 
 1. Upgrade `lpod`. Version 2.1 has no `self-update` yet, so run the installer:
 

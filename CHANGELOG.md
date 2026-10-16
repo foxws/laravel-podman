@@ -2,6 +2,22 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 6.0.0 - 2026-10-16
+
+**Breaking:** the presets now name their volumes after the app, without Quadlet's `systemd-` prefix (`my-app-pgsql` instead of `systemd-my-app-pgsql`). Existing installs keep their data in the old volumes; copy it over before reinstalling the units. See [From v5 to v6](https://github.com/foxws/laravel-podman/blob/main/UPGRADING.md#from-v5-to-v6).
+
+New: render presets from code with `PodmanPresetGenerator` (it returns the rendered units, sockets, timers and secrets), a configurable `podman.base_path`, `PodmanSecrets` to create the secrets a preset needs without lpod, and an `installer` preset for [laravel-installer](https://github.com/foxws/laravel-installer).
+
+### What's Changed
+
+* Add a configurable base path and a preset generator by @francoism90 in https://github.com/foxws/laravel-podman/pull/61
+* Return the rendered units, sockets, timers and secrets from PodmanPresetGenerator by @francoism90 in https://github.com/foxws/laravel-podman/pull/62
+* Add an installer preset by @francoism90 in https://github.com/foxws/laravel-podman/pull/60
+* Read each secret's type and target, and create secrets without lpod by @francoism90 in https://github.com/foxws/laravel-podman/pull/63
+* [6.x] Name the volumes after the app, without the systemd- prefix by @francoism90 in https://github.com/foxws/laravel-podman/pull/64
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/5.5.2...6.0.0
+
 ## 5.5.2 - 2026-10-14
 
 ### What's Changed
@@ -175,12 +191,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -217,6 +235,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -272,6 +291,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -284,6 +304,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

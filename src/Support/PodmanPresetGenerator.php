@@ -26,9 +26,9 @@ class PodmanPresetGenerator
      * install" on the host. The preset's previous output is removed first,
      * so files dropped or renamed since then don't linger.
      *
-     * Returns the directory the preset was rendered to.
+     * Returns what was rendered, and where.
      */
-    public function generate(string $preset): string
+    public function generate(string $preset): PodmanRenderedPreset
     {
         $file = new PodmanQuadletFile($this->path, $this->config);
 
@@ -38,6 +38,10 @@ class PodmanPresetGenerator
             File::deleteDirectory($target);
         }
 
+        $quadlets = [];
+        $systemdUnits = [];
+        $runtimesPath = null;
+
         $quadletsSource = $this->path->presetQuadletsPath($preset);
 
         if (File::isDirectory($quadletsSource)) {
@@ -46,7 +50,7 @@ class PodmanPresetGenerator
                     continue;
                 }
 
-                $file->prepareSource($quadlet->getRealPath(), "{$target}/{$quadlet->getFilename()}", $preset);
+                $quadlets[] = $file->prepareSource($quadlet->getRealPath(), "{$target}/{$quadlet->getFilename()}", $preset);
             }
         }
 
@@ -54,17 +58,17 @@ class PodmanPresetGenerator
 
         if (File::isDirectory($unitsSource)) {
             foreach (File::files($unitsSource) as $unit) {
-                $file->prepareSource($unit->getRealPath(), "{$target}/{$this->config->prefix()}-{$unit->getFilename()}", $preset);
+                $systemdUnits[] = $file->prepareSource($unit->getRealPath(), "{$target}/{$this->config->prefix()}-{$unit->getFilename()}", $preset);
             }
         }
 
         $runtimesSource = $this->path->presetRuntimesPath($preset);
 
         if (File::isDirectory($runtimesSource)) {
-            $file->publishDirectory($runtimesSource, $this->path->presetPublishRuntimesPath($preset), $preset);
+            $file->publishDirectory($runtimesSource, $runtimesPath = $this->path->presetPublishRuntimesPath($preset), $preset);
         }
 
-        return $target;
+        return new PodmanRenderedPreset($preset, $target, $quadlets, $systemdUnits, $runtimesPath);
     }
 
     /**

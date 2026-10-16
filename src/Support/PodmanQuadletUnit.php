@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Foxws\Podman\Support;
 
+use Foxws\Podman\Enums\QuadletUnitType;
 use Foxws\Podman\Exceptions\QuadletRenderException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
@@ -15,26 +16,9 @@ use Illuminate\Support\Str;
  */
 readonly class PodmanQuadletUnit
 {
-    /**
-     * The service systemd generates for each Quadlet unit type, as a suffix
-     * to the unit's name.
-     *
-     * @var array<string, string>
-     */
-    public const array SERVICE_SUFFIXES = [
-        'container' => '',
-        'kube' => '',
-        'pod' => '-pod',
-        'volume' => '-volume',
-        'network' => '-network',
-        'build' => '-build',
-        'image' => '-image',
-        'artifact' => '-artifact',
-    ];
-
     public function __construct(
         public string $name,
-        public string $type,
+        public QuadletUnitType $type,
         public string $contents,
     ) {}
 
@@ -67,8 +51,9 @@ readonly class PodmanQuadletUnit
         preg_match_all('/^\[([A-Za-z]+)\]$/m', $chunk, $sections);
 
         $type = Collection::make($sections[1])
-            ->map(fn (string $section): string => Str::lower($section))
-            ->first(fn (string $section): bool => array_key_exists($section, self::SERVICE_SUFFIXES));
+            ->map(fn (string $section): ?QuadletUnitType => QuadletUnitType::fromSection($section))
+            ->filter()
+            ->first();
 
         if ($type === null) {
             throw QuadletRenderException::invalidUnit($source, "the unit {$name[1]} has no Quadlet section, such as [Container]");
@@ -82,7 +67,7 @@ readonly class PodmanQuadletUnit
      */
     public function fileName(): string
     {
-        return "{$this->name}.{$this->type}";
+        return "{$this->name}.{$this->type->value}";
     }
 
     /**
@@ -91,16 +76,7 @@ readonly class PodmanQuadletUnit
      */
     public function serviceName(): string
     {
-        return $this->name.self::SERVICE_SUFFIXES[$this->type].'.service';
-    }
-
-    /**
-     * Whether the unit runs something itself, rather than being started as a
-     * dependency of one that does, like a volume or a build.
-     */
-    public function isRunnable(): bool
-    {
-        return in_array($this->type, ['container', 'kube', 'pod'], true);
+        return "{$this->name}{$this->type->serviceSuffix()}.service";
     }
 
     /**

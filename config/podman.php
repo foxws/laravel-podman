@@ -101,12 +101,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Base Path
+    |--------------------------------------------------------------------------
+    |
+    | The project folder presets are read from and rendered into, as this
+    | process sees it. Relative "stubs_path" and "publish_path" values are
+    | resolved against it. Defaults to base_path(); override when rendering
+    | another project than the running app, e.g. from an installer container
+    | with the project mounted somewhere else.
+    |
+    */
+
+    'base_path' => env('PODMAN_BASE_PATH'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Working Path
     |--------------------------------------------------------------------------
     |
     | The host path baked into the "{{workingPath}}"/"{{runtimePath}}"
     | placeholders. It does not affect where Artisan itself reads or writes
-    | files — that's always base_path(). Defaults to base_path(); override
+    | files — that's always "base_path". Defaults to "base_path"; override
     | when rendering happens somewhere whose filesystem view of the project
     | isn't the host's, e.g. inside the container used by "Setting up
     | without PHP on the host".

@@ -26,7 +26,7 @@ class PodmanQuadletPath
 
     public function stubsPath(): string
     {
-        return Config::string('podman.stubs_path');
+        return $this->resolvePath(Config::string('podman.stubs_path'), $this->basePath());
     }
 
     /**
@@ -84,9 +84,13 @@ class PodmanQuadletPath
         return "{$this->presetPath($preset)}/systemd";
     }
 
+    /**
+     * The project folder this process reads presets from and renders them
+     * into: "podman.base_path" when set, Laravel's base_path() otherwise.
+     */
     public function basePath(): string
     {
-        return base_path();
+        return Config::get('podman.base_path') ?: base_path();
     }
 
     /**

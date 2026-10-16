@@ -5,11 +5,11 @@ declare(strict_types=1);
 namespace Foxws\Podman\Concerns;
 
 use Foxws\Podman\Support\PodmanConfig;
+use Foxws\Podman\Support\PodmanPresetGenerator;
 use Foxws\Podman\Support\PodmanQuadletFile;
 use Foxws\Podman\Support\PodmanQuadletPath;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 
 use function Laravel\Prompts\error;
 use function Laravel\Prompts\info;
@@ -92,65 +92,13 @@ trait InteractsWithPodmanQuadlet
     }
 
     /**
-     * Render every ".quadlets" file and runtime build file for a preset
-     * (from the vendor copy, or the published copy if it exists) into the
-     * configured publish path, ready for "lpod install"/"podman quadlet
-     * install" on the host. The preset's previous output is removed first,
-     * so files dropped or renamed since then don't linger.
+     * Render a preset into the configured publish path.
+     *
+     * @see PodmanPresetGenerator::generate()
      */
     protected function generatePodmanPreset(string $preset): void
     {
-        $path = $this->podmanQuadletPath();
-        $file = $this->podmanQuadletFile();
-
-        $target = $path->presetPublishPath($preset);
-
-        if ($this->isPodmanPresetOutputDisposable($preset, $target)) {
-            File::deleteDirectory($target);
-        }
-
-        $quadletsSource = $path->presetQuadletsPath($preset);
-
-        if (File::isDirectory($quadletsSource)) {
-            foreach (File::files($quadletsSource) as $quadlet) {
-                if ($quadlet->getExtension() !== 'quadlets') {
-                    continue;
-                }
-
-                $file->prepareSource($quadlet->getRealPath(), "{$target}/{$quadlet->getFilename()}", $preset);
-            }
-        }
-
-        $unitsSource = $path->presetSystemdPath($preset);
-
-        if (File::isDirectory($unitsSource)) {
-            foreach (File::files($unitsSource) as $unit) {
-                $file->prepareSource($unit->getRealPath(), "{$target}/{$this->podmanConfig()->prefix()}-{$unit->getFilename()}", $preset);
-            }
-        }
-
-        $runtimesSource = $path->presetRuntimesPath($preset);
-
-        if (File::isDirectory($runtimesSource)) {
-            $file->publishDirectory($runtimesSource, $path->presetPublishRuntimesPath($preset), $preset);
-        }
-    }
-
-    /**
-     * Whether a preset's output directory only holds generated files. It
-     * doesn't when "publish_path" points at (or above) the preset's own
-     * templates, which must never be deleted.
-     */
-    protected function isPodmanPresetOutputDisposable(string $preset, string $target): bool
-    {
-        $target = realpath($target);
-        $source = realpath($this->podmanQuadletPath()->presetPath($preset));
-
-        if ($target === false || $source === false) {
-            return $target !== false;
-        }
-
-        return ! Str::startsWith("{$source}/", "{$target}/");
+        (new PodmanPresetGenerator($this->podmanQuadletPath(), $this->podmanConfig()))->generate($preset);
     }
 
     /**

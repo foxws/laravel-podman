@@ -104,7 +104,12 @@ To keep a single service running, such as the database for an external client, p
 
 ## The idle check
 
-Queue workers that keep running while the app sleeps would keep the database and cache awake too. The idle check stops them once there's no work left. It's part of [`lpod`](lpod.md) v2.2.0 or later, and you turn it on per app:
+Queue workers that keep running while the app sleeps would keep the database and cache awake too. The idle check stops them once there's no work left. There are two ways to run it. Pick one, not both:
+
+- **With [`lpod`](lpod.md)** v2.2.0 or later, turn it on per app with `lpod idle enable`. See below.
+- **Without lpod**, install the `ondemand` preset's timer. See [Without lpod](#without-lpod). [laravel-installer](https://github.com/foxws/laravel-installer) does this for you.
+
+With lpod:
 
 ```bash
 lpod idle enable my-app                  # run the check every minute
@@ -133,9 +138,19 @@ To have the check look at another worker too, such as `my-app-imports`, open a d
 Environment=LPOD_IDLE_WORKERS=imports
 ```
 
-### Older lpod versions
+### Without lpod
 
-Before `lpod` v2.2.0, the idle check was a timer in the `ondemand` preset (`lpod install ondemand/my-app-idle.timer --replace`). It still works the same way, but it's deprecated and will be removed in the next major version. Don't install both. To switch, run `lpod remove my-app-idle.timer`, then `lpod idle enable my-app`.
+The `ondemand` preset renders the same check as a timer, `my-app-idle.timer`, with its `my-app-idle.service`. They only use `systemctl` and `podman exec`, so they work on hosts without lpod. Copy both to `~/.config/systemd/user`, then enable the timer:
+
+```bash
+cp podman/ondemand/my-app-idle.timer podman/ondemand/my-app-idle.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user enable --now my-app-idle.timer
+```
+
+It checks the app's `queue` and `horizon` workers. To check another one, publish the `ondemand` preset and add its lines to `systemd/idle.service`, next to the ones for `queue`.
+
+Don't run it next to `lpod idle enable`. To move to lpod later, run `systemctl --user disable --now my-app-idle.timer`, then `lpod idle enable my-app`.
 
 ## What counts as work in progress
 

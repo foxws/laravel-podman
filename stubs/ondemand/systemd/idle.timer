@@ -1,5 +1,6 @@
-# Deprecated: lpod v2.2.0 and later run this check with "lpod idle enable {{application}}".
-# Install one or the other, not both. Removed in the next major version.
+# The idle check for hosts without lpod, such as apps set up with
+# laravel-installer. With lpod, run "lpod idle enable {{application}}" instead.
+# Install one or the other, not both.
 [Unit]
 Description=Laravel idle check timer
 

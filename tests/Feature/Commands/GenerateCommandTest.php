@@ -308,7 +308,7 @@ it('renders an installer for the app', function () {
     $runtimes = "{$this->publishPath}/installer/runtimes";
 
     expect(File::get("{$runtimes}/Containerfile"))
-        ->toContain('FROM ghcr.io/foxws/podman-installer:1')
+        ->toContain('FROM ghcr.io/foxws/laravel-installer:1')
         ->toContain('podman build -t acme-installer')
         ->and(File::get("{$runtimes}/installer/manifest.yml"))
         ->toContain('name: "Acme"')

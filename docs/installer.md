@@ -5,7 +5,7 @@ order: 6
 
 # Installer
 
-The `installer` preset is the starting point for a one-time installer for your app, built on [podman-installer](https://github.com/foxws/podman-installer). People run it once on their server: it checks the host, then runs your app's setup steps in a browser, such as the migrations and creating the first admin, and removes itself when stopped.
+The `installer` preset is the starting point for a one-time installer for your app, built on [laravel-installer](https://github.com/foxws/laravel-installer). People run it once on their server: it checks the host, then runs your app's setup steps in a browser, such as the migrations and creating the first admin, and removes itself when stopped.
 
 ## Render and customize it
 
@@ -18,7 +18,7 @@ Edit the steps in `containers/stubs/installer/runtimes/installer/`:
 - `manifest.yml` lists the steps. It runs the migrations in the app container, `systemd-{{application}}`, and has a commented-out step for creating the first admin with your app's own command. Laravel has no such command itself.
 - Each step has a Markdown file, which the installer shows above it.
 
-See [the manifest](https://github.com/foxws/podman-installer#the-manifest) for every option. Placeholders such as `{{appName}}` and `{{application}}` work in these files too.
+See [the manifest](https://github.com/foxws/laravel-installer#the-manifest) for every option. Placeholders such as `{{appName}}` and `{{application}}` work in these files too.
 
 ## Build and run it
 

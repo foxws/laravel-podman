@@ -1,5 +1,5 @@
 # The steps of the installer for {{appName}}. See
-# https://github.com/foxws/podman-installer#the-manifest for every option.
+# https://github.com/foxws/laravel-installer#the-manifest for every option.
 name: "{{appName}}"
 
 steps:

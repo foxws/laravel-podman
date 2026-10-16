@@ -11,6 +11,7 @@ it('lists the presets available in the vendor stubs directory', function () {
     expect($this->getPodmanQuadletPresets())->toBe([
         'devcontainer' => 'devcontainer',
         'development' => 'development',
+        'installer' => 'installer',
         'ondemand' => 'ondemand',
         'production' => 'production',
         'proxy' => 'proxy',
@@ -26,6 +27,7 @@ it('merges presets discovered in the configured stubs path with the vendor ones'
     expect($this->getPodmanQuadletPresets())->toBe([
         'devcontainer' => 'devcontainer',
         'development' => 'development',
+        'installer' => 'installer',
         'ondemand' => 'ondemand',
         'php-container' => 'php-container',
         'production' => 'production',

@@ -1,0 +1,8 @@
+# The one-time installer for {{appName}}. Build it with:
+#
+#   podman build -t {{application}}-installer podman/installer/runtimes
+#
+# and start it on the server with "lpod installer {{application}}-installer".
+FROM ghcr.io/foxws/laravel-installer:1
+
+COPY installer/ /app/installer/

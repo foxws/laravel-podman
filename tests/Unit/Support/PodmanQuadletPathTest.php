@@ -17,6 +17,25 @@ it('resolves the base path to Laravel\'s base_path', function () {
     expect($this->path->basePath())->toBe(base_path());
 });
 
+it('uses the configured base path when set, for the stubs and publish paths too', function () {
+    config([
+        'podman.base_path' => '/workspace',
+        'podman.stubs_path' => 'containers/stubs',
+        'podman.publish_path' => 'podman',
+    ]);
+
+    expect($this->path->basePath())->toBe('/workspace')
+        ->and($this->path->stubsPath())->toBe('/workspace/containers/stubs')
+        ->and($this->path->publishPath())->toBe('/workspace/podman')
+        ->and($this->path->workingPath())->toBe('/workspace');
+});
+
+it('keeps an absolute stubs path as is', function () {
+    config(['podman.base_path' => '/workspace', 'podman.stubs_path' => '/srv/stubs']);
+
+    expect($this->path->stubsPath())->toBe('/srv/stubs');
+});
+
 it('resolves the working path to the base path by default', function () {
     expect($this->path->workingPath())->toBe($this->path->basePath());
 });

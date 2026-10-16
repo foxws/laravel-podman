@@ -18,7 +18,8 @@ You customize the package in two places:
 | `quadlet_prefix` | `PODMAN_QUADLET_PREFIX` | `APP_NAME` (or `laravel`) | Prefix for service names, e.g. `laravel-pgsql` |
 | `proxy_prefix` | `PODMAN_PROXY_PREFIX` | `proxy` | Name of the `proxy` service and network |
 | `stubs_path` | `PODMAN_STUBS_PATH` | `containers/stubs` | Where your own presets live |
-| `working_path` | `PODMAN_WORKING_PATH` | Laravel's `base_path()` | Host path for `{{workingPath}}`/`{{runtimePath}}`. Override per run with `podman:generate --working-path=` |
+| `base_path` | `PODMAN_BASE_PATH` | Laravel's `base_path()` | The project folder presets are read from and rendered into. Relative `stubs_path`/`publish_path` values resolve against it. Set it to render another project, e.g. from an installer container |
+| `working_path` | `PODMAN_WORKING_PATH` | `base_path` | Host path for `{{workingPath}}`/`{{runtimePath}}`. Override per run with `podman:generate --working-path=` |
 | `config_path` | `PODMAN_CONFIG_PATH` | `working_path` | Host path for `{{configPath}}`, for service config kept outside the project |
 | `quadlet_uid`/`quadlet_gid` | `PODMAN_QUADLET_UID`/`_GID` | Your UID/GID | Written into the Quadlet files |
 | `publish_path` | `PODMAN_PUBLISH_PATH` | `podman` | Where rendered presets go. Don't commit this folder |

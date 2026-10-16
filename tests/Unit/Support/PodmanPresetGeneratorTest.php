@@ -58,5 +58,8 @@ it('lists the units, sockets, timers and secrets it rendered', function () {
 it('renders every bundled preset into valid units', function (string $preset) {
     $rendered = (new PodmanPresetGenerator)->generate($preset);
 
-    expect(implode('', array_map(fn ($unit) => $unit->contents, $rendered->units())))->not->toContain('{{');
+    $contents = implode('', array_map(fn ($unit) => $unit->contents, $rendered->units()));
+
+    expect($contents)->not->toContain('{{')
+        ->and($contents)->not->toContain('VolumeName=systemd-');
 })->with(['devcontainer', 'development', 'ondemand', 'production', 'proxy']);

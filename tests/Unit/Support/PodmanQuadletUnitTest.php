@@ -24,7 +24,7 @@ it('splits a .quadlets file into its units', function () {
         ---
         # FileName=acme-data
         [Volume]
-        VolumeName=systemd-acme-data
+        VolumeName=acme-data
         QUADLETS);
 
     expect($units)->toHaveCount(3)

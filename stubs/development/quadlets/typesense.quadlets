@@ -30,4 +30,4 @@ TimeoutStopSec=60
 # FileName={{application}}-typesense
 [Volume]
 Label={{application}}-typesense
-VolumeName=systemd-{{application}}-typesense
+VolumeName={{application}}-typesense

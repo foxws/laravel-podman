@@ -33,4 +33,4 @@ TimeoutStopSec=60
 # FileName={{application}}-mariadb
 [Volume]
 Label={{application}}-mariadb
-VolumeName=systemd-{{application}}-mariadb
+VolumeName={{application}}-mariadb

@@ -29,4 +29,4 @@ TimeoutStopSec=60
 # FileName={{application}}-meilisearch
 [Volume]
 Label={{application}}-meilisearch
-VolumeName=systemd-{{application}}-meilisearch
+VolumeName={{application}}-meilisearch

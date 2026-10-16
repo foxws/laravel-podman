@@ -1,5 +1,48 @@
 # Upgrading
 
+## From v5 to v6
+
+The presets name their volumes after the app, without Quadlet's `systemd-` prefix: `my-app-pgsql` instead of `systemd-my-app-pgsql`, and `proxy-data` instead of `systemd-proxy-data`. Containers and networks keep their `systemd-` names, so hosts such as `DB_HOST=systemd-my-app-pgsql` don't change.
+
+Your data stays in the old volumes. Once you regenerate and reinstall the units, the services start with new, empty volumes, so copy the data over first:
+
+1. Update the package:
+
+    ```bash
+    composer require foxws/laravel-podman:^6.0
+    ```
+
+2. If you published presets to `containers/stubs`, remove `systemd-` from their `VolumeName=` lines. To keep the old names instead, leave them as they are and skip step 4.
+
+3. Stop the app and its services:
+
+    ```bash
+    systemctl --user stop 'my-app*'
+    ```
+
+4. Copy every volume to its new name:
+
+    ```bash
+    for old in $(podman volume ls --format '{{.Name}}' --filter name='^systemd-my-app-'); do
+        new="${old#systemd-}"
+        podman volume create "$new"
+        podman volume export "$old" | podman volume import "$new" -
+    done
+    ```
+
+    Do the same for `systemd-proxy-` if you use the `proxy` preset.
+
+5. Regenerate and reinstall the units, then start the app:
+
+    ```bash
+    php artisan podman:setup
+    lpod install production/app.quadlets --replace
+    # ...and every other service you use
+    lpod my-app up
+    ```
+
+6. Once everything works, remove the old volumes with `podman volume rm`.
+
 ## From 5.2 to 5.3
 
 The devcontainer configs now mount only `~/.ssh` by default. The `ai` configs no longer mount `~/.claude`, `~/.claude.json` and `~/.codex`. They're listed as comments with the new `~/.config/gh`, `~/.aws` and `~/.config/cloud` mounts, because Podman won't start the container when one of them doesn't exist on your host.

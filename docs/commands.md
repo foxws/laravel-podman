@@ -69,11 +69,11 @@ php artisan podman:idle --services=queue,database
 `lpod remove` and `lpod uninstall` delete the service's volumes, and there's no undo. Back up anything you want to keep first (`pgsql`, `valkey`, `rustfs`, `typesense`, `mailpit`):
 
 ```bash
-# Archive a volume. Quadlet names them systemd-{app}-{service}, check with "podman volume ls"
-podman volume export systemd-my-app-pgsql -o pgsql-backup.tar
+# Archive a volume. They're named {app}-{service}, check with "podman volume ls"
+podman volume export my-app-pgsql -o pgsql-backup.tar
 
 # For databases, a dump is usually easier to restore elsewhere
 lpod my-app-pgsql run sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > backup.sql
 ```
 
-To restore, run `podman volume import systemd-my-app-pgsql pgsql-backup.tar`, or import the dump.
+To restore, run `podman volume import my-app-pgsql pgsql-backup.tar`, or import the dump.

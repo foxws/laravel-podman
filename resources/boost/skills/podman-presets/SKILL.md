@@ -45,7 +45,7 @@ Restart=always
 ---
 # FileName={{application}}-valkey
 [Volume]
-VolumeName=systemd-{{application}}-valkey
+VolumeName={{application}}-valkey
 ```
 
 ## Placeholders

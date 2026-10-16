@@ -188,10 +188,11 @@ it('renders an idle check that stops the queue workers, then the scheduler timer
         ->toContain(<<<'UNIT'
             TimeoutStartSec=50
             ExecCondition=/usr/bin/test yes = yes
+            ExecCondition=systemctl --user --quiet is-active acme-ondemand.socket
             ExecCondition=/bin/sh -c 'case "$$(systemctl --user is-active acme.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
-            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-schedule.service'
-            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-queue.service || exec podman exec systemd-acme-queue php -d variables_order=EGPCS /app/artisan podman:idle'
-            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-horizon.service || exec podman exec systemd-acme-horizon php -d variables_order=EGPCS /app/artisan podman:idle'
+            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-schedule.service || { echo "The scheduler of acme is still running."; exit 1; }'
+            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-queue.service || podman exec systemd-acme-queue php -d variables_order=EGPCS /app/artisan podman:idle || { echo "acme has work in progress, keeping its workers running."; exit 1; }'
+            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-horizon.service || podman exec systemd-acme-horizon php -d variables_order=EGPCS /app/artisan podman:idle || { echo "acme has work in progress, keeping its workers running."; exit 1; }'
             ExecCondition=/bin/sh -c 'case "$$(systemctl --user is-active acme.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
             ExecStart=-systemctl --user stop --no-block acme-queue.service
             ExecStart=-systemctl --user stop --no-block acme-horizon.service

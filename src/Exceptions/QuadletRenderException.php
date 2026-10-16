@@ -12,4 +12,9 @@ class QuadletRenderException extends RuntimeException
     {
         return new self("Removing SELinux volume flags failed: {$error}");
     }
+
+    public static function invalidUnit(string $source, string $reason): self
+    {
+        return new self("{$source} is not a valid .quadlets file: {$reason}.");
+    }
 }

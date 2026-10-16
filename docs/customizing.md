@@ -256,6 +256,23 @@ A few things to know:
 - An entry with an empty hostname or upstream (unset env var) is skipped.
 - `render()` uses `http://` by default. With a bare hostname, Caddy would try automatic HTTPS on port 443. The `production` image runs as a non-root user without permission to bind that port, so the server would crash. Only pass the third `$scheme` argument if your Caddy is allowed to bind ports below 1024.
 
+### Rendering presets from code
+
+`PodmanPresetGenerator` renders a preset without Artisan, for example from an installer. It returns what it rendered:
+
+```php
+use Foxws\Podman\Support\PodmanPresetGenerator;
+
+$rendered = (new PodmanPresetGenerator)->generate('production');
+
+$rendered->path;                       // where it was rendered to
+$rendered->units();                    // every unit of its .quadlets files
+$rendered->systemdUnitsOfType('timer'); // its plain systemd units, by type
+$rendered->secrets();                  // the Podman secrets its units use
+```
+
+Each unit (`PodmanQuadletUnit`) has its `type` (a `QuadletUnitType`, such as `QuadletUnitType::Container`), its `fileName()` (`acme.container`), the `serviceName()` systemd generates for it (`acme.service`, `acme-build.service`) and its `secrets()`. `$unit->type->isRunnable()` is true for containers, pods and kube units, which start the rest. `PodmanQuadletUnit::fromFile()` splits any rendered `.quadlets` file the same way.
+
 ## Links
 
 - [Command Reference](commands.md)

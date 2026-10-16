@@ -51,15 +51,17 @@ readonly class PodmanRenderedPreset
     }
 
     /**
-     * The names of the Podman secrets the preset's units use.
+     * The Podman secrets the preset's units use, once per name and target.
+     * The same secret can be used under several targets, such as a database
+     * password for both POSTGRES_PASSWORD and PGPASSWORD.
      *
-     * @return list<string>
+     * @return list<PodmanQuadletSecret>
      */
     public function secrets(): array
     {
         return array_values(Collection::make($this->units())
             ->flatMap(fn (PodmanQuadletUnit $unit): array => $unit->secrets())
-            ->unique()
+            ->unique(fn (PodmanQuadletSecret $secret): string => "{$secret->name}:{$secret->target}")
             ->all());
     }
 }

@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Foxws\Podman\Enums\QuadletSecretType;
 use Foxws\Podman\Enums\QuadletUnitType;
 use Foxws\Podman\Exceptions\QuadletRenderException;
 use Foxws\Podman\Support\PodmanQuadletUnit;
@@ -31,7 +32,10 @@ it('splits a .quadlets file into its units', function () {
         ->and(array_map(fn (PodmanQuadletUnit $unit) => $unit->fileName(), $units))->toBe(['acme.build', 'acme.container', 'acme-data.volume'])
         ->and(array_map(fn (PodmanQuadletUnit $unit) => $unit->serviceName(), $units))->toBe(['acme-build.service', 'acme.service', 'acme-data-volume.service'])
         ->and(array_map(fn (PodmanQuadletUnit $unit) => $unit->type, $units))->toBe([QuadletUnitType::Build, QuadletUnitType::Container, QuadletUnitType::Volume])
-        ->and($units[1]->secrets())->toBe(['acme-env', 'acme-key'])
+        ->and(array_map(fn ($secret) => [$secret->name, $secret->type, $secret->target], $units[1]->secrets()))->toBe([
+            ['acme-env', QuadletSecretType::Mount, '/app/.env'],
+            ['acme-key', QuadletSecretType::Env, 'APP_KEY'],
+        ])
         ->and($units[0]->secrets())->toBe([]);
 });
 

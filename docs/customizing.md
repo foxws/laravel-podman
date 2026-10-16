@@ -22,6 +22,7 @@ You customize the package in two places:
 | `working_path` | `PODMAN_WORKING_PATH` | `base_path` | Host path for `{{workingPath}}`/`{{runtimePath}}`. Override per run with `podman:generate --working-path=` |
 | `config_path` | `PODMAN_CONFIG_PATH` | `working_path` | Host path for `{{configPath}}`, for service config kept outside the project |
 | `quadlet_uid`/`quadlet_gid` | `PODMAN_QUADLET_UID`/`_GID` | Your UID/GID | Written into the Quadlet files |
+| `binary` | `PODMAN_BINARY` | `podman` | The Podman binary to run, such as for creating secrets with `PodmanSecrets` |
 | `publish_path` | `PODMAN_PUBLISH_PATH` | `podman` | Where rendered presets go. Don't commit this folder |
 | `selinux_volume_mapping` | `PODMAN_SELINUX_VOLUME_MAPPING` | `true` | Keeps the `Z`/`z`/`U` volume flags. Turn off on hosts without SELinux |
 | `presets` | `PODMAN_DEFAULT_PRESETS` | see `config/podman.php` | Presets that `podman:setup` renders |
@@ -268,10 +269,24 @@ $rendered = (new PodmanPresetGenerator)->generate('production');
 $rendered->path;                       // where it was rendered to
 $rendered->units();                    // every unit of its .quadlets files
 $rendered->systemdUnitsOfType('timer'); // its plain systemd units, by type
-$rendered->secrets();                  // the Podman secrets its units use
+$rendered->secrets();                  // the Podman secrets its units use, with their type and target
 ```
 
 Each unit (`PodmanQuadletUnit`) has its `type` (a `QuadletUnitType`, such as `QuadletUnitType::Container`), its `fileName()` (`acme.container`), the `serviceName()` systemd generates for it (`acme.service`, `acme-build.service`) and its `secrets()`. `$unit->type->isRunnable()` is true for containers, pods and kube units, which start the rest. `PodmanQuadletUnit::fromFile()` splits any rendered `.quadlets` file the same way.
+
+Each secret (`PodmanQuadletSecret`) has its `name`, its `type` (`QuadletSecretType::Env` for an environment variable, `QuadletSecretType::Mount` for a file) and its `target`, such as `POSTGRES_PASSWORD` or `/app/.env`. `PodmanSecrets` creates them with `podman secret`, without lpod:
+
+```php
+use Foxws\Podman\Support\PodmanSecrets;
+
+$secrets = new PodmanSecrets;
+
+$secrets->exists('acme-env');
+$secrets->create('acme-pgsql-password', $password); // the value goes through stdin
+$secrets->createFromFile('acme-env', base_path('.env'));
+```
+
+It runs `podman` by default. Set `PODMAN_BINARY=podman-remote` when it runs in a container with the host's Podman socket mounted.
 
 ## Links
 

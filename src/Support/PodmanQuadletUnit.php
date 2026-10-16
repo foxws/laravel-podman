@@ -80,15 +80,14 @@ readonly class PodmanQuadletUnit
     }
 
     /**
-     * The names of the Podman secrets the unit uses, which must exist before
-     * it starts.
+     * The Podman secrets the unit uses, which must exist before it starts.
      *
-     * @return list<string>
+     * @return list<PodmanQuadletSecret>
      */
     public function secrets(): array
     {
-        preg_match_all('/^Secret=([^,\s]+)/m', $this->contents, $matches);
+        preg_match_all('/^Secret=(.+)$/m', $this->contents, $matches);
 
-        return array_values(array_unique($matches[1]));
+        return array_map(fn (string $value): PodmanQuadletSecret => PodmanQuadletSecret::fromDirective($value), $matches[1]);
     }
 }

@@ -12,6 +12,6 @@ ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-sche
 ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-queue.service || exec podman exec systemd-{{application}}-queue php -d variables_order=EGPCS /app/artisan podman:idle'
 ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-horizon.service || exec podman exec systemd-{{application}}-horizon php -d variables_order=EGPCS /app/artisan podman:idle'
 ExecCondition=/bin/sh -c 'case "$$({{systemctl}} is-active {{application}}.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
-ExecStart=-{{systemctl}} stop --no-block {{application}}-queue.service
-ExecStart=-{{systemctl}} stop --no-block {{application}}-horizon.service
-ExecStart=-{{systemctl}} stop --no-block {{application}}-schedule.timer
+ExecStart=-/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-queue.service || exec {{systemctl}} stop --no-block {{application}}-queue.service'
+ExecStart=-/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-horizon.service || exec {{systemctl}} stop --no-block {{application}}-horizon.service'
+ExecStart=-/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-schedule.timer || exec {{systemctl}} stop --no-block {{application}}-schedule.timer'

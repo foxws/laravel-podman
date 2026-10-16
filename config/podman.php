@@ -193,6 +193,19 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Podman Binary
+    |--------------------------------------------------------------------------
+    |
+    | The Podman binary the package runs, such as for creating the secrets a
+    | preset's units use. Set it to "podman-remote" when running inside a
+    | container with the host's Podman socket mounted.
+    |
+    */
+
+    'binary' => env('PODMAN_BINARY', 'podman'),
+
+    /*
+    |--------------------------------------------------------------------------
     | SELinux Volume Mapping
     |--------------------------------------------------------------------------
     |

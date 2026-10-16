@@ -52,7 +52,7 @@ it('lists the units, sockets, timers and secrets it rendered', function () {
     expect(array_map(fn ($unit) => $unit->fileName(), $rendered->units()))->toContain('acme.build', 'acme.container')
         ->and($rendered->systemdUnitsOfType('timer'))->toBe(["{$rendered->path}/acme-schedule.timer"])
         ->and($rendered->systemdUnitsOfType('socket'))->toBe([])
-        ->and($rendered->secrets())->toContain('acme-env');
+        ->and(array_map(fn ($secret) => $secret->name, $rendered->secrets()))->toContain('acme-env');
 });
 
 it('renders every bundled preset into valid units', function (string $preset) {

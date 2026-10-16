@@ -70,7 +70,7 @@ TimeoutStopSec=60
 # FileName=acme-valkey
 [Volume]
 Label=acme-valkey
-VolumeName=systemd-acme-valkey
+VolumeName=acme-valkey
 ```
 
 ```bash

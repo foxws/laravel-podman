@@ -46,17 +46,17 @@ TimeoutStopSec=30
 # FileName={{application}}-config
 [Volume]
 Label={{application}}-config
-VolumeName=systemd-{{application}}-config
+VolumeName={{application}}-config
 ---
 # FileName={{application}}-data
 [Volume]
 Label={{application}}-data
-VolumeName=systemd-{{application}}-data
+VolumeName={{application}}-data
 ---
 # FileName={{application}}-cache
 [Volume]
 Label={{application}}-cache
-VolumeName=systemd-{{application}}-cache
+VolumeName={{application}}-cache
 ---
 # FileName={{application}}
 [Network]

@@ -84,7 +84,7 @@ lpod idle my-app                     # run the check once (lpod v3.0.0 and later
 journalctl --user -u my-app-idle
 ```
 
-The workers it checks and stops are set with `PODMAN_ONDEMAND_IDLE_WORKERS` (default `queue,horizon`); regenerate the `ondemand` preset and reinstall the socket after changing it. `lpod idle enable` and `disable` only turn off the `lpod-idle@` timer of lpod releases before v3.0.0.
+The workers it checks and stops are set with `PODMAN_ONDEMAND_IDLE_WORKERS` (default `queue,horizon`); regenerate the `ondemand` preset and reinstall the socket after changing it. `lpod idle disable` only turns off the `lpod-idle@` timer of lpod releases before v3.0.0, and `lpod idle enable` only prints how to install the socket.
 
 ## Installing and upgrading lpod
 

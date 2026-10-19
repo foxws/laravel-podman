@@ -18,11 +18,9 @@ php artisan podman:generate development   # or production
 php artisan podman:generate ondemand
 lpod install development/app.quadlets --replace
 lpod install ondemand/my-app-ondemand.socket --replace
-lpod idle enable my-app
 ```
 
-- `lpod install` copies the socket and its proxy service to `~/.config/systemd/user/` and enables the socket.
-- `lpod idle enable` turns on the [idle check](#the-idle-check), which lets the database and cache sleep too. It needs `lpod` v2.2.0 or later.
+- `lpod install` copies the socket, its proxy service and the [idle check](#the-idle-check) to `~/.config/systemd/user/`, and enables the socket. The idle check lets the database and cache sleep too. It needs `lpod` v3.0.0 or later.
 - On a server, run `loginctl enable-linger` once, so the socket keeps listening after a reboot without logging in. The `lpod` installer offers to do this.
 - If you use the `proxy` preset, regenerate and reinstall it too. Caddy then sends app traffic to the socket instead of the container.
 
@@ -51,6 +49,7 @@ proxy ──▶ my-app-ondemand.socket   (always listening, no process)
 | `ondemand.listen` | `PODMAN_ONDEMAND_LISTEN` | `8000` | Where the socket listens, e.g. `8000` or `192.168.1.10:8000` |
 | `ondemand.port` | `PODMAN_ONDEMAND_PORT` | `18000` | The loopback port the app is published on, for the socket proxy |
 | `ondemand.idle_timeout` | `PODMAN_ONDEMAND_IDLE_TIMEOUT` | `10min` | How long the app may be idle before it stops |
+| `ondemand.idle_workers` | `PODMAN_ONDEMAND_IDLE_WORKERS` | `queue,horizon` | The workers the [idle check](#the-idle-check) stops |
 
 If you run several apps on one host, give each its own `listen` and `port`.
 
@@ -104,53 +103,50 @@ To keep a single service running, such as the database for an external client, p
 
 ## The idle check
 
-Queue workers that keep running while the app sleeps would keep the database and cache awake too. The idle check stops them once there's no work left. There are two ways to run it. Pick one, not both:
-
-- **With [`lpod`](lpod.md)** v2.2.0 or later, turn it on per app with `lpod idle enable`. See below.
-- **Without lpod**, install the `ondemand` preset's timer. See [Without lpod](#without-lpod). [laravel-installer](https://github.com/foxws/laravel-installer) does this for you.
-
-With lpod:
-
-```bash
-lpod idle enable my-app                  # run the check every minute
-lpod idle my-app                         # run it once
-lpod idle disable my-app
-journalctl --user -u lpod-idle@my-app    # see what it did
-```
+Queue workers that keep running while the app sleeps would keep the database and cache awake too. The idle check stops them once there's no work left. It comes with the socket: `my-app-ondemand.socket` starts `my-app-idle.timer`, which runs `my-app-idle.service` every minute, and stops it again when the socket stops. There's nothing else to install or enable.
 
 Every minute, while the app is asleep, the check:
 
 1. Skips this minute if a scheduled `schedule:run` is still running, so the jobs it dispatches still find a worker.
-2. Runs `php artisan podman:idle` in each running queue worker or Horizon container. If the app has work in progress, it stops here and keeps everything running. A worker that isn't running is skipped.
+2. Runs `php artisan podman:idle` in each running worker of `idle_workers`. If the app has work in progress, it stops here and keeps everything running. A worker that isn't running is skipped.
 3. Checks that the app is still asleep, in case a request woke it during the check.
 4. Stops the workers, and the scheduler timer in `production`.
 
 The next request starts the workers again through the app's `Wants=` line. That line lists `queue` by default. If you use Horizon, put `horizon` there instead.
 
-The check does nothing when the app's on-demand socket isn't installed. If `podman:idle` fails or doesn't exist, the workers keep running. This happens, for example, when the package was installed with `--dev` and the production image leaves it out.
+The check does nothing while on-demand is off or the socket isn't listening. If `podman:idle` fails or doesn't exist, the workers keep running. This happens, for example, when the package was installed with `--dev` and the production image leaves it out.
 
-### Stopping another worker
+See what it did, or run it once:
 
-To have the check look at another worker too, such as `my-app-imports`, open a drop-in with `systemctl --user edit lpod-idle@my-app.service` and add:
+```bash
+journalctl --user -u my-app-idle
+lpod idle my-app                       # or: systemctl --user start my-app-idle.service
+```
+
+### Choosing the workers
+
+`idle_workers` lists the worker services by name without the app's prefix: `horizon` is `my-app-horizon`. To check only Horizon, or to add another worker, such as `my-app-imports`, set:
 
 ```ini
-[Service]
-Environment=LPOD_IDLE_WORKERS=imports
+PODMAN_ONDEMAND_IDLE_WORKERS=horizon,imports
+```
+
+Then regenerate the `ondemand` preset and reinstall the socket:
+
+```bash
+php artisan podman:generate ondemand
+lpod install ondemand/my-app-ondemand.socket --replace
 ```
 
 ### Without lpod
 
-The `ondemand` preset renders the same check as a timer, `my-app-idle.timer`, with its `my-app-idle.service`. They only use `systemctl` and `podman exec`, so they work on hosts without lpod. Copy both to `~/.config/systemd/user`, then enable the timer:
+The units only use `systemctl` and `podman exec`, so they work on hosts without lpod. [laravel-installer](https://github.com/foxws/laravel-installer) installs them for you. By hand, copy the socket, its proxy service and the idle check to `~/.config/systemd/user`, then enable the socket:
 
 ```bash
-cp podman/ondemand/my-app-idle.timer podman/ondemand/my-app-idle.service ~/.config/systemd/user/
+cp podman/ondemand/my-app-ondemand.* podman/ondemand/my-app-idle.* ~/.config/systemd/user/
 systemctl --user daemon-reload
-systemctl --user enable --now my-app-idle.timer
+systemctl --user enable --now my-app-ondemand.socket
 ```
-
-It checks the app's `queue` and `horizon` workers. To check another one, publish the `ondemand` preset and add its lines to `systemd/idle.service`, next to the ones for `queue`.
-
-Don't run it next to `lpod idle enable`. To move to lpod later, run `systemctl --user disable --now my-app-idle.timer`, then `lpod idle enable my-app`.
 
 ## What counts as work in progress
 
@@ -255,12 +251,11 @@ To keep the development worker running while the app sleeps, for example for lon
     Wants={{application}}-rustfs.container {{application}}-typesense.container
     ```
 
-4. Regenerate, reinstall the worker, and turn on the idle check so the worker stops once its jobs are done:
+4. Regenerate and reinstall the worker. The [idle check](#the-idle-check) stops it once its jobs are done:
 
     ```bash
     php artisan podman:generate development
     lpod install development/queue.quadlets --replace   # or horizon.quadlets
-    lpod idle enable my-app
     ```
 
 The app still starts the worker through its `Wants=` line, but no longer stops it.

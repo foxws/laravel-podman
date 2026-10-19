@@ -1,5 +1,29 @@
 # Upgrading
 
+## From 6.0 to 6.1
+
+The idle check comes with the on-demand socket now, on every host. Installing `my-app-ondemand.socket` also installs `my-app-idle.timer` and `my-app-idle.service`, and the socket starts the timer. `lpod idle enable` isn't needed anymore: [`lpod`](docs/lpod.md) v3.0.0 drops its own `lpod-idle@` check. See [The idle check](docs/ondemand.md#the-idle-check).
+
+1. If you published `config/podman.php`, add `idle_workers` to its `ondemand` block. If your app only runs Horizon, set it to `horizon`:
+
+    ```php
+    'idle_workers' => env('PODMAN_ONDEMAND_IDLE_WORKERS', 'queue,horizon'),
+    ```
+
+2. If you listed extra workers in `LPOD_IDLE_WORKERS`, or added them to a published `systemd/idle.service`, add them to `PODMAN_ONDEMAND_IDLE_WORKERS` instead. Update or remove a published `ondemand` preset.
+
+3. Regenerate the preset, turn off the old check, and reinstall the socket:
+
+    ```bash
+    php artisan podman:generate ondemand
+    lpod self-update                             # to v3.0.0 or later
+    lpod idle disable my-app                     # turns off lpod-idle@my-app.timer
+    systemctl --user disable my-app-idle.timer   # only if you enabled it by hand before
+    lpod install ondemand/my-app-ondemand.socket --replace
+    ```
+
+    Without lpod, copy `my-app-ondemand.*` and `my-app-idle.*` to `~/.config/systemd/user`, then run `systemctl --user daemon-reload` and `systemctl --user restart my-app-ondemand.socket`.
+
 ## From v5 to v6
 
 The presets name their volumes after the app, without Quadlet's `systemd-` prefix: `my-app-pgsql` instead of `systemd-my-app-pgsql`, and `proxy-data` instead of `systemd-proxy-data`. Containers and networks keep their `systemd-` names, so hosts such as `DB_HOST=systemd-my-app-pgsql` don't change.

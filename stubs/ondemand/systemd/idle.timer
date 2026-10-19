@@ -1,12 +1,9 @@
-# The idle check for hosts without lpod, such as apps set up with
-# laravel-installer. With lpod, run "lpod idle enable {{application}}" instead.
-# Install one or the other, not both.
+# Started by the on-demand socket's Wants= line, and stopped with it, so
+# installing the socket is enough. There's no [Install] section to enable.
 [Unit]
 Description=Laravel idle check timer
+PartOf={{application}}-ondemand.socket
 
 [Timer]
 OnCalendar=*-*-* *:*:30
 AccuracySec=1s
-
-[Install]
-WantedBy=timers.target

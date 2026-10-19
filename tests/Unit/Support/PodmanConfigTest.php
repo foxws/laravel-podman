@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Foxws\Podman\Exceptions\InvalidAppUrlException;
+use Foxws\Podman\Exceptions\QuadletRenderException;
 use Foxws\Podman\Support\PodmanConfig;
 
 beforeEach(function () {
@@ -122,6 +123,22 @@ it('renders the on-demand setting as a systemd boolean', function () {
 
     expect($this->config->onDemand())->toBe('no');
 });
+
+it('defaults the idle workers to the queue worker and horizon', function () {
+    expect($this->config->onDemandIdleWorkers())->toBe(['queue', 'horizon']);
+});
+
+it('splits the configured comma-separated idle workers into an array', function () {
+    config(['podman.ondemand.idle_workers' => 'horizon, imports']);
+
+    expect($this->config->onDemandIdleWorkers())->toBe(['horizon', 'imports']);
+});
+
+it('refuses idle workers that are not plain unit names', function () {
+    config(['podman.ondemand.idle_workers' => 'queue; rm -rf ~']);
+
+    $this->config->onDemandIdleWorkers();
+})->throws(QuadletRenderException::class, 'The idle worker "queue; rm -rf ~" may only contain letters, digits, dashes and underscores.');
 
 it('reads the port from the on-demand listen address', function (string $listen) {
     config(['podman.ondemand.listen' => $listen]);

@@ -233,6 +233,10 @@ return [
     | idle and no jobs are left. A sleeping stack skips scheduled tasks, and
     | the first request after idling waits for every service to start.
     |
+    | The idle check stops the "idle_workers" (e.g. "queue" for the
+    | "{prefix}-queue" container) once they have no work left, so their
+    | database and cache can sleep too. It comes with the on-demand socket.
+    |
     */
 
     'ondemand' => [
@@ -243,6 +247,8 @@ return [
         'port' => env('PODMAN_ONDEMAND_PORT', 18000),
 
         'idle_timeout' => env('PODMAN_ONDEMAND_IDLE_TIMEOUT', '10min'),
+
+        'idle_workers' => env('PODMAN_ONDEMAND_IDLE_WORKERS', 'queue,horizon'),
     ],
 
     /*

@@ -54,7 +54,7 @@ php artisan podman:s3-setup
 
 ## `podman:idle`
 
-Exits successfully when the app has no work in progress, and fails otherwise. `lpod`'s [idle check](ondemand.md#the-idle-check) runs it in the queue worker before stopping the workers. See [What counts as work in progress](ondemand.md#what-counts-as-work-in-progress).
+Exits successfully when the app has no work in progress, and fails otherwise. The [idle check](ondemand.md#the-idle-check) runs it in the queue worker before stopping the workers. See [What counts as work in progress](ondemand.md#what-counts-as-work-in-progress).
 
 ```bash
 # Every check for something the app uses (queue, database, scout)

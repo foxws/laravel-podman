@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Foxws\Podman\Support;
 
 use Foxws\Podman\Exceptions\InvalidAppUrlException;
+use Foxws\Podman\Exceptions\QuadletRenderException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
@@ -149,6 +150,26 @@ class PodmanConfig
     public function onDemandIdleTimeout(): string
     {
         return (string) Config::get('podman.ondemand.idle_timeout');
+    }
+
+    /**
+     * The workers the idle check stops, by service name without the prefix,
+     * e.g. ["queue", "horizon"]. They're rendered into a shell loop, so only
+     * plain unit names are accepted.
+     *
+     * @return array<int, string>
+     */
+    public function onDemandIdleWorkers(): array
+    {
+        $workers = $this->parseNameList(Config::get('podman.ondemand.idle_workers', []));
+
+        foreach ($workers as $worker) {
+            if (! preg_match('/^[A-Za-z0-9_-]+$/', $worker)) {
+                throw QuadletRenderException::invalidIdleWorker($worker);
+            }
+        }
+
+        return $workers;
     }
 
     /**

@@ -78,7 +78,6 @@ To change a preset, publish it with `php artisan podman:publish production`. See
     lpod install development/valkey.quadlets --replace
     lpod install ondemand/my-app-ondemand.socket --replace
     lpod install proxy/proxy.quadlets --replace
-    lpod idle enable my-app
     ```
 
     Replace `my-app` with your app's name (`APP_NAME`, kebab-cased).

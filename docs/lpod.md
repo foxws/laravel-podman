@@ -19,7 +19,6 @@ The installer:
 
 - puts `lpod` and `lpod-setup` in `~/.local/bin`, or `/usr/local/bin` as root;
 - checks the downloads against the release's checksums;
-- writes the systemd templates for the [idle check](ondemand.md#the-idle-check);
 - offers to enable linger, so your services start at boot.
 
 To install a specific version, set `LPOD_VERSION`, e.g. `LPOD_VERSION=v2.2.0`. You can also [install it by hand](https://github.com/foxws/lpod/blob/main/docs/installation.md).
@@ -121,9 +120,9 @@ All of these except `reload` accept the same flags as `podman quadlet` (`--repla
 
 | Command | Description |
 | --- | --- |
-| `lpod idle enable APP` | Run the [idle check](ondemand.md#the-idle-check) for the app every minute |
-| `lpod idle disable APP` | Stop running it |
-| `lpod idle APP` | Run the check once |
+| `lpod idle APP` | Run the app's [idle check](ondemand.md#the-idle-check) once, and show what it did |
+
+The idle check comes with the on-demand socket, so `lpod install ondemand/my-app-ondemand.socket` turns it on. From lpod v3.0.0, `lpod idle enable` and `disable` only turn off the `lpod-idle@` timer of older releases.
 
 ### Xdebug
 
@@ -143,7 +142,7 @@ lpod my-app debug queue:work          # one Artisan command
 
 - Podman 5.6 or newer, with `podman quadlet`, and a reachable systemd manager;
 - for rootless services: linger, `/etc/subuid` and `/etc/subgid`, and whether the proxy may use ports 80 and 443;
-- the idle check's templates, the proxy's local certificate, and whether `APP_URL` resolves;
+- leftover `lpod-idle@` timers of older releases, the proxy's local certificate, and whether `APP_URL` resolves;
 - failed services.
 
 ### Secrets

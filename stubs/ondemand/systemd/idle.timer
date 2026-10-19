@@ -1,5 +1,5 @@
 # Started by the on-demand socket's Wants= line, and stopped with it, so
-# installing the socket is enough. There's no [Install] section to enable.
+# installing the socket is enough. It has no install section to enable.
 [Unit]
 Description=Laravel idle check timer
 PartOf={{application}}-ondemand.socket

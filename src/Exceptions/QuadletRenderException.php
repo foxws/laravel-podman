@@ -17,4 +17,9 @@ class QuadletRenderException extends RuntimeException
     {
         return new self("{$source} is not a valid .quadlets file: {$reason}.");
     }
+
+    public static function invalidIdleWorker(string $worker): self
+    {
+        return new self("The idle worker \"{$worker}\" may only contain letters, digits, dashes and underscores.");
+    }
 }

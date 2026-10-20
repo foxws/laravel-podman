@@ -1,6 +1,6 @@
-# The idle check for hosts without lpod, such as apps set up with
-# laravel-installer. With lpod, run "lpod idle enable {{application}}" instead.
-# Install one or the other, not both.
+# The idle check, started every minute by the idle timer while the
+# on-demand socket listens. It stops the app's workers once it's asleep
+# and they have no work left, so the database and cache can sleep too.
 [Unit]
 Description=Laravel idle check
 
@@ -11,9 +11,8 @@ ExecCondition=/usr/bin/test {{ondemand}} = yes
 ExecCondition={{systemctl}} --quiet is-active {{application}}-ondemand.socket
 ExecCondition=/bin/sh -c 'case "$$({{systemctl}} is-active {{application}}.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
 ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-schedule.service || { echo "The scheduler of {{application}} is still running."; exit 1; }'
-ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-queue.service || podman exec systemd-{{application}}-queue php -d variables_order=EGPCS /app/artisan podman:idle || { echo "{{application}} has work in progress, keeping its workers running."; exit 1; }'
-ExecCondition=/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-horizon.service || podman exec systemd-{{application}}-horizon php -d variables_order=EGPCS /app/artisan podman:idle || { echo "{{application}} has work in progress, keeping its workers running."; exit 1; }'
+ExecCondition=/bin/sh -c 'for worker in {{ondemandIdleWorkers}}; do ! {{systemctl}} --quiet is-active {{application}}-$$worker.service || podman exec systemd-{{application}}-$$worker php -d variables_order=EGPCS /app/artisan podman:idle || { echo "{{application}} has work in progress, keeping its workers running."; exit 1; }; done'
+# A request may have woken the app while "podman:idle" ran.
 ExecCondition=/bin/sh -c 'case "$$({{systemctl}} is-active {{application}}.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
-ExecStart=-/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-queue.service || exec {{systemctl}} stop --no-block {{application}}-queue.service'
-ExecStart=-/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-horizon.service || exec {{systemctl}} stop --no-block {{application}}-horizon.service'
+ExecStart=-/bin/sh -c 'for worker in {{ondemandIdleWorkers}}; do ! {{systemctl}} --quiet is-active {{application}}-$$worker.service || {{systemctl}} stop --no-block {{application}}-$$worker.service; done'
 ExecStart=-/bin/sh -c '! {{systemctl}} --quiet is-active {{application}}-schedule.timer || exec {{systemctl}} stop --no-block {{application}}-schedule.timer'

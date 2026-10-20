@@ -107,7 +107,6 @@ If you run production in these containers, install it as a regular dependency, n
     lpod install development/valkey.quadlets --replace
     lpod install ondemand/my-app-ondemand.socket --replace
     lpod install proxy/proxy.quadlets --replace
-    lpod idle enable my-app
     ```
 
 4. **Open** your app. The first request starts it:

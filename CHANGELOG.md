@@ -2,6 +2,16 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 6.1.0 - 2026-10-20
+
+The idle check comes with the `ondemand` preset's socket now, on every host. Installing `my-app-ondemand.socket` also installs and starts `my-app-idle.timer`, with lpod, [laravel-installer](https://github.com/foxws/laravel-installer) or plain `systemctl`. The workers it checks are set with the new `PODMAN_ONDEMAND_IDLE_WORKERS` (default `queue,horizon`). It needs [lpod v3.0.0](https://github.com/foxws/lpod/releases/tag/v3.0.0) or later. See "From 6.0 to 6.1" in UPGRADING.md.
+
+### What's Changed
+
+* Ship the idle check with the on-demand socket by @francoism90 in https://github.com/foxws/laravel-podman/pull/67
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/6.0.1...6.1.0
+
 ## 6.0.1 - 2026-10-16
 
 Fixes for the `ondemand` preset's idle check. It's kept for hosts set up without lpod, such as apps installed with [laravel-installer](https://github.com/foxws/laravel-installer), and it now only runs while the app's `ondemand.socket` is active, like `lpod idle`. It also no longer logs errors for workers the app doesn't have.
@@ -204,12 +214,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -248,6 +260,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -307,6 +320,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -319,6 +333,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

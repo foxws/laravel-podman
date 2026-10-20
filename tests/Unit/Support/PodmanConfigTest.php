@@ -128,6 +128,12 @@ it('defaults the idle workers to the queue worker and horizon', function () {
     expect($this->config->onDemandIdleWorkers())->toBe(['queue', 'horizon']);
 });
 
+it('defaults the idle workers when a published config has no idle_workers key', function () {
+    config(['podman.ondemand' => ['enabled' => true]]);
+
+    expect($this->config->onDemandIdleWorkers())->toBe(['queue', 'horizon']);
+});
+
 it('splits the configured comma-separated idle workers into an array', function () {
     config(['podman.ondemand.idle_workers' => 'horizon, imports']);
 

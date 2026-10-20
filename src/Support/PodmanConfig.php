@@ -161,7 +161,7 @@ class PodmanConfig
      */
     public function onDemandIdleWorkers(): array
     {
-        $workers = $this->parseNameList(Config::get('podman.ondemand.idle_workers', []));
+        $workers = $this->parseNameList(Config::get('podman.ondemand.idle_workers', 'queue,horizon'));
 
         foreach ($workers as $worker) {
             if (! preg_match('/^[A-Za-z0-9_-]+$/', $worker)) {

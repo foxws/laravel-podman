@@ -2,6 +2,17 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 6.2.0 - 2026-10-22
+
+The `development` preset's Horizon now runs `horizon:listen`, so it restarts when a file in `config/horizon.php`'s `watch` list changes, like the app's Octane `--watch`. It needs Horizon 5.43 or later, the `chokidar` npm package, and a `watch` key in published Horizon configs (configs published before 5.43 lack it). A restart stops the jobs in progress; to keep long jobs running while you edit code, change the command in `development/horizon.quadlets` back to `artisan horizon`. See "Replacing the queue worker with Horizon" in docs/customizing.md. `production` is unchanged.
+
+### What's Changed
+
+* Shorten the podman-upgrade skill description by @francoism90 in https://github.com/foxws/laravel-podman/pull/68
+* Watch for file changes with Horizon in development by @francoism90 in https://github.com/foxws/laravel-podman/pull/69
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/6.1.0...6.2.0
+
 ## 6.1.0 - 2026-10-20
 
 The idle check comes with the `ondemand` preset's socket now, on every host. Installing `my-app-ondemand.socket` also installs and starts `my-app-idle.timer`, with lpod, [laravel-installer](https://github.com/foxws/laravel-installer) or plain `systemctl`. The workers it checks are set with the new `PODMAN_ONDEMAND_IDLE_WORKERS` (default `queue,horizon`). It needs [lpod v3.0.0](https://github.com/foxws/lpod/releases/tag/v3.0.0) or later. See "From 6.0 to 6.1" in UPGRADING.md.
@@ -215,12 +226,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -260,6 +273,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -321,6 +335,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -333,6 +348,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

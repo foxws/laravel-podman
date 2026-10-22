@@ -154,6 +154,8 @@ lpod install production/app.quadlets --replace
 
 If `queue` was already running, stop it with `systemctl --user stop {app}-queue`. It won't start again, because nothing wants it anymore.
 
+In `development`, Horizon runs with `horizon:listen`, which restarts it when a file in the `watch` list of `config/horizon.php` changes, like Octane's `--watch`. It needs Horizon 5.43 or later, the `chokidar` npm package installed in your app (`pnpm add -D chokidar`), and a `watch` key in `config/horizon.php`. Configs published before 5.43 lack that key, so copy the `watch` block from [Horizon's config](https://github.com/laravel/horizon/blob/5.x/config/horizon.php). A restart stops the jobs in progress. To keep long jobs running while you edit code, change the command in `development/horizon.quadlets` back to `artisan horizon`.
+
 ### Adding Reverb
 
 `reverb` isn't started by default, because it needs [Laravel Reverb](https://laravel.com/docs/reverb) installed in your app. To run it, publish the preset and add it to the `Wants=` line in `app.quadlets`:

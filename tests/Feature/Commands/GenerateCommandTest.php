@@ -84,6 +84,16 @@ it('starts a queue worker alongside the app instead of horizon in development', 
         ->not->toContain("{$application}-horizon.container");
 });
 
+it('restarts horizon on file changes in development only', function () {
+    $this->artisan('podman:generate', ['preset' => 'development'])->assertExitCode(0);
+    $this->artisan('podman:generate', ['preset' => 'production'])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/development/horizon.quadlets"))
+        ->toContain('/app/artisan horizon:listen"')
+        ->and(File::get("{$this->publishPath}/production/horizon.quadlets"))
+        ->toContain('/app/artisan horizon"');
+});
+
 it('does not bind sidecars to the app', function (string $preset) {
     $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
 

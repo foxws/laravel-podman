@@ -270,6 +270,23 @@ A few things to know:
 - An entry with an empty hostname or upstream (unset env var) is skipped.
 - `render()` uses `http://` by default. With a bare hostname, Caddy would try automatic HTTPS on port 443. The `production` image runs as a non-root user without permission to bind that port, so the server would crash. Only pass the third `$scheme` argument if your Caddy is allowed to bind ports below 1024.
 
+#### Paths instead of subdomains
+
+`PodmanCaddySites::routes()` sends a path of the app's own domain to a service instead, so you need no extra DNS entries or certificates, and the browser sees the same origin (no CORS). It renders routes for the app's site block, which FrankenPHP takes from `CADDY_SERVER_EXTRA_DIRECTIVES`:
+
+```php
+'CADDY_SERVER_EXTRA_DIRECTIVES' => implode("\n\n", [
+    // Reverb stays at "/", the browser connects to "/ws" (Echo's "wsPath").
+    PodmanCaddySites::routes(['/ws' => PodmanCaddySites::hostPort(env('REVERB_HOST'), env('REVERB_PORT', 6001))]),
+    // Mailpit serves from "/mail/" itself with MP_WEBROOT=/mail/.
+    PodmanCaddySites::routes(['/mail' => PodmanCaddySites::hostPort(env('MAIL_HOST'), 8025)], stripPrefix: false),
+]),
+```
+
+By default the path is stripped before the request reaches the service. Pass `stripPrefix: false` for services configured to serve from the path themselves. This replaces Octane's Mercure directives, which use the same variable.
+
+Not every service works under a path. Signed S3 URLs (`temporaryUrl()`) are signed over the full path, so a stripped prefix breaks them, and the Vite dev server serves its modules from `/`. Keep those on subdomains.
+
 ### Rendering presets from code
 
 `PodmanPresetGenerator` renders a preset without Artisan, for example from an installer. It returns what it rendered:

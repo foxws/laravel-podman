@@ -80,3 +80,25 @@ it('returns an empty string when the port is missing', function () {
     expect(PodmanCaddySites::hostPort('reverb', null))->toBe('');
     expect(PodmanCaddySites::hostPort('reverb', ''))->toBe('');
 });
+
+it('renders a route per path that strips the prefix', function () {
+    $config = PodmanCaddySites::routes(['/ws' => 'systemd-app-reverb:6001']);
+
+    expect($config)->toBe(<<<'CADDY'
+    redir /ws /ws/
+
+    handle_path /ws/* {
+    	reverse_proxy systemd-app-reverb:6001
+    }
+    CADDY);
+});
+
+it('keeps the path prefix when asked', function () {
+    $config = PodmanCaddySites::routes(['mail/' => 'systemd-app-mailpit:8025'], stripPrefix: false);
+
+    expect($config)->toContain("handle /mail/* {\n\treverse_proxy systemd-app-mailpit:8025\n}");
+});
+
+it('skips routes for the root path or with an empty upstream', function () {
+    expect(PodmanCaddySites::routes(['/' => 'systemd-app:8000', '/ws' => '']))->toBe('');
+});

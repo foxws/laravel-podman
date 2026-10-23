@@ -6,6 +6,7 @@ namespace Foxws\Podman\Support;
 
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
 
 /**
  * Builds the "{{placeholder}}" => value map rendered into every template:
@@ -39,6 +40,16 @@ class PodmanSubstitutions
     }
 
     /**
+     * The proxy's name from the "proxy_prefix" key that published configs
+     * from before 6.3 still have, or "proxy". A "proxy" substitution
+     * overrides it.
+     */
+    protected function legacyProxyName(): string
+    {
+        return Str::kebab(Config::string('podman.proxy_prefix', 'proxy'));
+    }
+
+    /**
      * @return array<string, string>
      */
     public function builtIn(string $preset): array
@@ -53,7 +64,7 @@ class PodmanSubstitutions
             '{{systemctl}}' => $this->config->systemctl(),
             '{{application}}' => $this->config->prefix(),
             '{{containerPrefix}}' => $this->config->containerPrefix(),
-            '{{proxy}}' => 'proxy',
+            '{{proxy}}' => $this->legacyProxyName(),
             '{{workingPath}}' => $this->path->workingPath(),
             '{{configPath}}' => $this->path->configPath(),
             '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),

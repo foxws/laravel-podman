@@ -33,6 +33,15 @@ class PodmanConfig
         return "{$name}.{$this->domain()}";
     }
 
+    /**
+     * @deprecated 6.3 The proxy's name is the "{{proxy}}" substitution now;
+     *             read it from PodmanSubstitutions::all().
+     */
+    public function proxy(): string
+    {
+        return Str::kebab(Config::string('podman.proxy_prefix', 'proxy'));
+    }
+
     public function prefix(): string
     {
         return Str::kebab(Config::string('podman.quadlet_prefix'));

@@ -78,3 +78,13 @@ it('points the built-in upstreams at the presets\' services', function () {
         ->toHaveKey('{{s3ConsoleUpstream}}', 'systemd-acme-rustfs:9001')
         ->toHaveKey('{{mailUpstream}}', 'systemd-acme-mailpit:8025');
 });
+
+it('still reads the proxy name from a legacy proxy_prefix', function () {
+    config(['podman.substitutions' => [], 'podman.proxy_prefix' => 'Edge Proxy']);
+
+    expect($this->substitutions->apply('{{proxy}}', 'proxy'))->toBe('edge-proxy');
+
+    config(['podman.substitutions' => ['proxy' => 'gateway']]);
+
+    expect($this->substitutions->apply('{{proxy}}', 'proxy'))->toBe('gateway');
+});

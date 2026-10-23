@@ -1,10 +1,10 @@
 # Upgrading
 
-## From 6.x to 7.0
+## From 6.2 to 6.3
 
-Generated files and published presets keep working: every placeholder they use still exists. Only check this if you published `config/podman.php` and renamed the proxy:
+Nothing breaks: generated files, published presets and published configs keep working.
 
-- `proxy_prefix` is gone. Move a custom value into `substitutions`, otherwise `{{proxy}}` falls back to `proxy` and the proxy's network and volumes get new names. The value is no longer kebab-cased:
+- `proxy_prefix` is deprecated. The proxy's name is now the `proxy` substitution, so move a custom value there when you get to it. A `proxy_prefix` in a published config is still read until you do:
 
     ```php
     'substitutions' => [
@@ -12,9 +12,9 @@ Generated files and published presets keep working: every placeholder they use s
     ],
     ```
 
-- `PodmanConfig::proxy()` is gone. Read `PodmanSubstitutions::all()` instead.
+- `PodmanConfig::proxy()` is deprecated. Read `{{proxy}}` from `PodmanSubstitutions::all()` instead.
 
-New in 7.0: built-in host and upstream placeholders (`{{viteHost}}`, `{{viteUpstream}}`, ...), which the `proxy` preset now uses, `container_prefix`, and friendlier `substitutions`. See [Placeholders](docs/customizing.md).
+New in 6.3: built-in host and upstream placeholders (`{{viteHost}}`, `{{viteUpstream}}`, ...), which the `proxy` preset now uses, `container_prefix`, `PodmanCaddyRoutes`, and friendlier `substitutions`. See [Placeholders](docs/customizing.md).
 
 ## From 6.0 to 6.1
 

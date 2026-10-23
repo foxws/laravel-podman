@@ -2,3 +2,24 @@
 	import compress
 	reverse_proxy {{appUpstream}}
 }
+
+{{viteHost}} {
+	import compress
+	reverse_proxy {{viteUpstream}}
+}
+
+{{reverbHost}} {
+	reverse_proxy {{reverbUpstream}}
+}
+
+{{s3Host}} {
+	reverse_proxy {{s3Upstream}}
+}
+
+{{s3ConsoleHost}} {
+	reverse_proxy {{s3ConsoleUpstream}}
+}
+
+{{mailHost}} {
+	reverse_proxy {{mailUpstream}}
+}

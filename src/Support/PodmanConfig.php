@@ -25,6 +25,14 @@ class PodmanConfig
             ?? throw InvalidAppUrlException::missingHost($url);
     }
 
+    /**
+     * A subdomain of the app's domain, e.g. "vite.laravel.test" for "vite".
+     */
+    public function subdomain(string $name): string
+    {
+        return "{$name}.{$this->domain()}";
+    }
+
     public function prefix(): string
     {
         return Str::kebab(Config::string('podman.quadlet_prefix'));

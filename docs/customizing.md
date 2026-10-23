@@ -70,6 +70,7 @@ Templates contain `{{placeholder}}` tokens. `podman:publish` leaves them as they
 | `{{runtimePath}}` | The preset's rendered `runtimes/` folder, e.g. `podman/production/runtimes` |
 | `{{systemctl}}` | `systemctl --user`, or `systemctl` when `quadlet_uid` is `0` (root) |
 | `{{ondemand}}`, `{{ondemandListen}}`, `{{ondemandPort}}`, `{{ondemandIdleTimeout}}`, `{{appUpstream}}` | [On-demand](ondemand.md) settings |
+| `{{viteHost}}`, `{{reverbHost}}`, `{{s3Host}}`, `{{s3ConsoleHost}}`, `{{mailHost}}` | Subdomains of `{{appHost}}` the `proxy` preset routes: `vite.`, `ws.`, `s3.`, `fs.` and `mail.` |
 | `{{viteUpstream}}`, `{{reverbUpstream}}`, `{{s3Upstream}}`, `{{s3ConsoleUpstream}}`, `{{mailUpstream}}` | The presets' services on the app's network: `systemd-{app}-vite:5173`, `-reverb:6001`, `-rustfs:9000`, `-rustfs:9001` and `-mailpit:8025` (web UI). Reverb's port assumes `REVERB_SERVER_PORT=6001`, as the presets expose. Override one in `substitutions` when a service runs elsewhere |
 
 `{{configPath}}` is useful for keeping a service's config outside the project, for example in your own `proxy.quadlets`:

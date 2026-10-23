@@ -2,13 +2,7 @@
 
 ## From 6.x to 7.0
 
-The `proxy` preset's `sites/laravel.Caddyfile` only routes `APP_URL` to the app. The `vite.`, `ws.`, `s3.`, `fs.` and `mail.` subdomains are gone, because not every app runs those services. If you use them:
-
-1. Publish the preset if you haven't: `php artisan podman:publish proxy`.
-2. Add `containers/stubs/proxy/runtimes/sites/services.Caddyfile` with the sites you use. Take hosts and upstreams from `.env` with your own placeholders. See [Adding your services](docs/proxy.md#adding-your-services).
-3. Regenerate and restart: `php artisan podman:generate proxy`, then `lpod proxy restart`.
-
-If you already published the `proxy` preset, nothing changes.
+The `proxy` preset's `sites/laravel.Caddyfile` routes the same subdomains as before, but through placeholders such as `{{viteHost}}` and `{{viteUpstream}}`, so you can change a host or upstream in `substitutions` without publishing the preset. See [Changing hosts and services](docs/proxy.md#changing-hosts-and-services). A published `proxy` preset keeps working as it is.
 
 `proxy_prefix` is gone: the `proxy` preset's name is now an ordinary substitution. If you published `config/podman.php`, replace `'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),` with this entry in `substitutions` (`PODMAN_PROXY_PREFIX` keeps working). The value is no longer kebab-cased for you:
 

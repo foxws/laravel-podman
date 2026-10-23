@@ -43,35 +43,31 @@ php artisan podman:generate proxy
 lpod proxy restart
 ```
 
-`sites/laravel.Caddyfile` routes your app domain (`APP_URL`) to the app, through its [on-demand socket](ondemand.md) when on-demand is on. The proxy doesn't assume which other services you run, such as Vite, Reverb, RustFS or Mailpit.
+`sites/laravel.Caddyfile` routes your app domain (`APP_URL`) and these subdomains:
 
-### Adding your services
+| Host | Placeholder | Routes to |
+| --- | --- | --- |
+| (root) | `{{appHost}}` | The app, through its [on-demand socket](ondemand.md) when on-demand is on |
+| `vite.` | `{{viteHost}}` | Vite dev server (`{{viteUpstream}}`) |
+| `ws.` | `{{reverbHost}}` | Reverb (`{{reverbUpstream}}`) |
+| `s3.` | `{{s3Host}}` | RustFS S3 API (`{{s3Upstream}}`) |
+| `fs.` | `{{s3ConsoleHost}}` | RustFS console (`{{s3ConsoleUpstream}}`) |
+| `mail.` | `{{mailHost}}` | Mailpit web UI (`{{mailUpstream}}`) |
 
-Caddy loads every `*.Caddyfile` in `sites/`. Publish the preset and add a file for your services. Take their hosts from `.env` with [your own placeholders](customizing.md#your-own-placeholders), so the proxy and your app read the same values:
+### Changing hosts and services
+
+Every host and upstream is a [placeholder](customizing.md#your-own-placeholders), so you can change one in `substitutions` without publishing the preset. Take the hosts from `.env` so the proxy and your app read the same values:
 
 ```php
 // config/podman.php
 'substitutions' => [
-    'viteHost' => env('VITE_HMR_HOST'),              // vite.laravel.test
-    'reverbHost' => env('VITE_REVERB_HOST'),         // ws.laravel.test
+    'viteHost' => env('VITE_HMR_HOST', 'vite.{{appHost}}'),
+    'reverbHost' => env('VITE_REVERB_HOST', 'ws.{{appHost}}'),
+    's3Upstream' => 'systemd-{{application}}-minio:9000',
 ],
 ```
 
-The upstreams of the presets' services are built in: `{{viteUpstream}}`, `{{reverbUpstream}}`, `{{s3Upstream}}`, `{{s3ConsoleUpstream}}` and `{{mailUpstream}}` (see [Placeholders](customizing.md)). Set one in `substitutions` only when that service runs elsewhere.
-
-```caddy
-# containers/stubs/proxy/runtimes/sites/services.Caddyfile
-{{viteHost}} {
-	import compress
-	reverse_proxy {{viteUpstream}}
-}
-
-{{reverbHost}} {
-	reverse_proxy {{reverbUpstream}}
-}
-```
-
-Only add sites for services you run: a site with an empty host stops Caddy from starting.
+Keep a default, as above: a site with an empty host stops Caddy from starting. To drop services you don't run, or to add others, publish the preset and edit `sites/laravel.Caddyfile`. Caddy loads every `*.Caddyfile` in `sites/`, so you can also add your own files there.
 
 Reverb and Mailpit can also run under a path of the app's domain, such as `/ws` and `/mail`, without a site of their own. The app's embedded Caddy routes them, so the proxy needs no extra site. See [Paths instead of subdomains](customizing.md#paths-instead-of-subdomains).
 
@@ -85,11 +81,11 @@ lpod proxy restart   # after editing the Caddyfile
 
 ## DNS
 
-Add your domain and the hosts of your other sites to `/etc/hosts`. Replace `laravel.test` with the host from your `APP_URL`:
+Add your domain and subdomains to `/etc/hosts`. Replace `laravel.test` with the host from your `APP_URL`:
 
 ```text
-127.0.0.1 laravel.test vite.laravel.test ws.laravel.test
-::1       laravel.test vite.laravel.test ws.laravel.test
+127.0.0.1 laravel.test vite.laravel.test ws.laravel.test s3.laravel.test fs.laravel.test mail.laravel.test
+::1       laravel.test vite.laravel.test ws.laravel.test s3.laravel.test fs.laravel.test mail.laravel.test
 ```
 
 With several devices, it's easier to run a local DNS server like [AdGuard Home](https://adguard.com/en/adguard-home/overview.html) and point `*.laravel.test` at your server's IP.

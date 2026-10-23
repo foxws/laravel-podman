@@ -63,6 +63,7 @@ VolumeName={{application}}-valkey
 | `{{runtimePath}}` | The preset's rendered `runtimes/` folder |
 | `{{systemctl}}` | `systemctl --user`, or `systemctl` when `quadlet_uid` is `0` (root) |
 | `{{appUpstream}}` | Where the proxy sends app traffic: `systemd-{app}:8000`, or the on-demand socket |
+| `{{viteHost}}`, `{{reverbHost}}`, `{{s3Host}}`, `{{s3ConsoleHost}}`, `{{mailHost}}` | `vite.`, `ws.`, `s3.`, `fs.`, `mail.` + `{{appHost}}` |
 | `{{viteUpstream}}`, `{{reverbUpstream}}`, `{{s3Upstream}}`, `{{s3ConsoleUpstream}}`, `{{mailUpstream}}` | The presets' services: `systemd-{app}-vite:5173`, `-reverb:6001`, `-rustfs:9000`, `-rustfs:9001`, `-mailpit:8025` (web UI) |
 | `{{ondemand}}` | `yes` when `ondemand.enabled`, otherwise `no`. Used for `StopWhenUnneeded=` on the app and services |
 | `{{ondemandListen}}`, `{{ondemandPort}}`, `{{ondemandIdleTimeout}}`, `{{ondemandIdleWorkers}}` | `ondemand.listen`, `ondemand.port`, `ondemand.idle_timeout`, `ondemand.idle_workers` (space-separated) |
@@ -116,7 +117,7 @@ Add `Memory=1G` under `[Container]` in that service's `.quadlets` file, then reg
 
 ### Proxy (Caddy)
 
-Publish `proxy`, then edit `containers/stubs/proxy/runtimes/Caddyfile` and `sites/*.Caddyfile`. The default site only routes `APP_URL` to the app. Add a `sites/services.Caddyfile` for other services (Vite, Reverb, RustFS, Mailpit) with host placeholders set from `.env` (e.g. `{{viteHost}}`) and the built-in upstreams (`{{viteUpstream}}`, `{{reverbUpstream}}`, `{{s3Upstream}}`, `{{s3ConsoleUpstream}}`, `{{mailUpstream}}`). Don't add a site whose host can be empty: Caddy won't start. Regenerate and run `lpod proxy restart`.
+Publish `proxy`, then edit `containers/stubs/proxy/runtimes/Caddyfile` and `sites/*.Caddyfile`. The default site routes `APP_URL` to the app and `vite.`, `ws.` (Reverb), `s3.` and `fs.` (RustFS) and `mail.` (Mailpit) to their services, all through placeholders (`{{viteHost}}`/`{{viteUpstream}}` and so on). Change a host or upstream in `substitutions` without publishing, e.g. `'viteHost' => env('VITE_HMR_HOST', 'vite.{{appHost}}')`; keep a default, since an empty host stops Caddy. Publish to drop or add sites. Regenerate and run `lpod proxy restart`.
 
 To serve Reverb or Mailpit under a path of the app's domain (`/ws`, `/mail`) instead of a subdomain, build `CADDY_SERVER_EXTRA_DIRECTIVES` in `config/octane.php` with `PodmanCaddyRoutes::make()->route($path, $host, $port)` (Reverb, stripped path, plus Echo's `wsPath`) and `->route(..., stripPrefix: false)` (Mailpit, with `MP_WEBROOT` set to the same path). Keep S3, the RustFS console and Vite on subdomains: signed S3 URLs and Vite's modules break under a path. See docs/customizing.md "Paths instead of subdomains".
 

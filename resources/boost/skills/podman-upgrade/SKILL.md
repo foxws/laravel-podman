@@ -11,10 +11,8 @@ The human guide is [UPGRADING.md](https://github.com/foxws/laravel-podman/blob/m
 
 ## From 6.x to 7.0
 
-The `proxy` preset's `sites/laravel.Caddyfile` only routes `APP_URL` to the app; the `vite.`, `ws.`, `s3.`, `fs.` and `mail.` subdomains were removed. Nothing changes when `containers/stubs/proxy` is already published.
-
 1. `composer require foxws/laravel-podman:^7.0` (with `--dev` if it was a dev dependency).
-2. If the app uses the `proxy` preset without publishing it, check which of those subdomains it needs (look at `.env`: `VITE_HMR_HOST`, `VITE_REVERB_HOST`, `AWS_URL`, `MAILPIT_UI_HOST`, `RUSTFS_CONSOLE_HOST`). Run `php artisan podman:publish proxy`, add those hosts and upstreams to `substitutions` in `config/podman.php` from the same env variables, and write `containers/stubs/proxy/runtimes/sites/services.Caddyfile` using them. Skip services the app doesn't run.
+2. The `proxy` preset routes the same subdomains, now through placeholders (`{{viteHost}}`, `{{viteUpstream}}`, ...). A published `containers/stubs/proxy` keeps working. If its hosts differ from `vite.`/`ws.`/`s3.`/`fs.`/`mail.` + `APP_URL`'s host, the user can now set them in `substitutions` instead of publishing.
 3. `php artisan podman:generate proxy`, then hand the user `lpod proxy restart`.
 
 `proxy_prefix` was removed: if `config/podman.php` is published, move it into `substitutions` as `'proxy' => env('PODMAN_PROXY_PREFIX', 'proxy')` (no longer kebab-cased). `PodmanConfig::proxy()` is gone too.

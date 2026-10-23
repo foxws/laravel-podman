@@ -70,3 +70,11 @@ it('renders the container prefix, systemd- by default', function () {
 
     expect($this->substitutions->apply('{{containerPrefix}}{{application}}', 'ondemand'))->toBe('box-acme');
 });
+
+it('points the built-in upstreams at the presets\' services', function () {
+    expect($this->substitutions->all('development'))
+        ->toHaveKey('{{reverbUpstream}}', 'systemd-acme-reverb:6001')
+        ->toHaveKey('{{s3Upstream}}', 'systemd-acme-rustfs:9000')
+        ->toHaveKey('{{s3ConsoleUpstream}}', 'systemd-acme-rustfs:9001')
+        ->toHaveKey('{{mailUpstream}}', 'systemd-acme-mailpit:8025');
+});

@@ -47,18 +47,17 @@ lpod proxy restart
 
 ### Adding your services
 
-Caddy loads every `*.Caddyfile` in `sites/`. Publish the preset and add a file for your services. Take their hosts and upstreams from `.env` with [your own placeholders](customizing.md#your-own-placeholders), so the proxy and your app read the same values:
+Caddy loads every `*.Caddyfile` in `sites/`. Publish the preset and add a file for your services. Take their hosts from `.env` with [your own placeholders](customizing.md#your-own-placeholders), so the proxy and your app read the same values:
 
 ```php
 // config/podman.php
 'substitutions' => [
     'viteHost' => env('VITE_HMR_HOST'),              // vite.laravel.test
     'reverbHost' => env('VITE_REVERB_HOST'),         // ws.laravel.test
-    'reverbUpstream' => env('REVERB_HOST').':'.env('REVERB_PORT', 6001),
 ],
 ```
 
-`{{viteUpstream}}` is built in (`systemd-my-app-vite:5173`). Set it in `substitutions` only when Vite runs elsewhere.
+The upstreams of the presets' services are built in: `{{viteUpstream}}`, `{{reverbUpstream}}`, `{{s3Upstream}}`, `{{s3ConsoleUpstream}}` and `{{mailUpstream}}` (see [Placeholders](customizing.md)). Set one in `substitutions` only when that service runs elsewhere.
 
 ```caddy
 # containers/stubs/proxy/runtimes/sites/services.Caddyfile

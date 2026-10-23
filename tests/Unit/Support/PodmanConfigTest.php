@@ -168,3 +168,10 @@ it('resolves the upstream of a service or the app container', function () {
     expect($this->config->serviceUpstream('reverb', 6001))->toBe('systemd-acme-reverb:6001')
         ->and($this->config->serviceUpstream(null, 8000))->toBe('systemd-acme:8000');
 });
+
+it('uses the configured container prefix for service upstreams', function () {
+    config(['podman.quadlet_prefix' => 'acme', 'podman.container_prefix' => '']);
+
+    expect($this->config->containerPrefix())->toBe('')
+        ->and($this->config->serviceUpstream('reverb', 6001))->toBe('acme-reverb:6001');
+});

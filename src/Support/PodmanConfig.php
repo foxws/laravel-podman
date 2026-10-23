@@ -30,6 +30,15 @@ class PodmanConfig
         return Str::kebab(Config::string('podman.quadlet_prefix'));
     }
 
+    /**
+     * What Quadlet puts in front of a unit's name to name its container or
+     * network: "systemd-" unless the units name them themselves.
+     */
+    public function containerPrefix(): string
+    {
+        return (string) Config::get('podman.container_prefix', 'systemd-');
+    }
+
     public function uid(): int
     {
         $uid = Config::get('podman.quadlet_uid');
@@ -192,12 +201,13 @@ class PodmanConfig
      * The "host:port" a preset's service is reached at on the app's network,
      * e.g. "systemd-my-app-vite:5173" for ("vite", 5173), or the app
      * container itself ("systemd-my-app:8000") when the service is null.
+     * The "systemd-" part is the container prefix.
      */
     public function serviceUpstream(?string $service, int $port): string
     {
         $container = $service === null ? $this->prefix() : "{$this->prefix()}-{$service}";
 
-        return "systemd-{$container}:{$port}";
+        return "{$this->containerPrefix()}{$container}:{$port}";
     }
 
     /**

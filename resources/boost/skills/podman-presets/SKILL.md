@@ -53,6 +53,7 @@ VolumeName={{application}}-valkey
 | Placeholder | Value |
 | --- | --- |
 | `{{application}}` | `quadlet_prefix`, kebab-cased (default `APP_NAME`) |
+| `{{containerPrefix}}` | `container_prefix` (default `systemd-`), Quadlet's prefix for container and network names |
 | `{{proxy}}` | `proxy`, or the `proxy` substitution (`PODMAN_PROXY_PREFIX`) |
 | `{{appEnv}}`, `{{appName}}`, `{{appUrl}}` | `app.env`, `app.name`, `app.url` |
 | `{{appHost}}` | Host part of `app.url` |
@@ -138,4 +139,4 @@ Edit `containers/stubs/{preset}/runtimes/Containerfile`, or pass the `PHP_EXTENS
 
 ## Config keys
 
-`PODMAN_QUADLET_PREFIX`, `PODMAN_PROXY_PREFIX`, `PODMAN_STUBS_PATH`, `PODMAN_WORKING_PATH` (override once with `podman:generate --working-path=`), `PODMAN_CONFIG_PATH`, `PODMAN_QUADLET_UID`/`_GID`, `PODMAN_PUBLISH_PATH`, `PODMAN_SELINUX_VOLUME_MAPPING` (turn off on hosts without SELinux), `PODMAN_DEFAULT_PRESETS`, `PODMAN_ONDEMAND_ENABLED`/`_LISTEN`/`_PORT`/`_IDLE_TIMEOUT`.
+`PODMAN_QUADLET_PREFIX`, `PODMAN_CONTAINER_PREFIX`, `PODMAN_PROXY_PREFIX`, `PODMAN_STUBS_PATH`, `PODMAN_WORKING_PATH` (override once with `podman:generate --working-path=`), `PODMAN_CONFIG_PATH`, `PODMAN_QUADLET_UID`/`_GID`, `PODMAN_PUBLISH_PATH`, `PODMAN_SELINUX_VOLUME_MAPPING` (turn off on hosts without SELinux), `PODMAN_DEFAULT_PRESETS`, `PODMAN_ONDEMAND_ENABLED`/`_LISTEN`/`_PORT`/`_IDLE_TIMEOUT`.

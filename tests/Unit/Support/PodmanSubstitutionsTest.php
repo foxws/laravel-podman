@@ -62,3 +62,11 @@ it('points viteUpstream at the development preset unless a substitution override
 
     expect($this->substitutions->apply('{{viteUpstream}}', 'development'))->toBe('vite.internal:3000');
 });
+
+it('renders the container prefix, systemd- by default', function () {
+    expect($this->substitutions->apply('{{containerPrefix}}{{application}}', 'ondemand'))->toBe('systemd-acme');
+
+    config(['podman.container_prefix' => 'box-']);
+
+    expect($this->substitutions->apply('{{containerPrefix}}{{application}}', 'ondemand'))->toBe('box-acme');
+});

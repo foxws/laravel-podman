@@ -14,7 +14,7 @@ steps:
     type: command
     file: migrate.md
     run:
-      container: systemd-{{application}}
+      container: {{containerPrefix}}{{application}}
       command: [php, artisan, migrate, --force, --no-interaction]
 
   # Creates the first admin with your app's own command, with the password
@@ -29,7 +29,7 @@ steps:
   #     - { name: email, label: Email, type: email, rules: required|email }
   #     - { name: password, label: Password, type: password, rules: required|min:12 }
   #   run:
-  #     container: systemd-{{application}}
+  #     container: {{containerPrefix}}{{application}}
   #     command: [php, artisan, users:create, --no-interaction, "--name={name}", "--email={email}", --password-stdin]
   #     stdin: "{password}"
   #     skip_if: [php, artisan, users:exists]

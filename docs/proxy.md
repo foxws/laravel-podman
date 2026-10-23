@@ -45,16 +45,31 @@ lpod proxy restart
 
 `sites/laravel.Caddyfile` routes your app domain (`APP_URL`) and these subdomains:
 
-| Subdomain | Routes to |
-| --- | --- |
-| (root) | The app, through its [on-demand socket](ondemand.md) when on-demand is on |
-| `vite.` | Vite dev server |
-| `ws.` | Reverb (WebSockets) |
-| `s3.` | RustFS (S3 API) |
-| `fs.` | RustFS console |
-| `mail.` | Mailpit (dev mail catcher) |
+| Host | Placeholder | Routes to |
+| --- | --- | --- |
+| (root) | `{{appHost}}` | The app, through its [on-demand socket](ondemand.md) when on-demand is on |
+| `vite.` | `{{viteHost}}` | Vite dev server (`{{viteUpstream}}`) |
+| `ws.` | `{{reverbHost}}` | Reverb (`{{reverbUpstream}}`) |
+| `s3.` | `{{s3Host}}` | RustFS S3 API (`{{s3Upstream}}`) |
+| `fs.` | `{{s3ConsoleHost}}` | RustFS console (`{{s3ConsoleUpstream}}`) |
+| `mail.` | `{{mailHost}}` | Mailpit web UI (`{{mailUpstream}}`) |
 
-For more domains or services, add `*.Caddyfile` files to `sites/`.
+### Changing hosts and services
+
+Every host and upstream is a [placeholder](customizing.md#your-own-placeholders), so you can change one in `substitutions` without publishing the preset. Take the hosts from `.env` so the proxy and your app read the same values:
+
+```php
+// config/podman.php
+'substitutions' => [
+    'viteHost' => env('VITE_HMR_HOST', 'vite.{{appHost}}'),
+    'reverbHost' => env('VITE_REVERB_HOST', 'ws.{{appHost}}'),
+    's3Upstream' => 'systemd-{{application}}-minio:9000',
+],
+```
+
+Keep a default, as above: a site with an empty host stops Caddy from starting. To drop services you don't run, or to add others, publish the preset and edit `sites/laravel.Caddyfile`. Caddy loads every `*.Caddyfile` in `sites/`, so you can also add your own files there.
+
+Reverb and Mailpit can also run under a path of the app's domain, such as `/ws` and `/mail`, without a site of their own. The app's embedded Caddy routes them, so the proxy needs no extra site. See [Paths instead of subdomains](customizing.md#paths-instead-of-subdomains).
 
 ## Starting the proxy
 

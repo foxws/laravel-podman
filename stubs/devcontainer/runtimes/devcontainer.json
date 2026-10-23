@@ -1,12 +1,12 @@
 {
     "name": "{{application}}-devcontainer",
-    "initializeCommand": "podman network create --ignore systemd-{{application}}",
+    "initializeCommand": "podman network create --ignore {{containerPrefix}}{{application}}",
     "image": "ghcr.io/foxws/laravel-podman-devcontainer:php-8.5",
     "remoteUser": "docker",
     "containerUser": "docker",
     "runArgs": [
         "--security-opt=label=disable",
-        "--network=systemd-{{application}}",
+        "--network={{containerPrefix}}{{application}}",
         "--userns=keep-id:uid={{appUid}},gid={{appGid}}",
         "--init"
     ],

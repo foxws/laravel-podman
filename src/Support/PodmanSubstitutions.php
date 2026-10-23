@@ -1,0 +1,89 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Foxws\Podman\Support;
+
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Str;
+
+/**
+ * Builds the "{{placeholder}}" => value map rendered into every template:
+ * the built-in placeholders, plus the ones set in "podman.substitutions".
+ */
+class PodmanSubstitutions
+{
+    public function __construct(
+        protected PodmanQuadletPath $path = new PodmanQuadletPath,
+        protected PodmanConfig $config = new PodmanConfig,
+    ) {}
+
+    /**
+     * @return array<string, string>
+     */
+    public function all(string $preset): array
+    {
+        $builtIn = $this->builtIn($preset);
+
+        $custom = Arr::map(
+            $this->config->customSubstitutions(),
+            fn (string $value): string => strtr($value, $builtIn),
+        );
+
+        return [...$builtIn, ...$custom];
+    }
+
+    public function apply(string $contents, string $preset): string
+    {
+        return strtr($contents, $this->all($preset));
+    }
+
+    /**
+     * The proxy's name from the "proxy_prefix" key that published configs
+     * from before 6.3 still have, or "proxy". A "proxy" substitution
+     * overrides it.
+     */
+    protected function legacyProxyName(): string
+    {
+        return Str::kebab(Config::string('podman.proxy_prefix', 'proxy'));
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    public function builtIn(string $preset): array
+    {
+        return [
+            '{{appEnv}}' => Config::string('app.env'),
+            '{{appName}}' => Config::string('app.name'),
+            '{{appUrl}}' => Config::string('app.url'),
+            '{{appHost}}' => $this->config->domain(),
+            '{{appUid}}' => (string) $this->config->uid(),
+            '{{appGid}}' => (string) $this->config->gid(),
+            '{{systemctl}}' => $this->config->systemctl(),
+            '{{application}}' => $this->config->prefix(),
+            '{{containerPrefix}}' => $this->config->containerPrefix(),
+            '{{proxy}}' => $this->legacyProxyName(),
+            '{{workingPath}}' => $this->path->workingPath(),
+            '{{configPath}}' => $this->path->configPath(),
+            '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),
+            '{{appUpstream}}' => $this->config->appUpstream(),
+            '{{viteHost}}' => $this->config->subdomain('vite'),
+            '{{reverbHost}}' => $this->config->subdomain('ws'),
+            '{{s3Host}}' => $this->config->subdomain('s3'),
+            '{{s3ConsoleHost}}' => $this->config->subdomain('fs'),
+            '{{mailHost}}' => $this->config->subdomain('mail'),
+            '{{viteUpstream}}' => $this->config->serviceUpstream('vite', 5173),
+            '{{reverbUpstream}}' => $this->config->serviceUpstream('reverb', 6001),
+            '{{s3Upstream}}' => $this->config->serviceUpstream('rustfs', 9000),
+            '{{s3ConsoleUpstream}}' => $this->config->serviceUpstream('rustfs', 9001),
+            '{{mailUpstream}}' => $this->config->serviceUpstream('mailpit', 8025),
+            '{{ondemand}}' => $this->config->onDemand(),
+            '{{ondemandListen}}' => $this->config->onDemandListen(),
+            '{{ondemandPort}}' => (string) $this->config->onDemandPort(),
+            '{{ondemandIdleTimeout}}' => $this->config->onDemandIdleTimeout(),
+            '{{ondemandIdleWorkers}}' => implode(' ', $this->config->onDemandIdleWorkers()),
+        ];
+    }
+}

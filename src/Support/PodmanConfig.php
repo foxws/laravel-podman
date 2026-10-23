@@ -7,6 +7,7 @@ namespace Foxws\Podman\Support;
 use Foxws\Podman\Exceptions\InvalidAppUrlException;
 use Foxws\Podman\Exceptions\QuadletRenderException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Illuminate\Support\Uri;
@@ -24,14 +25,35 @@ class PodmanConfig
             ?? throw InvalidAppUrlException::missingHost($url);
     }
 
+    /**
+     * A subdomain of the app's domain, e.g. "vite.laravel.test" for "vite".
+     */
+    public function subdomain(string $name): string
+    {
+        return "{$name}.{$this->domain()}";
+    }
+
+    /**
+     * @deprecated 6.3 The proxy's name is the "{{proxy}}" substitution now;
+     *             read it from PodmanSubstitutions::all().
+     */
+    public function proxy(): string
+    {
+        return Str::kebab(Config::string('podman.proxy_prefix', 'proxy'));
+    }
+
     public function prefix(): string
     {
         return Str::kebab(Config::string('podman.quadlet_prefix'));
     }
 
-    public function proxy(): string
+    /**
+     * What Quadlet puts in front of a unit's name to name its container or
+     * network: "systemd-" unless the units name them themselves.
+     */
+    public function containerPrefix(): string
     {
-        return Str::kebab(Config::string('podman.proxy_prefix'));
+        return (string) Config::get('podman.container_prefix', 'systemd-');
     }
 
     public function uid(): int
@@ -91,13 +113,19 @@ class PodmanConfig
 
     /**
      * Extra "{{placeholder}}" => value pairs merged into every rendered
-     * template, on top of the built-in ones.
+     * template, on top of the built-in ones. Keys may leave out the braces
+     * ("viteUrl" is "{{viteUrl}}"), and a null value, such as an unset env
+     * variable, renders as an empty string.
      *
      * @return array<string, string>
      */
     public function customSubstitutions(): array
     {
-        return Config::array('podman.substitutions', []);
+        return Collection::make(Config::array('podman.substitutions', []))
+            ->mapWithKeys(fn (mixed $value, string $key): array => [
+                Str::of($key)->start('{{')->finish('}}')->toString() => (string) $value,
+            ])
+            ->all();
     }
 
     public function isEnabled(): bool
@@ -183,7 +211,20 @@ class PodmanConfig
             return "host.containers.internal:{$this->onDemandListenPort()}";
         }
 
-        return "systemd-{$this->prefix()}:8000";
+        return $this->serviceUpstream(null, 8000);
+    }
+
+    /**
+     * The "host:port" a preset's service is reached at on the app's network,
+     * e.g. "systemd-my-app-vite:5173" for ("vite", 5173), or the app
+     * container itself ("systemd-my-app:8000") when the service is null.
+     * The "systemd-" part is the container prefix.
+     */
+    public function serviceUpstream(?string $service, int $port): string
+    {
+        $container = $service === null ? $this->prefix() : "{$this->prefix()}-{$service}";
+
+        return "{$this->containerPrefix()}{$container}:{$port}";
     }
 
     /**

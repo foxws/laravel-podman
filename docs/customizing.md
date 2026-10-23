@@ -16,7 +16,7 @@ You customize the package in two places:
 | --- | --- | --- | --- |
 | `enabled` | `PODMAN_ENABLED` | `true` | Turns all `podman:*` commands on or off |
 | `quadlet_prefix` | `PODMAN_QUADLET_PREFIX` | `APP_NAME` (or `laravel`) | Prefix for service names, e.g. `laravel-pgsql` |
-| `proxy_prefix` | `PODMAN_PROXY_PREFIX` | `proxy` | Name of the `proxy` service and network |
+| `container_prefix` | `PODMAN_CONTAINER_PREFIX` | `systemd-` | What Quadlet puts in front of container and network names. Change it when your units set `ContainerName=`/`NetworkName=` |
 | `stubs_path` | `PODMAN_STUBS_PATH` | `containers/stubs` | Where your own presets live |
 | `base_path` | `PODMAN_BASE_PATH` | Laravel's `base_path()` | The project folder presets are read from and rendered into. Relative `stubs_path`/`publish_path` values resolve against it. Set it to render another project, e.g. from an installer container |
 | `working_path` | `PODMAN_WORKING_PATH` | `base_path` | Host path for `{{workingPath}}`/`{{runtimePath}}`. Override per run with `podman:generate --working-path=` |
@@ -58,7 +58,8 @@ Templates contain `{{placeholder}}` tokens. `podman:publish` leaves them as they
 | Placeholder | Value |
 | --- | --- |
 | `{{application}}` | `quadlet_prefix`, kebab-cased |
-| `{{proxy}}` | `proxy_prefix`, kebab-cased |
+| `{{containerPrefix}}` | `container_prefix` (default `systemd-`), so `{{containerPrefix}}{{application}}-pgsql` is the database container |
+| `{{proxy}}` | Name of the `proxy` service, network and volumes: `proxy`, or the `proxy` substitution (`PODMAN_PROXY_PREFIX`) |
 | `{{appEnv}}` | `app.env` |
 | `{{appName}}` | `app.name` |
 | `{{appUrl}}` | `app.url` |
@@ -69,6 +70,8 @@ Templates contain `{{placeholder}}` tokens. `podman:publish` leaves them as they
 | `{{runtimePath}}` | The preset's rendered `runtimes/` folder, e.g. `podman/production/runtimes` |
 | `{{systemctl}}` | `systemctl --user`, or `systemctl` when `quadlet_uid` is `0` (root) |
 | `{{ondemand}}`, `{{ondemandListen}}`, `{{ondemandPort}}`, `{{ondemandIdleTimeout}}`, `{{appUpstream}}` | [On-demand](ondemand.md) settings |
+| `{{viteHost}}`, `{{reverbHost}}`, `{{s3Host}}`, `{{s3ConsoleHost}}`, `{{mailHost}}` | Subdomains of `{{appHost}}` the `proxy` preset routes: `vite.`, `ws.`, `s3.`, `fs.` and `mail.` |
+| `{{viteUpstream}}`, `{{reverbUpstream}}`, `{{s3Upstream}}`, `{{s3ConsoleUpstream}}`, `{{mailUpstream}}` | The presets' services on the app's network: `systemd-{app}-vite:5173`, `-reverb:6001`, `-rustfs:9000`, `-rustfs:9001` and `-mailpit:8025` (web UI). Reverb's port assumes `REVERB_SERVER_PORT=6001`, as the presets expose. Override one in `substitutions` when a service runs elsewhere |
 
 `{{configPath}}` is useful for keeping a service's config outside the project, for example in your own `proxy.quadlets`:
 
@@ -90,7 +93,18 @@ Add your own placeholders with `substitutions` in `config/podman.php`. It's plai
 Environment=API_ENDPOINT={{apiEndpoint}}
 ```
 
-A substitution with the same name as a built-in placeholder, such as `{{appHost}}`, replaces it.
+The braces are optional, so `'apiEndpoint' => ...` is `{{apiEndpoint}}` too. An unset env variable (`null`) renders as an empty string.
+
+A value can use the built-in placeholders, so you can derive it from the app instead of repeating it:
+
+```php
+'substitutions' => [
+    'viteUrl' => env('VITE_HMR_URL', 'https://vite.{{appHost}}'),
+    'searchUpstream' => '{{containerPrefix}}{{application}}-typesense:8108',
+],
+```
+
+Only built-in placeholders are replaced inside values, not your own. A substitution with the same name as a built-in placeholder, such as `{{appHost}}`, replaces it.
 
 ## Services
 
@@ -258,6 +272,52 @@ A few things to know:
 - Use `env()` here, not `config()`. Config files can't rely on each other's load order.
 - An entry with an empty hostname or upstream (unset env var) is skipped.
 - `render()` uses `http://` by default. With a bare hostname, Caddy would try automatic HTTPS on port 443. The `production` image runs as a non-root user without permission to bind that port, so the server would crash. Only pass the third `$scheme` argument if your Caddy is allowed to bind ports below 1024.
+
+#### Paths instead of subdomains
+
+Some services can also run under a path of the app's own domain, such as `laravel.test/ws` instead of `ws.laravel.test`. That needs no extra DNS entries or certificates, and the browser sees the same origin, so you need no CORS or CSP entries for those services. Subdomains are the default because every service supports them. Use a path only for services that work under one:
+
+| Service | Under a path? | What it needs |
+| --- | --- | --- |
+| Reverb | Yes | Strip the path. Reverb keeps serving from `/`, and Echo connects with `wsPath` |
+| Mailpit | Yes | Keep the path, and set `MP_WEBROOT` to it on the Mailpit container |
+| S3 (RustFS, MinIO) | Public URLs only | Signed URLs (`temporaryUrl()`) are signed over the full path, so a stripped prefix breaks them. Keep a subdomain |
+| RustFS console | No | The console expects to run from `/` |
+| Vite dev server | Not reliably | It serves its modules from `/`. Keep a subdomain |
+
+`PodmanCaddyRoutes` renders the routes for the app's site block, which FrankenPHP takes from `CADDY_SERVER_EXTRA_DIRECTIVES` in `config/octane.php`. Services you keep on subdomains stay in `CADDY_EXTRA_CONFIG`:
+
+```php
+use Foxws\Podman\Support\PodmanCaddyRoutes;
+
+'CADDY_SERVER_EXTRA_DIRECTIVES' => PodmanCaddyRoutes::make()
+    // Reverb stays at "/", the browser connects to "/ws".
+    ->route(env('VITE_REVERB_PATH'), env('REVERB_HOST'), env('REVERB_PORT', 6001))
+    // Mailpit serves from "/mail/" itself.
+    ->route(env('MAILPIT_PATH'), env('MAIL_HOST'), 8025, stripPrefix: false)
+    ->render(),
+```
+
+By default the path is stripped before the request reaches the service. Pass `stripPrefix: false` for services that serve from the path themselves. A route with an empty path, host or port is skipped, so an unset env variable turns it off. `upstream()` takes a ready `host:port` instead, and `PodmanCaddySites::routes()` is a shorthand for a list of routes that all strip or all keep their path. Setting `CADDY_SERVER_EXTRA_DIRECTIVES` replaces Octane's Mercure directives, which use the same variable.
+
+Then point the services at the path:
+
+1. **Reverb**: set `VITE_REVERB_HOST` to the app's own host and add `VITE_REVERB_PATH=/ws`. Pass the path to Echo as `wsPath` (for example through `config/reverb.php`, next to `wsHost`), then rebuild the frontend. Laravel keeps broadcasting straight to `REVERB_HOST:REVERB_PORT`, so the server side doesn't change.
+2. **Mailpit**: add `MAILPIT_PATH=/mail`, then set the same value on the container with your own placeholder. Regenerate and reinstall `mailpit.quadlets`:
+
+    ```php
+    // config/podman.php
+    'substitutions' => [
+        'mailpitPath' => env('MAILPIT_PATH'),
+    ],
+    ```
+
+    ```ini
+    # mailpit.quadlets
+    Environment=MP_WEBROOT={{mailpitPath}}
+    ```
+
+Your TLS proxy in front of the app must forward WebSocket upgrades for `/ws`. With the [`proxy` preset](proxy.md) that works out of the box, since it already sends the app's domain to the app.
 
 ### Rendering presets from code
 

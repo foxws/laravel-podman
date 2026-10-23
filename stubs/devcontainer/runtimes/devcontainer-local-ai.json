@@ -1,11 +1,11 @@
 {
     "name": "{{application}}-devcontainer",
-    "initializeCommand": "podman network create --ignore systemd-{{application}}",
+    "initializeCommand": "podman network create --ignore {{containerPrefix}}{{application}}",
     "remoteUser": "docker",
     "containerUser": "docker",
     "runArgs": [
         "--security-opt=label=disable",
-        "--network=systemd-{{application}}",
+        "--network={{containerPrefix}}{{application}}",
         "--userns=keep-id:uid={{appUid}},gid={{appGid}}",
         "--init"
     ],

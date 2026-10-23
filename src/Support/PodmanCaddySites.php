@@ -40,6 +40,33 @@ class PodmanCaddySites
         return implode("\n\n", $blocks);
     }
 
+    /**
+     * Render Caddyfile routes that reverse proxy sibling services under a
+     * path of the app's own domain, e.g. "/ws" for Reverb, instead of a
+     * subdomain of their own. Meant for a container's embedded Caddy
+     * instance inside the app's site block (e.g. FrankenPHP's, via
+     * "CADDY_SERVER_EXTRA_DIRECTIVES"), where they run before the app.
+     *
+     * The path is stripped before the request is passed on, so the service
+     * keeps serving from "/". Pass `$stripPrefix: false` for services that
+     * are configured to serve from the path themselves, such as Mailpit
+     * with "MP_WEBROOT".
+     *
+     * To mix both kinds, use PodmanCaddyRoutes.
+     *
+     * @param  array<string, string>  $routes  Path => internal "host:port" upstream.
+     */
+    public static function routes(array $routes, bool $stripPrefix = true): string
+    {
+        $builder = PodmanCaddyRoutes::make();
+
+        foreach ($routes as $path => $upstream) {
+            $builder->upstream($path, $upstream, $stripPrefix);
+        }
+
+        return $builder->render();
+    }
+
     public static function hostFromUrl(string $url): string
     {
         if ($url === '') {

@@ -1,5 +1,21 @@
 # Upgrading
 
+## From 6.2 to 6.3
+
+Nothing breaks: generated files, published presets and published configs keep working.
+
+- `proxy_prefix` is deprecated. The proxy's name is now the `proxy` substitution, so move a custom value there when you get to it. A `proxy_prefix` in a published config is still read until you do:
+
+    ```php
+    'substitutions' => [
+        'proxy' => env('PODMAN_PROXY_PREFIX', 'proxy'),
+    ],
+    ```
+
+- `PodmanConfig::proxy()` is deprecated. Read `{{proxy}}` from `PodmanSubstitutions::all()` instead.
+
+New in 6.3: built-in host and upstream placeholders (`{{viteHost}}`, `{{viteUpstream}}`, ...), which the `proxy` preset now uses, `container_prefix`, `PodmanCaddyRoutes`, and friendlier `substitutions`. See [Placeholders](docs/customizing.md).
+
 ## From 6.0 to 6.1
 
 The idle check comes with the on-demand socket now, on every host. Installing `my-app-ondemand.socket` also installs `my-app-idle.timer` and `my-app-idle.service`, and the socket starts the timer. `lpod idle enable` isn't needed anymore: [`lpod`](docs/lpod.md) v3.0.0 drops its own `lpod-idle@` check. See [The idle check](docs/ondemand.md#the-idle-check).

@@ -81,7 +81,19 @@ return [
         env('APP_NAME', 'laravel'),
     ),
 
-    'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),
+    /*
+    |--------------------------------------------------------------------------
+    | Container Prefix
+    |--------------------------------------------------------------------------
+    |
+    | Quadlet names containers and networks "systemd-" followed by the unit
+    | name, e.g. "systemd-laravel-pgsql". Change this when your units set
+    | their own "ContainerName="/"NetworkName=" or run outside Quadlet. It's
+    | used for "{{containerPrefix}}" and the built-in upstreams.
+    |
+    */
+
+    'container_prefix' => env('PODMAN_CONTAINER_PREFIX', 'systemd-'),
 
     /*
     |--------------------------------------------------------------------------
@@ -153,12 +165,16 @@ return [
     | template, on top of the built-in ones (see the "Customizing" docs). A
     | substitution here overrides a built-in placeholder of the same name.
     | Values are plain PHP, so "env(...)" works like anywhere else in this
-    | file, e.g. '{{apiEndpoint}}' => env('API_ENDPOINT').
+    | file. The braces are optional, and values may use the built-in
+    | placeholders, e.g. 'searchUpstream' => '{{containerPrefix}}{{application}}-typesense:8108'.
+    |
+    | "proxy" names the "proxy" preset's service, network and volumes.
     |
     */
 
     'substitutions' => [
-        // '{{apiEndpoint}}' => env('API_ENDPOINT'),
+        'proxy' => env('PODMAN_PROXY_PREFIX', 'proxy'),
+        // 'apiEndpoint' => env('API_ENDPOINT'),
     ],
 
     /*

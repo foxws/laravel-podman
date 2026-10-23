@@ -281,6 +281,23 @@ it('points the proxy at the app or its on-demand socket', function () {
         ->toContain('reverse_proxy host.containers.internal:9000');
 });
 
+it('routes the app and its services through placeholders in the default proxy site', function () {
+    config([
+        'app.url' => 'https://laravel.test',
+        'podman.quadlet_prefix' => 'acme',
+        'podman.substitutions' => ['viteHost' => 'hmr.{{appHost}}'],
+    ]);
+
+    $this->artisan('podman:generate', ['preset' => 'proxy'])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/proxy/runtimes/sites/laravel.Caddyfile"))
+        ->toStartWith('laravel.test {')
+        ->toContain("hmr.laravel.test {\n\timport compress\n\treverse_proxy systemd-acme-vite:5173")
+        ->toContain("ws.laravel.test {\n\treverse_proxy systemd-acme-reverb:6001")
+        ->toContain("mail.laravel.test {\n\treverse_proxy systemd-acme-mailpit:8025")
+        ->not->toContain('{{');
+});
+
 it('removes output left over from a previous generate', function () {
     File::ensureDirectoryExists("{$this->publishPath}/proxy");
     File::put("{$this->publishPath}/proxy/stale.quadlets", '');

@@ -73,6 +73,8 @@ Caddy loads every `*.Caddyfile` in `sites/`. Publish the preset and add a file f
 
 Only add sites for services you run: a site with an empty host stops Caddy from starting.
 
+Reverb and Mailpit can also run under a path of the app's domain, such as `/ws` and `/mail`, without a site of their own. The app's embedded Caddy routes them, so the proxy needs no extra site. See [Paths instead of subdomains](customizing.md#paths-instead-of-subdomains).
+
 ## Starting the proxy
 
 ```bash

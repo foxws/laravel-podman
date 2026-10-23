@@ -272,24 +272,49 @@ A few things to know:
 
 #### Paths instead of subdomains
 
-`PodmanCaddyRoutes` sends a path of the app's own domain to a service instead, so you need no extra DNS entries or certificates, and the browser sees the same origin (no CORS). It renders routes for the app's site block, which FrankenPHP takes from `CADDY_SERVER_EXTRA_DIRECTIVES`:
+Some services can also run under a path of the app's own domain, such as `laravel.test/ws` instead of `ws.laravel.test`. That needs no extra DNS entries or certificates, and the browser sees the same origin, so you need no CORS or CSP entries for those services. Subdomains are the default because every service supports them. Use a path only for services that work under one:
+
+| Service | Under a path? | What it needs |
+| --- | --- | --- |
+| Reverb | Yes | Strip the path. Reverb keeps serving from `/`, and Echo connects with `wsPath` |
+| Mailpit | Yes | Keep the path, and set `MP_WEBROOT` to it on the Mailpit container |
+| S3 (RustFS, MinIO) | Public URLs only | Signed URLs (`temporaryUrl()`) are signed over the full path, so a stripped prefix breaks them. Keep a subdomain |
+| RustFS console | No | The console expects to run from `/` |
+| Vite dev server | Not reliably | It serves its modules from `/`. Keep a subdomain |
+
+`PodmanCaddyRoutes` renders the routes for the app's site block, which FrankenPHP takes from `CADDY_SERVER_EXTRA_DIRECTIVES` in `config/octane.php`. Services you keep on subdomains stay in `CADDY_EXTRA_CONFIG`:
 
 ```php
 use Foxws\Podman\Support\PodmanCaddyRoutes;
 
 'CADDY_SERVER_EXTRA_DIRECTIVES' => PodmanCaddyRoutes::make()
-    // Reverb stays at "/", the browser connects to "/ws" (Echo's "wsPath").
+    // Reverb stays at "/", the browser connects to "/ws".
     ->route(env('VITE_REVERB_PATH'), env('REVERB_HOST'), env('REVERB_PORT', 6001))
-    // Mailpit serves from "/mail/" itself with MP_WEBROOT=/mail/.
+    // Mailpit serves from "/mail/" itself.
     ->route(env('MAILPIT_PATH'), env('MAIL_HOST'), 8025, stripPrefix: false)
     ->render(),
 ```
 
-A route with an empty path, host or port is skipped. `upstream()` takes a ready `host:port` instead, and `PodmanCaddySites::routes()` is a shorthand for a list of routes that all strip or all keep their path.
+By default the path is stripped before the request reaches the service. Pass `stripPrefix: false` for services that serve from the path themselves. A route with an empty path, host or port is skipped, so an unset env variable turns it off. `upstream()` takes a ready `host:port` instead, and `PodmanCaddySites::routes()` is a shorthand for a list of routes that all strip or all keep their path. Setting `CADDY_SERVER_EXTRA_DIRECTIVES` replaces Octane's Mercure directives, which use the same variable.
 
-By default the path is stripped before the request reaches the service. Pass `stripPrefix: false` for services configured to serve from the path themselves. This replaces Octane's Mercure directives, which use the same variable.
+Then point the services at the path:
 
-Not every service works under a path. Signed S3 URLs (`temporaryUrl()`) are signed over the full path, so a stripped prefix breaks them, and the Vite dev server serves its modules from `/`. Keep those on subdomains.
+1. **Reverb**: set `VITE_REVERB_HOST` to the app's own host and add `VITE_REVERB_PATH=/ws`. Pass the path to Echo as `wsPath` (for example through `config/reverb.php`, next to `wsHost`), then rebuild the frontend. Laravel keeps broadcasting straight to `REVERB_HOST:REVERB_PORT`, so the server side doesn't change.
+2. **Mailpit**: add `MAILPIT_PATH=/mail`, then set the same value on the container with your own placeholder. Regenerate and reinstall `mailpit.quadlets`:
+
+    ```php
+    // config/podman.php
+    'substitutions' => [
+        'mailpitPath' => env('MAILPIT_PATH'),
+    ],
+    ```
+
+    ```ini
+    # mailpit.quadlets
+    Environment=MP_WEBROOT={{mailpitPath}}
+    ```
+
+Your TLS proxy in front of the app must forward WebSocket upgrades for `/ws`. With the [`proxy` preset](proxy.md) that works out of the box, since it already sends the app's domain to the app.
 
 ### Rendering presets from code
 

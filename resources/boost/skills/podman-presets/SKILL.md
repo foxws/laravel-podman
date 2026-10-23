@@ -116,6 +116,8 @@ Add `Memory=1G` under `[Container]` in that service's `.quadlets` file, then reg
 
 Publish `proxy`, then edit `containers/stubs/proxy/runtimes/Caddyfile` and `sites/*.Caddyfile`. The default site only routes `APP_URL` to the app. Add a `sites/services.Caddyfile` for other services (Vite, Reverb, RustFS, Mailpit) using custom placeholders such as `{{viteHost}}` and `{{viteUpstream}}` set from `.env`. Don't add a site whose host can be empty: Caddy won't start. Regenerate and run `lpod proxy restart`.
 
+To serve Reverb or Mailpit under a path of the app's domain (`/ws`, `/mail`) instead of a subdomain, build `CADDY_SERVER_EXTRA_DIRECTIVES` in `config/octane.php` with `PodmanCaddyRoutes::make()->route($path, $host, $port)` (Reverb, stripped path, plus Echo's `wsPath`) and `->route(..., stripPrefix: false)` (Mailpit, with `MP_WEBROOT` set to the same path). Keep S3, the RustFS console and Vite on subdomains: signed S3 URLs and Vite's modules break under a path. See docs/customizing.md "Paths instead of subdomains".
+
 ### On-demand (scale-to-zero)
 
 On by default. `PODMAN_ONDEMAND_ENABLED=false` renders `StopWhenUnneeded=no` everywhere and points the proxy straight at the container.

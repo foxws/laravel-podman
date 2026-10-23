@@ -57,6 +57,7 @@ class PodmanSubstitutions
             '{{configPath}}' => $this->path->configPath(),
             '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),
             '{{appUpstream}}' => $this->config->appUpstream(),
+            '{{viteUpstream}}' => $this->config->viteUpstream(),
             '{{ondemand}}' => $this->config->onDemand(),
             '{{ondemandListen}}' => $this->config->onDemandListen(),
             '{{ondemandPort}}' => (string) $this->config->onDemandPort(),

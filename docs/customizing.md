@@ -68,6 +68,7 @@ Templates contain `{{placeholder}}` tokens. `podman:publish` leaves them as they
 | `{{runtimePath}}` | The preset's rendered `runtimes/` folder, e.g. `podman/production/runtimes` |
 | `{{systemctl}}` | `systemctl --user`, or `systemctl` when `quadlet_uid` is `0` (root) |
 | `{{ondemand}}`, `{{ondemandListen}}`, `{{ondemandPort}}`, `{{ondemandIdleTimeout}}`, `{{appUpstream}}` | [On-demand](ondemand.md) settings |
+| `{{viteUpstream}}` | The `development` preset's Vite dev server: `systemd-{app}-vite:5173`. Override it when Vite runs elsewhere |
 
 `{{configPath}}` is useful for keeping a service's config outside the project, for example in your own `proxy.quadlets`:
 
@@ -96,7 +97,7 @@ A value can use the built-in placeholders, so you can derive it from the app ins
 ```php
 'substitutions' => [
     'viteUrl' => env('VITE_HMR_URL', 'https://vite.{{appHost}}'),
-    'viteUpstream' => 'systemd-{{application}}-vite:5173',
+    'reverbUpstream' => 'systemd-{{application}}-reverb:6001',
 ],
 ```
 

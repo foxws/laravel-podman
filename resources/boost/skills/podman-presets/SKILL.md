@@ -62,6 +62,7 @@ VolumeName={{application}}-valkey
 | `{{runtimePath}}` | The preset's rendered `runtimes/` folder |
 | `{{systemctl}}` | `systemctl --user`, or `systemctl` when `quadlet_uid` is `0` (root) |
 | `{{appUpstream}}` | Where the proxy sends app traffic: `systemd-{app}:8000`, or the on-demand socket |
+| `{{viteUpstream}}` | The `development` preset's Vite dev server: `systemd-{app}-vite:5173` |
 | `{{ondemand}}` | `yes` when `ondemand.enabled`, otherwise `no`. Used for `StopWhenUnneeded=` on the app and services |
 | `{{ondemandListen}}`, `{{ondemandPort}}`, `{{ondemandIdleTimeout}}`, `{{ondemandIdleWorkers}}` | `ondemand.listen`, `ondemand.port`, `ondemand.idle_timeout`, `ondemand.idle_workers` (space-separated) |
 
@@ -71,7 +72,7 @@ Add your own in `config/podman.php`, usually from `.env` so templates and the ap
 'substitutions' => [
     'apiEndpoint' => env('API_ENDPOINT'),
     'viteUrl' => env('VITE_HMR_URL', 'https://vite.{{appHost}}'),
-    'viteUpstream' => 'systemd-{{application}}-vite:5173',
+    'reverbUpstream' => 'systemd-{{application}}-reverb:6001',
 ],
 ```
 

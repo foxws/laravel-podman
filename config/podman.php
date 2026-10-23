@@ -152,7 +152,7 @@ return [
     | substitution here overrides a built-in placeholder of the same name.
     | Values are plain PHP, so "env(...)" works like anywhere else in this
     | file. The braces are optional, and values may use the built-in
-    | placeholders, e.g. 'viteUpstream' => 'systemd-{{application}}-vite:5173'.
+    | placeholders, e.g. 'reverbUpstream' => 'systemd-{{application}}-reverb:6001'.
     |
     | "proxy" names the "proxy" preset's service, network and volumes.
     |

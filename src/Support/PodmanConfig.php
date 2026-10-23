@@ -189,6 +189,16 @@ class PodmanConfig
     }
 
     /**
+     * The Vite dev server of the "development" preset, for proxies to send
+     * HMR traffic to. Override the "viteUpstream" substitution when Vite
+     * runs elsewhere.
+     */
+    public function viteUpstream(): string
+    {
+        return "systemd-{$this->prefix()}-vite:5173";
+    }
+
+    /**
      * Normalize a config value that may be either a comma-separated string
      * or a plain array into a list of trimmed, non-empty names.
      *

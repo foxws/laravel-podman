@@ -54,3 +54,11 @@ it('names the proxy "proxy" unless a substitution renames it', function () {
 
     expect($this->substitutions->apply('{{proxy}}', 'proxy'))->toBe('edge');
 });
+
+it('points viteUpstream at the development preset unless a substitution overrides it', function () {
+    expect($this->substitutions->apply('{{viteUpstream}}', 'development'))->toBe('systemd-acme-vite:5173');
+
+    config(['podman.substitutions' => ['viteUpstream' => 'vite.internal:3000']]);
+
+    expect($this->substitutions->apply('{{viteUpstream}}', 'development'))->toBe('vite.internal:3000');
+});

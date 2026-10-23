@@ -2,6 +2,20 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 6.3.0 - 2026-10-23
+
+Templates no longer assume one stack. The `proxy` preset's site now routes the app and its `vite.`, `ws.`, `s3.`, `fs.` and `mail.` subdomains entirely through placeholders, such as `{{viteHost}}` and `{{viteUpstream}}`. Change a host or upstream in `substitutions` without publishing the preset, for example `'viteHost' => env('VITE_HMR_HOST', 'vite.{{appHost}}')`. In `substitutions` the braces are optional, `null` renders as an empty string, and values may use built-in placeholders.
+
+`container_prefix` (`PODMAN_CONTAINER_PREFIX`, default `systemd-`) covers units that set `ContainerName=` or `NetworkName=`, and `PodmanCaddyRoutes` serves services such as Reverb or Mailpit under a path of the app's domain through FrankenPHP's `CADDY_SERVER_EXTRA_DIRECTIVES`. See "Placeholders" and "Paths instead of subdomains" in docs/customizing.md.
+
+Nothing breaks: generated files, published presets and published configs keep working. `proxy_prefix` and `PodmanConfig::proxy()` are deprecated in favour of the `proxy` substitution; a published `proxy_prefix` is still read. See UPGRADING.md.
+
+### What's Changed
+
+* Generate placeholders from config instead of assuming the stack by @francoism90 in https://github.com/foxws/laravel-podman/pull/70
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/6.2.0...6.3.0
+
 ## 6.2.0 - 2026-10-22
 
 The `development` preset's Horizon now runs `horizon:listen`, so it restarts when a file in `config/horizon.php`'s `watch` list changes, like the app's Octane `--watch`. It needs Horizon 5.43 or later, the `chokidar` npm package, and a `watch` key in published Horizon configs (configs published before 5.43 lack it). A restart stops the jobs in progress; to keep long jobs running while you edit code, change the command in `development/horizon.quadlets` back to `artisan horizon`. See "Replacing the queue worker with Horizon" in docs/customizing.md. `production` is unchanged.
@@ -227,12 +241,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -273,6 +289,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -336,6 +353,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -348,6 +366,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

@@ -1,5 +1,17 @@
 # Upgrading
 
+## From 6.x to 7.0
+
+The `proxy` preset's `sites/laravel.Caddyfile` only routes `APP_URL` to the app. The `vite.`, `ws.`, `s3.`, `fs.` and `mail.` subdomains are gone, because not every app runs those services. If you use them:
+
+1. Publish the preset if you haven't: `php artisan podman:publish proxy`.
+2. Add `containers/stubs/proxy/runtimes/sites/services.Caddyfile` with the sites you use. Take hosts and upstreams from `.env` with your own placeholders. See [Adding your services](docs/proxy.md#adding-your-services).
+3. Regenerate and restart: `php artisan podman:generate proxy`, then `lpod proxy restart`.
+
+If you already published the `proxy` preset, nothing changes.
+
+Your own `substitutions` keys may now leave out the braces, `null` values render as an empty string, and values may contain built-in placeholders such as `{{application}}`. Existing configs keep working.
+
 ## From 6.0 to 6.1
 
 The idle check comes with the on-demand socket now, on every host. Installing `my-app-ondemand.socket` also installs `my-app-idle.timer` and `my-app-idle.service`, and the socket starts the timer. `lpod idle enable` isn't needed anymore: [`lpod`](docs/lpod.md) v3.0.0 drops its own `lpod-idle@` check. See [The idle check](docs/ondemand.md#the-idle-check).

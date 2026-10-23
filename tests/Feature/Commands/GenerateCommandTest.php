@@ -281,6 +281,17 @@ it('points the proxy at the app or its on-demand socket', function () {
         ->toContain('reverse_proxy host.containers.internal:9000');
 });
 
+it('only routes the app domain in the default proxy site', function () {
+    config(['app.url' => 'https://laravel.test']);
+
+    $this->artisan('podman:generate', ['preset' => 'proxy'])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/proxy/runtimes/sites/laravel.Caddyfile"))
+        ->toStartWith('laravel.test {')
+        ->not->toContain('vite.')
+        ->not->toContain('mail.');
+});
+
 it('removes output left over from a previous generate', function () {
     File::ensureDirectoryExists("{$this->publishPath}/proxy");
     File::put("{$this->publishPath}/proxy/stale.quadlets", '');

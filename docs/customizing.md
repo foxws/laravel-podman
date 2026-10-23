@@ -90,7 +90,18 @@ Add your own placeholders with `substitutions` in `config/podman.php`. It's plai
 Environment=API_ENDPOINT={{apiEndpoint}}
 ```
 
-A substitution with the same name as a built-in placeholder, such as `{{appHost}}`, replaces it.
+The braces are optional, so `'apiEndpoint' => ...` is `{{apiEndpoint}}` too. An unset env variable (`null`) renders as an empty string.
+
+A value can use the built-in placeholders, so you can derive it from the app instead of repeating it:
+
+```php
+'substitutions' => [
+    'viteUrl' => env('VITE_HMR_URL', 'https://vite.{{appHost}}'),
+    'viteUpstream' => 'systemd-{{application}}-vite:5173',
+],
+```
+
+Only built-in placeholders are replaced inside values, not your own. A substitution with the same name as a built-in placeholder, such as `{{appHost}}`, replaces it.
 
 ## Services
 

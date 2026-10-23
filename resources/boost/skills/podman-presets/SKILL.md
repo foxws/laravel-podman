@@ -65,11 +65,13 @@ VolumeName={{application}}-valkey
 | `{{ondemand}}` | `yes` when `ondemand.enabled`, otherwise `no`. Used for `StopWhenUnneeded=` on the app and services |
 | `{{ondemandListen}}`, `{{ondemandPort}}`, `{{ondemandIdleTimeout}}`, `{{ondemandIdleWorkers}}` | `ondemand.listen`, `ondemand.port`, `ondemand.idle_timeout`, `ondemand.idle_workers` (space-separated) |
 
-Add your own in `config/podman.php`. They also override built-in placeholders:
+Add your own in `config/podman.php`, usually from `.env` so templates and the app read the same values. Braces are optional, `null` renders as an empty string, and values may contain built-in placeholders (not custom ones). They also override built-in placeholders:
 
 ```php
 'substitutions' => [
-    '{{apiEndpoint}}' => env('API_ENDPOINT'),
+    'apiEndpoint' => env('API_ENDPOINT'),
+    'viteUrl' => env('VITE_HMR_URL', 'https://vite.{{appHost}}'),
+    'viteUpstream' => 'systemd-{{application}}-vite:5173',
 ],
 ```
 
@@ -112,7 +114,7 @@ Add `Memory=1G` under `[Container]` in that service's `.quadlets` file, then reg
 
 ### Proxy (Caddy)
 
-Publish `proxy`, then edit `containers/stubs/proxy/runtimes/Caddyfile` and `sites/*.Caddyfile`. The default site routes `APP_URL` to the app, and the subdomains `vite.`, `ws.` (Reverb), `s3.` and `fs.` (RustFS) and `mail.` (Mailpit). Regenerate and run `lpod proxy restart`.
+Publish `proxy`, then edit `containers/stubs/proxy/runtimes/Caddyfile` and `sites/*.Caddyfile`. The default site only routes `APP_URL` to the app. Add a `sites/services.Caddyfile` for other services (Vite, Reverb, RustFS, Mailpit) using custom placeholders such as `{{viteHost}}` and `{{viteUpstream}}` set from `.env`. Don't add a site whose host can be empty: Caddy won't start. Regenerate and run `lpod proxy restart`.
 
 ### On-demand (scale-to-zero)
 

@@ -1,13 +1,23 @@
 ---
 name: podman-upgrade
-description: Upgrade foxws/laravel-podman between major and minor versions (v3 through 6.1), including published presets in containers/stubs, volumes and the on-demand idle check. Use when upgrading the package, or when published presets or installed units look older than the installed version.
+description: Upgrade foxws/laravel-podman between major and minor versions (v3 through 7.0), including published presets in containers/stubs, volumes and the on-demand idle check. Use when upgrading the package, or when published presets or installed units look older than the installed version.
 ---
 
 # Upgrading laravel-podman
 
-Check the installed version with `composer show foxws/laravel-podman`. Coming from v3, do "From v3 to v4" first, then "From v4 to v5", then "From v5 to v6", then "From 6.0 to 6.1".
+Check the installed version with `composer show foxws/laravel-podman`. Coming from v3, do "From v3 to v4" first, then "From v4 to v5", then "From v5 to v6", then "From 6.0 to 6.1", then "From 6.x to 7.0".
 
 The human guide is [UPGRADING.md](https://github.com/foxws/laravel-podman/blob/main/UPGRADING.md). It isn't shipped in `vendor/`, and these notes cover the same steps.
+
+## From 6.x to 7.0
+
+The `proxy` preset's `sites/laravel.Caddyfile` only routes `APP_URL` to the app; the `vite.`, `ws.`, `s3.`, `fs.` and `mail.` subdomains were removed. Nothing changes when `containers/stubs/proxy` is already published.
+
+1. `composer require foxws/laravel-podman:^7.0` (with `--dev` if it was a dev dependency).
+2. If the app uses the `proxy` preset without publishing it, check which of those subdomains it needs (look at `.env`: `VITE_HMR_HOST`, `VITE_REVERB_HOST`, `AWS_URL`, `MAILPIT_UI_HOST`, `RUSTFS_CONSOLE_HOST`). Run `php artisan podman:publish proxy`, add those hosts and upstreams to `substitutions` in `config/podman.php` from the same env variables, and write `containers/stubs/proxy/runtimes/sites/services.Caddyfile` using them. Skip services the app doesn't run.
+3. `php artisan podman:generate proxy`, then hand the user `lpod proxy restart`.
+
+`substitutions` keys may now leave out the braces, `null` renders as `''`, and values may use built-in placeholders. No change is needed for existing configs.
 
 ## From v5 to v6
 

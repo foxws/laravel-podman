@@ -7,6 +7,7 @@ namespace Foxws\Podman\Support;
 use Foxws\Podman\Exceptions\InvalidAppUrlException;
 use Foxws\Podman\Exceptions\QuadletRenderException;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Str;
 use Illuminate\Support\Uri;
@@ -91,13 +92,19 @@ class PodmanConfig
 
     /**
      * Extra "{{placeholder}}" => value pairs merged into every rendered
-     * template, on top of the built-in ones.
+     * template, on top of the built-in ones. Keys may leave out the braces
+     * ("viteUrl" is "{{viteUrl}}"), and a null value, such as an unset env
+     * variable, renders as an empty string.
      *
      * @return array<string, string>
      */
     public function customSubstitutions(): array
     {
-        return Config::array('podman.substitutions', []);
+        return Collection::make(Config::array('podman.substitutions', []))
+            ->mapWithKeys(fn (mixed $value, string $key): array => [
+                Str::of($key)->start('{{')->finish('}}')->toString() => (string) $value,
+            ])
+            ->all();
     }
 
     public function isEnabled(): bool

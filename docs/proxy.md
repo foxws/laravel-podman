@@ -43,18 +43,35 @@ php artisan podman:generate proxy
 lpod proxy restart
 ```
 
-`sites/laravel.Caddyfile` routes your app domain (`APP_URL`) and these subdomains:
+`sites/laravel.Caddyfile` routes your app domain (`APP_URL`) to the app, through its [on-demand socket](ondemand.md) when on-demand is on. The proxy doesn't assume which other services you run, such as Vite, Reverb, RustFS or Mailpit.
 
-| Subdomain | Routes to |
-| --- | --- |
-| (root) | The app, through its [on-demand socket](ondemand.md) when on-demand is on |
-| `vite.` | Vite dev server |
-| `ws.` | Reverb (WebSockets) |
-| `s3.` | RustFS (S3 API) |
-| `fs.` | RustFS console |
-| `mail.` | Mailpit (dev mail catcher) |
+### Adding your services
 
-For more domains or services, add `*.Caddyfile` files to `sites/`.
+Caddy loads every `*.Caddyfile` in `sites/`. Publish the preset and add a file for your services. Take their hosts and upstreams from `.env` with [your own placeholders](customizing.md#your-own-placeholders), so the proxy and your app read the same values:
+
+```php
+// config/podman.php
+'substitutions' => [
+    'viteHost' => env('VITE_HMR_HOST'),              // vite.laravel.test
+    'viteUpstream' => env('VITE_SERVER_HOST').':5173', // systemd-my-app-vite:5173
+    'reverbHost' => env('VITE_REVERB_HOST'),         // ws.laravel.test
+    'reverbUpstream' => env('REVERB_HOST').':'.env('REVERB_PORT', 6001),
+],
+```
+
+```caddy
+# containers/stubs/proxy/runtimes/sites/services.Caddyfile
+{{viteHost}} {
+	import compress
+	reverse_proxy {{viteUpstream}}
+}
+
+{{reverbHost}} {
+	reverse_proxy {{reverbUpstream}}
+}
+```
+
+Only add sites for services you run: a site with an empty host stops Caddy from starting.
 
 ## Starting the proxy
 
@@ -66,11 +83,11 @@ lpod proxy restart   # after editing the Caddyfile
 
 ## DNS
 
-Add your domain and subdomains to `/etc/hosts`. Replace `laravel.test` with the host from your `APP_URL`:
+Add your domain and the hosts of your other sites to `/etc/hosts`. Replace `laravel.test` with the host from your `APP_URL`:
 
 ```text
-127.0.0.1 laravel.test vite.laravel.test ws.laravel.test s3.laravel.test fs.laravel.test mail.laravel.test
-::1       laravel.test vite.laravel.test ws.laravel.test s3.laravel.test fs.laravel.test mail.laravel.test
+127.0.0.1 laravel.test vite.laravel.test ws.laravel.test
+::1       laravel.test vite.laravel.test ws.laravel.test
 ```
 
 With several devices, it's easier to run a local DNS server like [AdGuard Home](https://adguard.com/en/adguard-home/overview.html) and point `*.laravel.test` at your server's IP.

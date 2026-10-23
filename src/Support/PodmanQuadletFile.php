@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Foxws\Podman\Support;
 
 use Foxws\Podman\Exceptions\QuadletRenderException;
-use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
@@ -21,27 +20,7 @@ class PodmanQuadletFile
      */
     public function substitutions(string $preset): array
     {
-        return [
-            '{{appEnv}}' => Config::string('app.env'),
-            '{{appName}}' => Config::string('app.name'),
-            '{{appUrl}}' => Config::string('app.url'),
-            '{{appHost}}' => $this->config->domain(),
-            '{{appUid}}' => (string) $this->config->uid(),
-            '{{appGid}}' => (string) $this->config->gid(),
-            '{{systemctl}}' => $this->config->systemctl(),
-            '{{application}}' => $this->config->prefix(),
-            '{{proxy}}' => $this->config->proxy(),
-            '{{workingPath}}' => $this->path->workingPath(),
-            '{{configPath}}' => $this->path->configPath(),
-            '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),
-            '{{appUpstream}}' => $this->config->appUpstream(),
-            '{{ondemand}}' => $this->config->onDemand(),
-            '{{ondemandListen}}' => $this->config->onDemandListen(),
-            '{{ondemandPort}}' => (string) $this->config->onDemandPort(),
-            '{{ondemandIdleTimeout}}' => $this->config->onDemandIdleTimeout(),
-            '{{ondemandIdleWorkers}}' => implode(' ', $this->config->onDemandIdleWorkers()),
-            ...$this->config->customSubstitutions(),
-        ];
+        return (new PodmanSubstitutions($this->path, $this->config))->all($preset);
     }
 
     public function renderSource(string $source, string $preset): string

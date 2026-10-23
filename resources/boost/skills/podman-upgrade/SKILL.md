@@ -11,13 +11,11 @@ The human guide is [UPGRADING.md](https://github.com/foxws/laravel-podman/blob/m
 
 ## From 6.x to 7.0
 
+Generated files and published presets keep working; every placeholder they use still exists.
+
 1. `composer require foxws/laravel-podman:^7.0` (with `--dev` if it was a dev dependency).
-2. The `proxy` preset routes the same subdomains, now through placeholders (`{{viteHost}}`, `{{viteUpstream}}`, ...). A published `containers/stubs/proxy` keeps working. If its hosts differ from `vite.`/`ws.`/`s3.`/`fs.`/`mail.` + `APP_URL`'s host, the user can now set them in `substitutions` instead of publishing.
-3. `php artisan podman:generate proxy`, then hand the user `lpod proxy restart`.
-
-`proxy_prefix` was removed: if `config/podman.php` is published, move it into `substitutions` as `'proxy' => env('PODMAN_PROXY_PREFIX', 'proxy')` (no longer kebab-cased). `PodmanConfig::proxy()` is gone too.
-
-`substitutions` keys may now leave out the braces, `null` renders as `''`, and values may use built-in placeholders. No change is needed for existing configs.
+2. If `config/podman.php` is published and sets `proxy_prefix` to something other than `proxy`, move that value into `substitutions` as `'proxy' => env('PODMAN_PROXY_PREFIX', '...')` (no longer kebab-cased). Otherwise `{{proxy}}` becomes `proxy` and the proxy's network and volumes get new names. Remove the old key either way.
+3. Replace calls to `PodmanConfig::proxy()`, if any, with `app(PodmanSubstitutions::class)->all($preset)['{{proxy}}']`.
 
 ## From v5 to v6
 

@@ -2,17 +2,19 @@
 
 ## From 6.x to 7.0
 
-The `proxy` preset's `sites/laravel.Caddyfile` routes the same subdomains as before, but through placeholders such as `{{viteHost}}` and `{{viteUpstream}}`, so you can change a host or upstream in `substitutions` without publishing the preset. See [Changing hosts and services](docs/proxy.md#changing-hosts-and-services). A published `proxy` preset keeps working as it is.
+Generated files and published presets keep working: every placeholder they use still exists. Only check this if you published `config/podman.php` and renamed the proxy:
 
-`proxy_prefix` is gone: the `proxy` preset's name is now an ordinary substitution. If you published `config/podman.php`, replace `'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),` with this entry in `substitutions` (`PODMAN_PROXY_PREFIX` keeps working). The value is no longer kebab-cased for you:
+- `proxy_prefix` is gone. Move a custom value into `substitutions`, otherwise `{{proxy}}` falls back to `proxy` and the proxy's network and volumes get new names. The value is no longer kebab-cased:
 
-```php
-'substitutions' => [
-    'proxy' => env('PODMAN_PROXY_PREFIX', 'proxy'),
-],
-```
+    ```php
+    'substitutions' => [
+        'proxy' => env('PODMAN_PROXY_PREFIX', 'proxy'),
+    ],
+    ```
 
-Your own `substitutions` keys may now leave out the braces, `null` values render as an empty string, and values may contain built-in placeholders such as `{{application}}`. Existing configs keep working.
+- `PodmanConfig::proxy()` is gone. Read `PodmanSubstitutions::all()` instead.
+
+New in 7.0: built-in host and upstream placeholders (`{{viteHost}}`, `{{viteUpstream}}`, ...), which the `proxy` preset now uses, `container_prefix`, and friendlier `substitutions`. See [Placeholders](docs/customizing.md).
 
 ## From 6.0 to 6.1
 

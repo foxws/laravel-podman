@@ -161,3 +161,10 @@ it('uses the user service manager unless the units are installed as root', funct
 
     expect($this->config->systemctl())->toBe('systemctl');
 });
+
+it('resolves the upstream of a service or the app container', function () {
+    config(['podman.quadlet_prefix' => 'acme']);
+
+    expect($this->config->serviceUpstream('reverb', 6001))->toBe('systemd-acme-reverb:6001')
+        ->and($this->config->serviceUpstream(null, 8000))->toBe('systemd-acme:8000');
+});

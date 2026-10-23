@@ -185,17 +185,19 @@ class PodmanConfig
             return "host.containers.internal:{$this->onDemandListenPort()}";
         }
 
-        return "systemd-{$this->prefix()}:8000";
+        return $this->serviceUpstream(null, 8000);
     }
 
     /**
-     * The Vite dev server of the "development" preset, for proxies to send
-     * HMR traffic to. Override the "viteUpstream" substitution when Vite
-     * runs elsewhere.
+     * The "host:port" a preset's service is reached at on the app's network,
+     * e.g. "systemd-my-app-vite:5173" for ("vite", 5173), or the app
+     * container itself ("systemd-my-app:8000") when the service is null.
      */
-    public function viteUpstream(): string
+    public function serviceUpstream(?string $service, int $port): string
     {
-        return "systemd-{$this->prefix()}-vite:5173";
+        $container = $service === null ? $this->prefix() : "{$this->prefix()}-{$service}";
+
+        return "systemd-{$container}:{$port}";
     }
 
     /**

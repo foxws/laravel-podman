@@ -52,7 +52,7 @@ class PodmanSubstitutions
             '{{appGid}}' => (string) $this->config->gid(),
             '{{systemctl}}' => $this->config->systemctl(),
             '{{application}}' => $this->config->prefix(),
-            '{{proxy}}' => $this->config->proxy(),
+            '{{proxy}}' => 'proxy',
             '{{workingPath}}' => $this->path->workingPath(),
             '{{configPath}}' => $this->path->configPath(),
             '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),

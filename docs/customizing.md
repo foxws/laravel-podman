@@ -16,7 +16,6 @@ You customize the package in two places:
 | --- | --- | --- | --- |
 | `enabled` | `PODMAN_ENABLED` | `true` | Turns all `podman:*` commands on or off |
 | `quadlet_prefix` | `PODMAN_QUADLET_PREFIX` | `APP_NAME` (or `laravel`) | Prefix for service names, e.g. `laravel-pgsql` |
-| `proxy_prefix` | `PODMAN_PROXY_PREFIX` | `proxy` | Name of the `proxy` service and network |
 | `stubs_path` | `PODMAN_STUBS_PATH` | `containers/stubs` | Where your own presets live |
 | `base_path` | `PODMAN_BASE_PATH` | Laravel's `base_path()` | The project folder presets are read from and rendered into. Relative `stubs_path`/`publish_path` values resolve against it. Set it to render another project, e.g. from an installer container |
 | `working_path` | `PODMAN_WORKING_PATH` | `base_path` | Host path for `{{workingPath}}`/`{{runtimePath}}`. Override per run with `podman:generate --working-path=` |
@@ -58,7 +57,7 @@ Templates contain `{{placeholder}}` tokens. `podman:publish` leaves them as they
 | Placeholder | Value |
 | --- | --- |
 | `{{application}}` | `quadlet_prefix`, kebab-cased |
-| `{{proxy}}` | `proxy_prefix`, kebab-cased |
+| `{{proxy}}` | Name of the `proxy` service, network and volumes: `proxy`, or the `proxy` substitution (`PODMAN_PROXY_PREFIX`) |
 | `{{appEnv}}` | `app.env` |
 | `{{appName}}` | `app.name` |
 | `{{appUrl}}` | `app.url` |

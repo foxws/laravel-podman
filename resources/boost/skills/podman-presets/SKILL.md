@@ -53,7 +53,7 @@ VolumeName={{application}}-valkey
 | Placeholder | Value |
 | --- | --- |
 | `{{application}}` | `quadlet_prefix`, kebab-cased (default `APP_NAME`) |
-| `{{proxy}}` | `proxy_prefix`, kebab-cased |
+| `{{proxy}}` | `proxy`, or the `proxy` substitution (`PODMAN_PROXY_PREFIX`) |
 | `{{appEnv}}`, `{{appName}}`, `{{appUrl}}` | `app.env`, `app.name`, `app.url` |
 | `{{appHost}}` | Host part of `app.url` |
 | `{{appUid}}`/`{{appGid}}` | `quadlet_uid`/`quadlet_gid` |

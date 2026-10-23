@@ -10,6 +10,14 @@ The `proxy` preset's `sites/laravel.Caddyfile` only routes `APP_URL` to the app.
 
 If you already published the `proxy` preset, nothing changes.
 
+`proxy_prefix` is gone: the `proxy` preset's name is now an ordinary substitution. If you published `config/podman.php`, replace `'proxy_prefix' => env('PODMAN_PROXY_PREFIX', 'proxy'),` with this entry in `substitutions` (`PODMAN_PROXY_PREFIX` keeps working). The value is no longer kebab-cased for you:
+
+```php
+'substitutions' => [
+    'proxy' => env('PODMAN_PROXY_PREFIX', 'proxy'),
+],
+```
+
 Your own `substitutions` keys may now leave out the braces, `null` values render as an empty string, and values may contain built-in placeholders such as `{{application}}`. Existing configs keep working.
 
 ## From 6.0 to 6.1

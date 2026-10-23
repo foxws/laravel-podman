@@ -44,3 +44,13 @@ it('lets a custom value override a built-in placeholder', function () {
 
     expect($this->substitutions->apply('{{application}}', 'production'))->toBe('overridden');
 });
+
+it('names the proxy "proxy" unless a substitution renames it', function () {
+    config(['podman.substitutions' => []]);
+
+    expect($this->substitutions->apply('{{proxy}}', 'proxy'))->toBe('proxy');
+
+    config(['podman.substitutions' => ['proxy' => 'edge']]);
+
+    expect($this->substitutions->apply('{{proxy}}', 'proxy'))->toBe('edge');
+});

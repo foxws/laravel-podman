@@ -30,11 +30,6 @@ class PodmanConfig
         return Str::kebab(Config::string('podman.quadlet_prefix'));
     }
 
-    public function proxy(): string
-    {
-        return Str::kebab(Config::string('podman.proxy_prefix'));
-    }
-
     public function uid(): int
     {
         $uid = Config::get('podman.quadlet_uid');

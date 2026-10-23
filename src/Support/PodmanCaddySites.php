@@ -52,25 +52,19 @@ class PodmanCaddySites
      * are configured to serve from the path themselves, such as Mailpit
      * with "MP_WEBROOT".
      *
+     * To mix both kinds, use PodmanCaddyRoutes.
+     *
      * @param  array<string, string>  $routes  Path => internal "host:port" upstream.
      */
     public static function routes(array $routes, bool $stripPrefix = true): string
     {
-        $directive = $stripPrefix ? 'handle_path' : 'handle';
-
-        $blocks = [];
+        $builder = PodmanCaddyRoutes::make();
 
         foreach ($routes as $path => $upstream) {
-            $path = '/'.trim($path, '/');
-
-            if ($path === '/' || $upstream === '') {
-                continue;
-            }
-
-            $blocks[] = "redir {$path} {$path}/\n\n{$directive} {$path}/* {\n\treverse_proxy {$upstream}\n}";
+            $builder->upstream($path, $upstream, $stripPrefix);
         }
 
-        return implode("\n\n", $blocks);
+        return $builder->render();
     }
 
     public static function hostFromUrl(string $url): string

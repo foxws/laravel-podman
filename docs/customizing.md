@@ -272,16 +272,20 @@ A few things to know:
 
 #### Paths instead of subdomains
 
-`PodmanCaddySites::routes()` sends a path of the app's own domain to a service instead, so you need no extra DNS entries or certificates, and the browser sees the same origin (no CORS). It renders routes for the app's site block, which FrankenPHP takes from `CADDY_SERVER_EXTRA_DIRECTIVES`:
+`PodmanCaddyRoutes` sends a path of the app's own domain to a service instead, so you need no extra DNS entries or certificates, and the browser sees the same origin (no CORS). It renders routes for the app's site block, which FrankenPHP takes from `CADDY_SERVER_EXTRA_DIRECTIVES`:
 
 ```php
-'CADDY_SERVER_EXTRA_DIRECTIVES' => implode("\n\n", [
+use Foxws\Podman\Support\PodmanCaddyRoutes;
+
+'CADDY_SERVER_EXTRA_DIRECTIVES' => PodmanCaddyRoutes::make()
     // Reverb stays at "/", the browser connects to "/ws" (Echo's "wsPath").
-    PodmanCaddySites::routes(['/ws' => PodmanCaddySites::hostPort(env('REVERB_HOST'), env('REVERB_PORT', 6001))]),
+    ->route(env('VITE_REVERB_PATH'), env('REVERB_HOST'), env('REVERB_PORT', 6001))
     // Mailpit serves from "/mail/" itself with MP_WEBROOT=/mail/.
-    PodmanCaddySites::routes(['/mail' => PodmanCaddySites::hostPort(env('MAIL_HOST'), 8025)], stripPrefix: false),
-]),
+    ->route(env('MAILPIT_PATH'), env('MAIL_HOST'), 8025, stripPrefix: false)
+    ->render(),
 ```
+
+A route with an empty path, host or port is skipped. `upstream()` takes a ready `host:port` instead, and `PodmanCaddySites::routes()` is a shorthand for a list of routes that all strip or all keep their path.
 
 By default the path is stripped before the request reaches the service. Pass `stripPrefix: false` for services configured to serve from the path themselves. This replaces Octane's Mercure directives, which use the same variable.
 

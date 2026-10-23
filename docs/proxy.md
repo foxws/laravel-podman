@@ -53,7 +53,7 @@ Caddy loads every `*.Caddyfile` in `sites/`. Publish the preset and add a file f
 // config/podman.php
 'substitutions' => [
     'viteHost' => env('VITE_HMR_HOST'),              // vite.laravel.test
-    'viteUpstream' => env('VITE_SERVER_HOST').':5173', // systemd-my-app-vite:5173
+    'viteUpstream' => env('VITE_SERVER_HOST').':'.env('VITE_SERVER_PORT', 5173), // systemd-my-app-vite:5173
     'reverbHost' => env('VITE_REVERB_HOST'),         // ws.laravel.test
     'reverbUpstream' => env('REVERB_HOST').':'.env('REVERB_PORT', 6001),
 ],

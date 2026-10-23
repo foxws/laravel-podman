@@ -17,7 +17,7 @@ The `proxy` preset's `sites/laravel.Caddyfile` only routes `APP_URL` to the app;
 2. If the app uses the `proxy` preset without publishing it, check which of those subdomains it needs (look at `.env`: `VITE_HMR_HOST`, `VITE_REVERB_HOST`, `AWS_URL`, `MAILPIT_UI_HOST`, `RUSTFS_CONSOLE_HOST`). Run `php artisan podman:publish proxy`, add those hosts and upstreams to `substitutions` in `config/podman.php` from the same env variables, and write `containers/stubs/proxy/runtimes/sites/services.Caddyfile` using them. Skip services the app doesn't run.
 3. `php artisan podman:generate proxy`, then hand the user `lpod proxy restart`.
 
-`proxy_prefix` was removed: `{{proxy}}` reads `PODMAN_PROXY_PREFIX` directly (default `proxy`, no longer kebab-cased). Remove the key from a published `config/podman.php`; a `proxy` substitution still overrides it. `PodmanConfig::proxy()` is gone too.
+`proxy_prefix` was removed: if `config/podman.php` is published, move it into `substitutions` as `'proxy' => env('PODMAN_PROXY_PREFIX', 'proxy')` (no longer kebab-cased). `PodmanConfig::proxy()` is gone too.
 
 `substitutions` keys may now leave out the braces, `null` renders as `''`, and values may use built-in placeholders. No change is needed for existing configs.
 

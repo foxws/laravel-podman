@@ -59,7 +59,7 @@ Templates contain `{{placeholder}}` tokens. `podman:publish` leaves them as they
 | --- | --- |
 | `{{application}}` | `quadlet_prefix`, kebab-cased |
 | `{{containerPrefix}}` | `container_prefix` (default `systemd-`), so `{{containerPrefix}}{{application}}-pgsql` is the database container |
-| `{{proxy}}` | Name of the `proxy` service, network and volumes: `proxy`, or the `proxy` substitution (`PODMAN_PROXY_PREFIX`) |
+| `{{proxy}}` | Name of the `proxy` service, network and volumes: `PODMAN_PROXY_PREFIX` (default `proxy`), or a `proxy` substitution |
 | `{{appEnv}}` | `app.env` |
 | `{{appName}}` | `app.name` |
 | `{{appUrl}}` | `app.url` |

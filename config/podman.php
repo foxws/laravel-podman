@@ -168,12 +168,9 @@ return [
     | file. The braces are optional, and values may use the built-in
     | placeholders, e.g. 'reverbUpstream' => 'systemd-{{application}}-reverb:6001'.
     |
-    | "proxy" names the "proxy" preset's service, network and volumes.
-    |
     */
 
     'substitutions' => [
-        'proxy' => env('PODMAN_PROXY_PREFIX', 'proxy'),
         // 'apiEndpoint' => env('API_ENDPOINT'),
     ],
 

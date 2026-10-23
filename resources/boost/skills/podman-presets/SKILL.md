@@ -54,7 +54,7 @@ VolumeName={{application}}-valkey
 | --- | --- |
 | `{{application}}` | `quadlet_prefix`, kebab-cased (default `APP_NAME`) |
 | `{{containerPrefix}}` | `container_prefix` (default `systemd-`), Quadlet's prefix for container and network names |
-| `{{proxy}}` | `proxy`, or the `proxy` substitution (`PODMAN_PROXY_PREFIX`) |
+| `{{proxy}}` | `PODMAN_PROXY_PREFIX` (default `proxy`), or a `proxy` substitution |
 | `{{appEnv}}`, `{{appName}}`, `{{appUrl}}` | `app.env`, `app.name`, `app.url` |
 | `{{appHost}}` | Host part of `app.url` |
 | `{{appUid}}`/`{{appGid}}` | `quadlet_uid`/`quadlet_gid` |

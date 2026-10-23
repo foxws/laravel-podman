@@ -53,7 +53,8 @@ class PodmanSubstitutions
             '{{systemctl}}' => $this->config->systemctl(),
             '{{application}}' => $this->config->prefix(),
             '{{containerPrefix}}' => $this->config->containerPrefix(),
-            '{{proxy}}' => 'proxy',
+            // Falls back to "proxy" when the config is cached and the variable only lives in .env.
+            '{{proxy}}' => (string) env('PODMAN_PROXY_PREFIX', 'proxy'), // @phpstan-ignore larastan.noEnvCallsOutsideOfConfig
             '{{workingPath}}' => $this->path->workingPath(),
             '{{configPath}}' => $this->path->configPath(),
             '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),

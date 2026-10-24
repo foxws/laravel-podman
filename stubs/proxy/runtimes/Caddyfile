@@ -6,7 +6,7 @@
 	}
 
 	# debug
-	local_certs
+	{{proxyCerts}}
 	admin off
 }
 

@@ -65,6 +65,7 @@ class PodmanSubstitutions
             '{{application}}' => $this->config->prefix(),
             '{{containerPrefix}}' => $this->config->containerPrefix(),
             '{{proxy}}' => $this->legacyProxyName(),
+            '{{proxyCerts}}' => $this->config->proxyCerts(),
             '{{workingPath}}' => $this->path->workingPath(),
             '{{configPath}}' => $this->path->configPath(),
             '{{runtimePath}}' => $this->path->workingPresetRuntimePath($preset),

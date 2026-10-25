@@ -184,7 +184,7 @@ it('keeps services running when on-demand is disabled', function () {
     $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
 
     expect(File::get("{$this->publishPath}/development/pgsql.quadlets"))->toContain('StopWhenUnneeded=no')
-        ->and(File::get("{$this->publishPath}/ondemand/laravel-idle@acme.service.d/idle.conf"))->toContain('"LARAVEL_ONDEMAND=no"');
+        ->and(File::get("{$this->publishPath}/ondemand/laravel-idle@acme.service.d/idle.conf"))->toContain('Environment="LARAVEL_ONDEMAND=no"');
 });
 
 it('renders a shared idle check that stops the queue workers, then the scheduler timer', function () {
@@ -195,7 +195,9 @@ it('renders a shared idle check that stops the queue workers, then the scheduler
     expect(File::get("{$this->publishPath}/ondemand/laravel-idle@.service"))
         ->toContain(<<<'UNIT'
             TimeoutStartSec=50
-            Environment="LARAVEL_IDLE_WORKERS=queue horizon" "LARAVEL_CONTAINER_PREFIX=systemd-" "LARAVEL_ONDEMAND=yes"
+            Environment="LARAVEL_IDLE_WORKERS=queue horizon"
+            Environment="LARAVEL_CONTAINER_PREFIX=systemd-"
+            Environment="LARAVEL_ONDEMAND=yes"
             ExecCondition=/usr/bin/test "${LARAVEL_ONDEMAND}" = yes
             ExecCondition=systemctl --user --quiet is-active %i-ondemand.socket
             ExecCondition=/bin/sh -c 'case "$$(systemctl --user is-active %i.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
@@ -235,7 +237,11 @@ it('renders the app\'s idle settings into a drop-in', function () {
 
     expect(File::get("{$this->publishPath}/ondemand/laravel-idle@acme.service.d/idle.conf"))
         ->toContain('[Service]')
-        ->toContain('Environment="LARAVEL_IDLE_WORKERS=horizon imports" "LARAVEL_CONTAINER_PREFIX=lab-" "LARAVEL_ONDEMAND=yes"');
+        ->toContain(<<<'UNIT'
+            Environment="LARAVEL_IDLE_WORKERS=horizon imports"
+            Environment="LARAVEL_CONTAINER_PREFIX=lab-"
+            Environment="LARAVEL_ONDEMAND=yes"
+            UNIT);
 });
 
 it('renders an idle check for the system service manager when installed as root', function () {

@@ -10,7 +10,9 @@ Description=Laravel idle check for %i
 [Service]
 Type=oneshot
 TimeoutStartSec=50
-Environment="LARAVEL_IDLE_WORKERS=queue horizon" "LARAVEL_CONTAINER_PREFIX=systemd-" "LARAVEL_ONDEMAND=yes"
+Environment="LARAVEL_IDLE_WORKERS=queue horizon"
+Environment="LARAVEL_CONTAINER_PREFIX=systemd-"
+Environment="LARAVEL_ONDEMAND=yes"
 ExecCondition=/usr/bin/test "${LARAVEL_ONDEMAND}" = yes
 ExecCondition={{systemctl}} --quiet is-active %i-ondemand.socket
 ExecCondition=/bin/sh -c 'case "$$({{systemctl}} is-active %i.service)" in inactive|failed) exit 0;; *) exit 1;; esac'

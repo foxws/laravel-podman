@@ -1,5 +1,26 @@
 # Upgrading
 
+## From 6.3 to 6.4
+
+The idle check is a systemd template now, shared by every on-demand app on the host: `laravel-idle@.timer` and `laravel-idle@.service` replace each app's `my-app-idle.timer` and `my-app-idle.service`. The socket starts `laravel-idle@my-app.timer`, and the app's workers are in the drop-in `laravel-idle@my-app.service.d/idle.conf`. Installing it needs [`lpod`](docs/lpod.md) v3.1.0 or later. See [The idle check](docs/ondemand.md#the-idle-check).
+
+1. If you published the `ondemand` preset, update it from the vendor's `stubs/ondemand`: `systemd/idle.timer` and `systemd/idle.service` are now `systemd/laravel-idle@.timer`, `systemd/laravel-idle@.service` and `systemd/laravel-idle@{{application}}.service.d/idle.conf`, and the socket `Wants=laravel-idle@{{application}}.timer`. Delete it when it has no other changes.
+
+2. Regenerate the preset, remove the old idle check, and reinstall the socket, for every on-demand app on the host:
+
+    ```bash
+    php artisan podman:generate ondemand
+    lpod self-update                             # to v3.1.0 or later
+    lpod remove my-app-idle.timer                # also removes my-app-idle.service
+    lpod install ondemand/my-app-ondemand.socket --replace
+    ```
+
+    Without lpod, stop and delete `my-app-idle.*` in `~/.config/systemd/user`, copy `my-app-ondemand.*` and `laravel-idle@*` there (with `cp -r` for the drop-in folder), then run `systemctl --user daemon-reload` and `systemctl --user restart my-app-ondemand.socket`.
+
+Every app renders the same template, so update the apps on one host together.
+
+`PodmanRenderedPreset` has a new `systemdDropIns` list and `systemdTemplates()` method, and `systemdUnitsOfType()` leaves templates out. If you install rendered presets yourself, copy the drop-in folders too, and don't enable the templates.
+
 ## From 6.2 to 6.3
 
 Nothing breaks: generated files, published presets and published configs keep working.

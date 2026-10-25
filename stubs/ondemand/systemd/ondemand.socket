@@ -1,6 +1,6 @@
 [Unit]
 Description=Laravel App (Octane) on-demand socket
-Wants={{application}}-idle.timer
+Wants=laravel-idle@{{application}}.timer
 
 [Socket]
 ListenStream={{ondemandListen}}

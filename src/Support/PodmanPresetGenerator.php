@@ -20,7 +20,8 @@ class PodmanPresetGenerator
     ) {}
 
     /**
-     * Render every ".quadlets" file and runtime build file for a preset
+     * Render every ".quadlets" file, plain systemd unit and drop-in, and
+     * runtime build file for a preset
      * (from the vendor copy, or the published copy if it exists) into the
      * configured publish path, ready for "lpod install"/"podman quadlet
      * install" on the host. The preset's previous output is removed first,
@@ -54,11 +55,25 @@ class PodmanPresetGenerator
             }
         }
 
+        $systemdDropIns = [];
+
         $unitsSource = $this->path->presetSystemdPath($preset);
 
         if (File::isDirectory($unitsSource)) {
             foreach (File::files($unitsSource) as $unit) {
-                $systemdUnits[] = $file->prepareSource($unit->getRealPath(), "{$target}/{$this->config->prefix()}-{$unit->getFilename()}", $preset);
+                $systemdUnits[] = $file->prepareSource($unit->getRealPath(), "{$target}/{$this->systemdUnitName($unit->getFilename())}", $preset);
+            }
+
+            foreach (File::directories($unitsSource) as $directory) {
+                if (! Str::endsWith($directory, '.d')) {
+                    continue;
+                }
+
+                $dropInTarget = "{$target}/".strtr(basename($directory), $file->substitutions($preset));
+
+                foreach (File::files($directory) as $dropIn) {
+                    $systemdDropIns[] = $file->prepareSource($dropIn->getRealPath(), "{$dropInTarget}/{$dropIn->getFilename()}", $preset);
+                }
             }
         }
 
@@ -68,7 +83,22 @@ class PodmanPresetGenerator
             $file->publishDirectory($runtimesSource, $runtimesPath = $this->path->presetPublishRuntimesPath($preset), $preset);
         }
 
-        return new PodmanRenderedPreset($preset, $target, $quadlets, $systemdUnits, $runtimesPath);
+        return new PodmanRenderedPreset($preset, $target, $quadlets, $systemdUnits, $runtimesPath, $systemdDropIns);
+    }
+
+    /**
+     * The name a plain systemd unit is rendered under: the app's prefix in
+     * front, as in "my-app-ondemand.socket". Templates, such as
+     * "laravel-idle@.service", are shared by every app on the host and keep
+     * their name.
+     */
+    public function systemdUnitName(string $fileName): string
+    {
+        if (Str::contains($fileName, '@.')) {
+            return $fileName;
+        }
+
+        return "{$this->config->prefix()}-{$fileName}";
     }
 
     /**

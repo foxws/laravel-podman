@@ -20,7 +20,7 @@ lpod install development/app.quadlets --replace
 lpod install ondemand/my-app-ondemand.socket --replace
 ```
 
-- `lpod install` copies the socket, its proxy service and the [idle check](#the-idle-check) to `~/.config/systemd/user/`, and enables the socket. The idle check lets the database and cache sleep too. It needs `lpod` v3.0.0 or later.
+- `lpod install` copies the socket, its proxy service and the [idle check](#the-idle-check) to `~/.config/systemd/user/`, and enables the socket. The idle check lets the database and cache sleep too. It needs `lpod` v3.1.0 or later.
 - On a server, run `loginctl enable-linger` once, so the socket keeps listening after a reboot without logging in. The `lpod` installer offers to do this.
 - If you use the `proxy` preset, regenerate and reinstall it too. Caddy then sends app traffic to the socket instead of the container.
 
@@ -103,7 +103,21 @@ To keep a single service running, such as the database for an external client, p
 
 ## The idle check
 
-Queue workers that keep running while the app sleeps would keep the database and cache awake too. The idle check stops them once there's no work left. It comes with the socket: `my-app-ondemand.socket` starts `my-app-idle.timer`, which runs `my-app-idle.service` every minute, and stops it again when the socket stops. There's nothing else to install or enable.
+Queue workers that keep running while the app sleeps would keep the database and cache awake too. The idle check stops them once there's no work left. It comes with the socket: `my-app-ondemand.socket` starts `laravel-idle@my-app.timer`, which runs `laravel-idle@my-app.service` every minute, and stops it again when the socket stops. There's nothing else to install or enable.
+
+The check is a systemd template, `laravel-idle@.timer` and `laravel-idle@.service`, shared by every on-demand app on the host, so each app only adds its socket and proxy service:
+
+```text
+~/.config/systemd/user/
+├── laravel-idle@.service          # shared by every app
+├── laravel-idle@.timer
+├── laravel-idle@my-app.service.d/
+│   └── idle.conf                  # my-app's workers
+├── my-app-ondemand.service
+└── my-app-ondemand.socket
+```
+
+The app's own settings, such as its [workers](#choosing-the-workers), are in the drop-in `laravel-idle@my-app.service.d/idle.conf`. Without it, the check uses `queue horizon`.
 
 Every minute, while the app is asleep, the check:
 
@@ -119,8 +133,8 @@ The check does nothing while on-demand is off or the socket isn't listening. If 
 See what it did, or run it once:
 
 ```bash
-journalctl --user -u my-app-idle
-lpod idle my-app                       # or: systemctl --user start my-app-idle.service
+journalctl --user -u laravel-idle@my-app
+lpod idle my-app                       # or: systemctl --user start laravel-idle@my-app.service
 ```
 
 ### Choosing the workers
@@ -131,7 +145,7 @@ lpod idle my-app                       # or: systemctl --user start my-app-idle.
 PODMAN_ONDEMAND_IDLE_WORKERS=horizon,imports
 ```
 
-Then regenerate the `ondemand` preset and reinstall the socket:
+Then regenerate the `ondemand` preset and reinstall the socket, which installs the new drop-in:
 
 ```bash
 php artisan podman:generate ondemand
@@ -143,7 +157,7 @@ lpod install ondemand/my-app-ondemand.socket --replace
 The units only use `systemctl` and `podman exec`, so they work on hosts without lpod. [laravel-installer](https://github.com/foxws/laravel-installer) installs them for you. By hand, copy the socket, its proxy service and the idle check to `~/.config/systemd/user`, then enable the socket:
 
 ```bash
-cp podman/ondemand/my-app-ondemand.* podman/ondemand/my-app-idle.* ~/.config/systemd/user/
+cp -r podman/ondemand/my-app-ondemand.* podman/ondemand/laravel-idle@* ~/.config/systemd/user/
 systemctl --user daemon-reload
 systemctl --user enable --now my-app-ondemand.socket
 ```
@@ -284,4 +298,6 @@ The proxy doesn't need to retry. The connection is held until the app is ready, 
 
 - The presets are the same with on-demand on or off. `{{ondemand}}` renders `StopWhenUnneeded=yes` or `no` on the app and services, and the `proxy` preset points at the socket or the container.
 - The socket and its proxy service are plain systemd units, because Quadlet has no unit type for sockets. They're always rendered, but only take effect once installed.
+- A plain unit with `@.` in its name, such as `laravel-idle@.service`, is a template and keeps its name when rendered, instead of getting the app's prefix. A `.d` folder next to the units is a drop-in, and placeholders in its name are rendered, as in `laravel-idle@{{application}}.service.d`. `PodmanRenderedPreset` lists them in `systemdTemplates()` and `systemdDropIns`, and leaves templates out of `systemdUnitsOfType()`, since they can't be enabled.
+- Every app renders the same template. Installing an app's socket overwrites it with that app's version, so keep the apps on one host on the same laravel-podman version.
 - Sidecars use `PartOf=` the app, not `BindsTo=`. `BindsTo=` would count as needing the app, which would keep it running.

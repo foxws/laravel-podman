@@ -15,6 +15,7 @@ readonly class PodmanRenderedPreset
     /**
      * @param  list<string>  $quadlets  The rendered ".quadlets" files.
      * @param  list<string>  $systemdUnits  The rendered plain systemd units, such as sockets and timers.
+     * @param  list<string>  $systemdDropIns  The rendered drop-ins of plain systemd units, such as "laravel-idle@my-app.service.d/idle.conf".
      */
     public function __construct(
         public string $preset,
@@ -22,6 +23,7 @@ readonly class PodmanRenderedPreset
         public array $quadlets,
         public array $systemdUnits,
         public ?string $runtimesPath,
+        public array $systemdDropIns = [],
     ) {}
 
     /**
@@ -38,7 +40,8 @@ readonly class PodmanRenderedPreset
 
     /**
      * The rendered plain systemd units of the given type, such as "socket"
-     * or "timer".
+     * or "timer". Templates are left out, since they can't be enabled or
+     * started without an instance.
      *
      * @return list<string>
      */
@@ -46,8 +49,24 @@ readonly class PodmanRenderedPreset
     {
         return array_values(array_filter(
             $this->systemdUnits,
-            fn (string $file): bool => pathinfo($file, PATHINFO_EXTENSION) === $type,
+            fn (string $file): bool => pathinfo($file, PATHINFO_EXTENSION) === $type && ! $this->isSystemdTemplate($file),
         ));
+    }
+
+    /**
+     * The rendered plain systemd templates, such as "laravel-idle@.service",
+     * which every app on the host shares.
+     *
+     * @return list<string>
+     */
+    public function systemdTemplates(): array
+    {
+        return array_values(array_filter($this->systemdUnits, $this->isSystemdTemplate(...)));
+    }
+
+    protected function isSystemdTemplate(string $file): bool
+    {
+        return str_contains(basename($file), '@.');
     }
 
     /**

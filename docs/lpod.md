@@ -122,7 +122,7 @@ All of these except `reload` accept the same flags as `podman quadlet` (`--repla
 | --- | --- |
 | `lpod idle APP` | Run the app's [idle check](ondemand.md#the-idle-check) once, and show what it did |
 
-The idle check comes with the on-demand socket, so `lpod install ondemand/my-app-ondemand.socket` turns it on. From lpod v3.0.0, `lpod idle disable` only turns off the `lpod-idle@` timer of older releases, and `lpod idle enable` only prints how to install the socket.
+The idle check comes with the on-demand socket, so `lpod install ondemand/my-app-ondemand.socket` turns it on. From lpod v3.1.0, that also installs the shared `laravel-idle@` template and the app's drop-in. From lpod v3.0.0, `lpod idle disable` only turns off the `lpod-idle@` timer of older releases, and `lpod idle enable` only prints how to install the socket.
 
 ### Xdebug
 

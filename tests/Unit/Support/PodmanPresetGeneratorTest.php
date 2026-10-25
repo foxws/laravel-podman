@@ -55,6 +55,24 @@ it('lists the units, sockets, timers and secrets it rendered', function () {
         ->and(array_map(fn ($secret) => $secret->name, $rendered->secrets()))->toContain('acme-env');
 });
 
+it('keeps the names of shared templates and lists their drop-ins', function () {
+    $rendered = (new PodmanPresetGenerator)->generate('ondemand');
+
+    expect($rendered->systemdUnits)->toEqualCanonicalizing([
+        "{$rendered->path}/acme-ondemand.socket",
+        "{$rendered->path}/acme-ondemand.service",
+        "{$rendered->path}/laravel-idle@.timer",
+        "{$rendered->path}/laravel-idle@.service",
+    ])
+        ->and($rendered->systemdTemplates())->toEqualCanonicalizing([
+            "{$rendered->path}/laravel-idle@.timer",
+            "{$rendered->path}/laravel-idle@.service",
+        ])
+        ->and($rendered->systemdUnitsOfType('timer'))->toBe([])
+        ->and($rendered->systemdUnitsOfType('socket'))->toBe(["{$rendered->path}/acme-ondemand.socket"])
+        ->and($rendered->systemdDropIns)->toBe(["{$rendered->path}/laravel-idle@acme.service.d/idle.conf"]);
+});
+
 it('renders every bundled preset into valid units', function (string $preset) {
     $rendered = (new PodmanPresetGenerator)->generate($preset);
 

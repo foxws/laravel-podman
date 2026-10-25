@@ -1,0 +1,11 @@
+# The idle check's timer, shared by every on-demand app on this host:
+# "laravel-idle@my-app.timer" checks "my-app". Started by the app's
+# on-demand socket's Wants= line, and stopped with it, so installing the
+# socket is enough. It has no install section to enable.
+[Unit]
+Description=Laravel idle check timer for %i
+PartOf=%i-ondemand.socket
+
+[Timer]
+OnCalendar=*-*-* *:*:30
+AccuracySec=1s

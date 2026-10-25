@@ -184,28 +184,30 @@ it('keeps services running when on-demand is disabled', function () {
     $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
 
     expect(File::get("{$this->publishPath}/development/pgsql.quadlets"))->toContain('StopWhenUnneeded=no')
-        ->and(File::get("{$this->publishPath}/ondemand/acme-idle.service"))->toContain('ExecCondition=/usr/bin/test no = yes');
+        ->and(File::get("{$this->publishPath}/ondemand/laravel-idle@acme.service.d/idle.conf"))->toContain('"LARAVEL_ONDEMAND=no"');
 });
 
-it('renders an idle check that stops the queue workers, then the scheduler timer', function () {
+it('renders a shared idle check that stops the queue workers, then the scheduler timer', function () {
     config(['podman.quadlet_prefix' => 'acme', 'podman.quadlet_uid' => 1000]);
 
     $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
 
-    expect(File::get("{$this->publishPath}/ondemand/acme-idle.service"))
+    expect(File::get("{$this->publishPath}/ondemand/laravel-idle@.service"))
         ->toContain(<<<'UNIT'
             TimeoutStartSec=50
-            ExecCondition=/usr/bin/test yes = yes
-            ExecCondition=systemctl --user --quiet is-active acme-ondemand.socket
-            ExecCondition=/bin/sh -c 'case "$$(systemctl --user is-active acme.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
-            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active acme-schedule.service || { echo "The scheduler of acme is still running."; exit 1; }'
-            ExecCondition=/bin/sh -c 'for worker in queue horizon; do ! systemctl --user --quiet is-active acme-$$worker.service || podman exec systemd-acme-$$worker php -d variables_order=EGPCS /app/artisan podman:idle || { echo "acme has work in progress, keeping its workers running."; exit 1; }; done'
+            Environment="LARAVEL_IDLE_WORKERS=queue horizon" "LARAVEL_CONTAINER_PREFIX=systemd-" "LARAVEL_ONDEMAND=yes"
+            ExecCondition=/usr/bin/test "${LARAVEL_ONDEMAND}" = yes
+            ExecCondition=systemctl --user --quiet is-active %i-ondemand.socket
+            ExecCondition=/bin/sh -c 'case "$$(systemctl --user is-active %i.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
+            ExecCondition=/bin/sh -c '! systemctl --user --quiet is-active %i-schedule.service || { echo "The scheduler of %i is still running."; exit 1; }'
+            ExecCondition=/bin/sh -c 'for worker in $$LARAVEL_IDLE_WORKERS; do ! systemctl --user --quiet is-active %i-$$worker.service || podman exec "$${LARAVEL_CONTAINER_PREFIX}%i-$$worker" php -d variables_order=EGPCS /app/artisan podman:idle || { echo "%i has work in progress, keeping its workers running."; exit 1; }; done'
             UNIT)
         ->toContain(<<<'UNIT'
-            ExecCondition=/bin/sh -c 'case "$$(systemctl --user is-active acme.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
-            ExecStart=-/bin/sh -c 'for worker in queue horizon; do ! systemctl --user --quiet is-active acme-$$worker.service || systemctl --user stop --no-block acme-$$worker.service; done'
-            ExecStart=-/bin/sh -c '! systemctl --user --quiet is-active acme-schedule.timer || exec systemctl --user stop --no-block acme-schedule.timer'
-            UNIT);
+            ExecCondition=/bin/sh -c 'case "$$(systemctl --user is-active %i.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
+            ExecStart=-/bin/sh -c 'for worker in $$LARAVEL_IDLE_WORKERS; do ! systemctl --user --quiet is-active %i-$$worker.service || systemctl --user stop --no-block %i-$$worker.service; done'
+            ExecStart=-/bin/sh -c '! systemctl --user --quiet is-active %i-schedule.timer || exec systemctl --user stop --no-block %i-schedule.timer'
+            UNIT)
+        ->not->toContain('acme');
 });
 
 it('starts the idle check with the on-demand socket', function () {
@@ -214,20 +216,26 @@ it('starts the idle check with the on-demand socket', function () {
     $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
 
     expect(File::get("{$this->publishPath}/ondemand/acme-ondemand.socket"))
-        ->toContain('Wants=acme-idle.timer')
-        ->and(File::get("{$this->publishPath}/ondemand/acme-idle.timer"))
-        ->toContain('PartOf=acme-ondemand.socket')
-        ->not->toContain('[Install]');
+        ->toContain('Wants=laravel-idle@acme.timer')
+        ->and(File::get("{$this->publishPath}/ondemand/laravel-idle@.timer"))
+        ->toContain('PartOf=%i-ondemand.socket')
+        ->not->toContain('[Install]')
+        ->and(File::exists("{$this->publishPath}/ondemand/acme-idle.timer"))->toBeFalse()
+        ->and(File::exists("{$this->publishPath}/ondemand/acme-idle.service"))->toBeFalse();
 });
 
-it('renders the idle check for the configured workers', function () {
-    config(['podman.quadlet_prefix' => 'acme', 'podman.ondemand.idle_workers' => 'horizon, imports']);
+it('renders the app\'s idle settings into a drop-in', function () {
+    config([
+        'podman.quadlet_prefix' => 'acme',
+        'podman.container_prefix' => 'lab-',
+        'podman.ondemand.idle_workers' => 'horizon, imports',
+    ]);
 
     $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
 
-    expect(File::get("{$this->publishPath}/ondemand/acme-idle.service"))
-        ->toContain("'for worker in horizon imports; do")
-        ->not->toContain('queue');
+    expect(File::get("{$this->publishPath}/ondemand/laravel-idle@acme.service.d/idle.conf"))
+        ->toContain('[Service]')
+        ->toContain('Environment="LARAVEL_IDLE_WORKERS=horizon imports" "LARAVEL_CONTAINER_PREFIX=lab-" "LARAVEL_ONDEMAND=yes"');
 });
 
 it('renders an idle check for the system service manager when installed as root', function () {
@@ -235,8 +243,8 @@ it('renders an idle check for the system service manager when installed as root'
 
     $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
 
-    expect(File::get("{$this->publishPath}/ondemand/acme-idle.service"))
-        ->toContain("ExecStart=-/bin/sh -c '! systemctl --quiet is-active acme-schedule.timer || exec systemctl stop --no-block acme-schedule.timer'")
+    expect(File::get("{$this->publishPath}/ondemand/laravel-idle@.service"))
+        ->toContain("ExecStart=-/bin/sh -c '! systemctl --quiet is-active %i-schedule.timer || exec systemctl stop --no-block %i-schedule.timer'")
         ->not->toContain('--user');
 });
 

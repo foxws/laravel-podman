@@ -273,6 +273,18 @@ A few things to know:
 - An entry with an empty hostname or upstream (unset env var) is skipped.
 - `render()` uses `http://` by default. With a bare hostname, Caddy would try automatic HTTPS on port 443. The `production` image runs as a non-root user without permission to bind that port, so the server would crash. Only pass the third `$scheme` argument if your Caddy is allowed to bind ports below 1024.
 
+Put your TLS proxy in front of the app's port and send every hostname to it, keeping the original `Host` header. For example, with Caddy on the host:
+
+```caddy
+laravel.test, s3.laravel.test, ws.laravel.test, mail.laravel.test {
+	reverse_proxy 127.0.0.1:8000 {
+		stream_close_delay 5m
+	}
+}
+```
+
+`stream_close_delay` keeps WebSocket connections open for a while after a Caddy reload. Caddy passes the `Host` header through by default, so don't override it with `header_up Host`.
+
 #### Paths instead of subdomains
 
 Some services can also run under a path of the app's own domain, such as `laravel.test/ws` instead of `ws.laravel.test`. That needs no extra DNS entries or certificates, and the browser sees the same origin, so you need no CORS or CSP entries for those services. Subdomains are the default because every service supports them. Use a path only for services that work under one:

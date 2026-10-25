@@ -2,6 +2,20 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 6.4.0 - 2026-10-25
+
+The idle check is a systemd template now, shared by every on-demand app on the host. The `ondemand` preset renders `laravel-idle@.timer` and `laravel-idle@.service` instead of each app's `my-app-idle.timer` and `my-app-idle.service`. Each app's settings (`idle_workers`, `container_prefix`, `ondemand.enabled`) go in the drop-in `laravel-idle@my-app.service.d/idle.conf`, and the socket starts `laravel-idle@my-app.timer`. See "The idle check" in docs/ondemand.md.
+
+Installing it needs [lpod v3.1.0](https://github.com/foxws/lpod/releases/tag/v3.1.0) or later. Run `lpod remove my-app-idle.timer` to remove the old units, then reinstall the socket with `--replace`. Apps on one host share the template, so upgrade them together. See UPGRADING.md.
+
+`PodmanRenderedPreset` has a new `systemdDropIns` list and `systemdTemplates()` method, and `systemdUnitsOfType()` leaves templates out. Code that installs rendered presets itself must copy the drop-in folders too.
+
+### What's Changed
+
+* Share the idle check between apps as a systemd template by @francoism90 in https://github.com/foxws/laravel-podman/pull/72
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/6.3.0...6.4.0
+
 ## 6.3.0 - 2026-10-23
 
 Templates no longer assume one stack. The `proxy` preset's site now routes the app and its `vite.`, `ws.`, `s3.`, `fs.` and `mail.` subdomains entirely through placeholders, such as `{{viteHost}}` and `{{viteUpstream}}`. Change a host or upstream in `substitutions` without publishing the preset, for example `'viteHost' => env('VITE_HMR_HOST', 'vite.{{appHost}}')`. In `substitutions` the braces are optional, `null` renders as an empty string, and values may use built-in placeholders.
@@ -242,12 +256,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -289,6 +305,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -354,6 +371,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -366,6 +384,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

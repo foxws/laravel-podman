@@ -88,3 +88,13 @@ it('still reads the proxy name from a legacy proxy_prefix', function () {
 
     expect($this->substitutions->apply('{{proxy}}', 'proxy'))->toBe('gateway');
 });
+
+it('uses Caddy\'s local certificates only in the local environment', function () {
+    config(['app.env' => 'local']);
+
+    expect($this->substitutions->apply('{{proxyCerts}}', 'proxy'))->toBe('local_certs');
+
+    config(['app.env' => 'production']);
+
+    expect($this->substitutions->apply('{{proxyCerts}}', 'proxy'))->toBe('');
+});

@@ -2,6 +2,15 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 6.4.1 - 2026-10-31
+
+### What's Changed
+
+* Add Caddy example for an external proxy by @francoism90 in https://github.com/foxws/laravel-podman/pull/73
+* Expose container ports per quadlet instead of in the image by @francoism90 in https://github.com/foxws/laravel-podman/pull/74
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/6.4.0...6.4.1
+
 ## 6.4.0 - 2026-10-25
 
 The idle check is a systemd template now, shared by every on-demand app on the host. The `ondemand` preset renders `laravel-idle@.timer` and `laravel-idle@.service` instead of each app's `my-app-idle.timer` and `my-app-idle.service`. Each app's settings (`idle_workers`, `container_prefix`, `ondemand.enabled`) go in the drop-in `laravel-idle@my-app.service.d/idle.conf`, and the socket starts `laravel-idle@my-app.timer`. See "The idle check" in docs/ondemand.md.
@@ -257,12 +266,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -305,6 +316,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -372,6 +384,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -384,6 +397,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

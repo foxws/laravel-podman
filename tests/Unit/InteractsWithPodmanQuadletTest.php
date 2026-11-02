@@ -15,6 +15,7 @@ it('lists the presets available in the vendor stubs directory', function () {
         'ondemand' => 'ondemand',
         'production' => 'production',
         'proxy' => 'proxy',
+        'runtime' => 'runtime',
         's3' => 's3',
     ]);
 });
@@ -32,6 +33,7 @@ it('merges presets discovered in the configured stubs path with the vendor ones'
         'php-container' => 'php-container',
         'production' => 'production',
         'proxy' => 'proxy',
+        'runtime' => 'runtime',
         's3' => 's3',
     ]);
 

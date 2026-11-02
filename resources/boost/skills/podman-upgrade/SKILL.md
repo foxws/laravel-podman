@@ -1,13 +1,22 @@
 ---
 name: podman-upgrade
-description: Upgrade foxws/laravel-podman between major and minor versions (v3 through 6.4), including published presets in containers/stubs, volumes and the on-demand idle check. Use when upgrading the package, or when published presets or installed units look older than the installed version.
+description: Upgrade foxws/laravel-podman between major and minor versions (v3 through 6.5), including published presets in containers/stubs, volumes and the on-demand idle check. Use when upgrading the package, or when published presets or installed units look older than the installed version.
 ---
 
 # Upgrading laravel-podman
 
-Check the installed version with `composer show foxws/laravel-podman`. Coming from v3, do "From v3 to v4" first, then "From v4 to v5", then "From v5 to v6", then "From 6.0 to 6.1", then "From 6.2 to 6.3", then "From 6.3 to 6.4".
+Check the installed version with `composer show foxws/laravel-podman`. Coming from v3, do "From v3 to v4" first, then "From v4 to v5", then "From v5 to v6", then "From 6.0 to 6.1", then "From 6.2 to 6.3", then "From 6.3 to 6.4", then "From 6.4 to 6.5".
 
 The human guide is [UPGRADING.md](https://github.com/foxws/laravel-podman/blob/main/UPGRADING.md). It isn't shipped in `vendor/`, and these notes cover the same steps.
+
+## From 6.4 to 6.5
+
+`production` builds on the `runtime` preset's image, a static FrankenPHP build (`ghcr.io/foxws/laravel-podman-runtime:php-8.5`), instead of `docker.io/dunglas/frankenphp`.
+
+1. `composer require foxws/laravel-podman:^6.5` (with `--dev` if it was a dev dependency).
+2. If the user published `containers/stubs/production`, update `runtimes/Containerfile` from the vendor's `stubs/production`: `ARG RUNTIME_IMAGE=ghcr.io/foxws/laravel-podman-runtime:php-8.5` + `FROM ${RUNTIME_IMAGE}` instead of `FRANKENPHP_VERSION`; drop the layers the runtime has (`TZ`/`LANG`/`DEBIAN_FRONTEND`/`APP_USER`, timezone, `ca-certificates curl gosu`, the `docker` user, `/app` and `/config`, `php.ini-production`, `install-php-extensions`, `setcap`); copy `php-production.ini` to `${PHP_INI_DIR}/php.d/xx-php-user.ini`. Keep their own packages and layers.
+3. `PHP_EXTENSIONS` is gone from `production`. The runtime has the old image's extensions except `ffi` and `inotify`. If the user's list had others, ask before building a custom runtime (publish `runtime`, build it with a comma-separated `PHP_EXTENSIONS`, set `RUNTIME_IMAGE`): it compiles PHP from source and takes a while.
+4. `php artisan podman:generate production`, then hand the user the rebuild and restart of the app's containers.
 
 ## From 6.3 to 6.4
 

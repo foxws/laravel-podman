@@ -66,4 +66,28 @@ if [ ${#settings[@]} -gt 0 ]; then
     export PHP_INI_SCAN_DIR=":${dir}"
 fi
 
+# php-cli on PHP 8.5 only runs a script or "-r" code, so answer the info
+# options tools and people use most like the CLI SAPI does.
+# shellcheck disable=SC2016 # the "$" belongs to PHP
+if [ $# -eq 0 ] && [ ${#args[@]} -eq 1 ]; then
+    case "${args[0]}" in
+        -v | --version)
+            set -- -r 'printf("PHP %s (cli) (FrankenPHP) (%s)\nCopyright (c) The PHP Group\nZend Engine v%s, Copyright (c) Zend Technologies\n", PHP_VERSION, PHP_ZTS ? "ZTS" : "NTS", zend_version());'
+            args=()
+            ;;
+        -m)
+            set -- -r '$php = get_loaded_extensions(); $zend = get_loaded_extensions(true); natcasesort($php); natcasesort($zend); echo "[PHP Modules]\n", implode("\n", $php), "\n\n[Zend Modules]\n", implode("\n", $zend), "\n\n";'
+            args=()
+            ;;
+        -i)
+            set -- -r 'phpinfo();'
+            args=()
+            ;;
+        --ini)
+            set -- -r 'printf("Configuration File (php.ini) Path: %s\nLoaded Configuration File:         %s\nScan for additional .ini files in: %s\nAdditional .ini files parsed:      %s\n", PHP_CONFIG_FILE_PATH, php_ini_loaded_file() ?: "(none)", PHP_CONFIG_FILE_SCAN_DIR ?: "(none)", php_ini_scanned_files() ?: "(none)");'
+            args=()
+            ;;
+    esac
+fi
+
 exec -a "$(realpath "$0")" /usr/local/bin/frankenphp php-cli "${args[@]}" "$@"

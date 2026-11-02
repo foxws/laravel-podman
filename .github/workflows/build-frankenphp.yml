@@ -127,7 +127,9 @@ jobs:
           run() { podman run --rm "${IMAGE_REF}" "$@"; }
 
           run frankenphp version
-          run php -v
+          run php -v | grep -q '^PHP 8\.'
+          run php -m | grep -qx uv
+          run php --ini | grep -q '/etc/frankenphp/php.ini'
           run composer --version
 
           # Horizon starts its supervisors and workers through PHP_BINARY

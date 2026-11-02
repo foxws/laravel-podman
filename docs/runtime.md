@@ -27,9 +27,10 @@ The image exposes no ports. The quadlets expose the ports they use with `ExposeH
 
 ## The php command
 
-The static build has no separate `php` binary. `/usr/local/bin/php` is a script that runs `frankenphp php-cli`. It also does two things `php-cli` doesn't do on PHP 8.5:
+The static build has no separate `php` binary. `/usr/local/bin/php` is a script that runs `frankenphp php-cli`. It also does what `php-cli` doesn't do on PHP 8.5:
 
 - It applies the `-d` settings before the script, by writing them to an ini file that PHP loads through `PHP_INI_SCAN_DIR`. Composer passes `-d allow_url_fopen=… -d disable_functions=… -d memory_limit=…` to every `@php` script, such as `@php artisan package:discover`.
+- It answers `-v`, `-m`, `-i` and `--ini` itself. On PHP 8.5, `php-cli` only runs a script or `-r` code, and ignores other options such as `-n` and `-c`.
 - It sets `PHP_BINARY` to itself instead of the `frankenphp` binary. Horizon, the scheduler, `queue:listen` and Composer start their child processes with `PHP_BINARY`, so they keep working.
 
 ## mimalloc

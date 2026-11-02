@@ -70,10 +70,12 @@ fi
 
 # Install cpx (composer package executor, like npx for Composer binaries)
 RUN COMPOSER_HOME=/usr/local/share/composer composer global require cpx/cpx:^2.0 \
+    && COMPOSER_HOME=/usr/local/share/composer composer clear-cache \
     && ln -s /usr/local/share/composer/vendor/bin/cpx /usr/local/bin/cpx
 
 # Node.js Configuration
 RUN npm install -g npm@latest pnpm@latest yarn@latest svgo@latest \
+    && npm cache clean --force \
     && mkdir -p ${PNPM_HOME}/store \
     && pnpm config set store-dir ${PNPM_HOME}/store
 
@@ -115,7 +117,8 @@ fi
 # host at runtime, masking whatever the build installed there. Set
 # CODEX_CLI=false to skip it, or to a version to pin it.
 RUN if [ "$CODEX_CLI" != "false" ]; then \
-    npm install -g --prefix=/home/docker/.local @openai/codex@$CODEX_CLI; \
+    npm install -g --prefix=/home/docker/.local @openai/codex@$CODEX_CLI \
+    && npm cache clean --force; \
 fi
 
 # Install Laravel LSP -- the language server laravel/agent-skills' laravel-lsp
@@ -124,10 +127,12 @@ fi
 RUN if [ "$AI_LARAVEL_LSP" != "false" ]; then \
     if [ "$AI_LARAVEL_LSP" = "latest" ]; then LSP_PACKAGE=laravel/lsp; else LSP_PACKAGE="laravel/lsp:$AI_LARAVEL_LSP"; fi \
     && COMPOSER_HOME=/usr/local/share/composer composer global require "$LSP_PACKAGE" \
+    && COMPOSER_HOME=/usr/local/share/composer composer clear-cache \
     && ln -s /usr/local/share/composer/vendor/bin/laravel-lsp /usr/local/bin/laravel-lsp; \
 fi
 
 # Install additional AI CLI packages if specified
 RUN if [ -n "$AI_NPM_PACKAGES" ]; then \
-    npm install -g --prefix=/home/docker/.local $AI_NPM_PACKAGES; \
+    npm install -g --prefix=/home/docker/.local $AI_NPM_PACKAGES \
+    && npm cache clean --force; \
 fi

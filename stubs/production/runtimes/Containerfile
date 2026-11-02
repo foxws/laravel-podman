@@ -85,7 +85,7 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Custom PHP configuration
-COPY podman/production/runtimes/php-production.ini /usr/local/etc/php/conf.d/xx-php-user.ini
+COPY podman/production/runtimes/php-production.ini ${PHP_INI_DIR}/conf.d/xx-php-user.ini
 
 # Node.js Configuration
 #
@@ -94,9 +94,10 @@ COPY podman/production/runtimes/php-production.ini /usr/local/etc/php/conf.d/xx-
 # were chowned to "docker" earlier -- re-chown so the "docker" user can
 # read them.
 RUN npm install -g npm@latest pnpm@latest svgo@latest \
-    && mkdir -p ${PNPM_HOME}/store \
+    && npm cache clean --force \
+    && mkdir -p ${PNPM_HOME}/store /home/docker/.cache/composer /home/docker/.cache/pnpm \
     && pnpm config set store-dir ${PNPM_HOME}/store \
-    && chown -R docker:docker ${PNPM_HOME} /config /data
+    && chown -R docker:docker ${PNPM_HOME} /home/docker/.cache /config /data
 
 # Entrypoint
 COPY --chmod=755 podman/production/runtimes/entrypoint.sh /usr/local/bin/entrypoint.sh
@@ -111,7 +112,7 @@ USER docker
 RUN cp .env.example .env
 
 # Install PHP dependencies
-RUN --mount=type=cache,target=/home/docker/.composer/cache,uid=${UID},gid=${GID} \
+RUN --mount=type=cache,target=/home/docker/.cache/composer,uid=${UID},gid=${GID} \
     composer install --prefer-dist --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Complete composer setup
@@ -130,6 +131,7 @@ RUN ${PHP_CLI} storage:link
 # devDependencies -- all in one layer, since Docker layers are additive and
 # pruning in a later layer wouldn't remove devDependencies from the image.
 RUN --mount=type=cache,target=/home/docker/.local/share/pnpm/store,uid=${UID},gid=${GID} \
+    --mount=type=cache,target=/home/docker/.cache/pnpm,uid=${UID},gid=${GID} \
     pnpm install --frozen-lockfile \
     && pnpm build && pnpm build:ssr \
     && pnpm prune --prod

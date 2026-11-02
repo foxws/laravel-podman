@@ -42,10 +42,11 @@ php artisan podman:generate production
 
 podman build -f podman/production/runtimes/Containerfile --target=runtime \
     --build-arg PHP_EXTENSIONS="apcu,bcmath,...,mongodb" \
+    --secret id=github_token,env=GITHUB_TOKEN \
     -t localhost/my-app-runtime .
 ```
 
-Then pass `--build-arg RUNTIME_IMAGE=localhost/my-app-runtime`, or add `BuildArg=RUNTIME_IMAGE=localhost/my-app-runtime` under `[Build]`. See the [static-php-cli extension list](https://static-php.dev/en/guide/extensions.html) for what's supported. The build compiles PHP and every extension from source, so it takes a while.
+Then pass `--build-arg RUNTIME_IMAGE=localhost/my-app-runtime`, or add `BuildArg=RUNTIME_IMAGE=localhost/my-app-runtime` under `[Build]`. See the [static-php-cli extension list](https://static-php.dev/en/guide/extensions.html) for what's supported. The build compiles PHP and every extension from source, so it takes a while. It looks up most sources through the GitHub API, which allows 60 requests an hour without a token, so pass one as the `github_token` secret, for example with `GITHUB_TOKEN=$(gh auth token)` exported.
 
 ## Links
 

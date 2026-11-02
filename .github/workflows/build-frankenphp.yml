@@ -88,6 +88,8 @@ jobs:
           {
             echo "args<<EOF"
             echo "--target=runtime"
+            # static-php-cli looks up its sources through the GitHub API
+            echo "--secret=id=github_token,env=GITHUB_TOKEN"
             echo "--cache-from=${CACHE_REPO}"
             if [ "${{ github.event_name }}" != "pull_request" ]; then
               echo "--cache-to=${CACHE_REPO}"
@@ -98,6 +100,8 @@ jobs:
       - name: Build image
         id: build
         uses: redhat-actions/buildah-build@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           image: ${{ env.IMAGE_NAME }}
           tags: ci-php${{ matrix.php }}-${{ steps.platform.outputs.pair }}-${{ github.sha }}

@@ -15,7 +15,12 @@ ARG PHP_EXTENSIONS="apcu,bcmath,ctype,curl,dom,exif,fileinfo,filter,gd,iconv,igb
 
 # The glibc build links against the builder's glibc 2.28, so it runs on any
 # newer Debian. The build runs ./build-static.sh, the builder's default command.
-RUN PHP_VERSION="${PHP_VERSION}" PHP_EXTENSIONS="${PHP_EXTENSIONS}" OUTPUT_DIR=/output ./build-static.sh \
+# It looks up most sources through the GitHub API, which allows 60 requests an
+# hour without a token: pass one with --secret id=github_token,env=GITHUB_TOKEN
+# (or src=<file>) to raise that. It isn't stored in the image.
+RUN --mount=type=secret,id=github_token,required=false \
+    if [ -s /run/secrets/github_token ]; then export GITHUB_TOKEN="$(cat /run/secrets/github_token)"; fi \
+    && PHP_VERSION="${PHP_VERSION}" PHP_EXTENSIONS="${PHP_EXTENSIONS}" OUTPUT_DIR=/output ./build-static.sh \
     && mv /output/frankenphp-linux-* /output/frankenphp
 
 # The static build has no php.ini of its own. EGPCS fills $_ENV from the

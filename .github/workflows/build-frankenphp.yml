@@ -17,6 +17,10 @@ on:
     types: [published]
   workflow_dispatch:
 
+# Only main and releases publish: pull requests and manual runs on other
+# branches build and smoke test the image without pushing it, so they can't
+# overwrite the floating php-8.5 tag.
+
 concurrency:
   group: frankenphp-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -75,7 +79,7 @@ jobs:
         run: echo "pair=${PLATFORM//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Login to GitHub Container Registry
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event_name == 'release' || github.ref == 'refs/heads/main' }}
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Determine build args
@@ -91,7 +95,7 @@ jobs:
             # static-php-cli looks up its sources through the GitHub API
             echo "--secret=id=github_token,env=GITHUB_TOKEN"
             echo "--cache-from=${CACHE_REPO}"
-            if [ "${{ github.event_name }}" != "pull_request" ]; then
+            if [ "${{ github.event_name == 'release' || github.ref == 'refs/heads/main' }}" = "true" ]; then
               echo "--cache-to=${CACHE_REPO}"
             fi
             echo "EOF"
@@ -153,7 +157,7 @@ jobs:
           test "$(podman image inspect --format '{{len .Config.ExposedPorts}}' "${IMAGE_REF}")" = 0
 
       - name: Push image by tag
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event_name == 'release' || github.ref == 'refs/heads/main' }}
         id: push
         uses: redhat-actions/push-to-registry@v3
         with:
@@ -165,7 +169,7 @@ jobs:
           digestfile: /tmp/digest.txt
 
       - name: Upload digest
-        if: ${{ github.event_name != 'pull_request' }}
+        if: ${{ github.event_name == 'release' || github.ref == 'refs/heads/main' }}
         uses: actions/upload-artifact@v7
         with:
           name: digests-php${{ matrix.php }}-${{ steps.platform.outputs.pair }}
@@ -176,7 +180,7 @@ jobs:
   merge:
     name: Merge & push manifest (php-${{ matrix.php }})
     needs: build
-    if: ${{ github.event_name != 'pull_request' }}
+    if: ${{ github.event_name == 'release' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     permissions:
       contents: read

@@ -198,6 +198,10 @@ The `devcontainer` preset doesn't need this workflow. It has no placeholders and
 - The PHP version marked `default: true` also gets the `main`, commit-sha and `latest` tags.
 - To build another PHP version, add it to the `php:` matrix.
 
+## The FrankenPHP image
+
+The `runtime` stage of the `production` preset's `Containerfile`, the base of the app stage, builds the same way. [`build-frankenphp.yml`](../.github/workflows/build-frankenphp.yml) publishes it to `ghcr.io/foxws/laravel-frankenphp` with the same tags, without a variant (see [FrankenPHP Image](runtime.md)). Before pushing, it runs a smoke test on the image: `PHP_BINARY`, `-d` settings, the extensions, pcntl signals and TLS.
+
 ## Links
 
 - [Customizing](customizing.md)

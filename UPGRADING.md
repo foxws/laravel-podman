@@ -1,5 +1,19 @@
 # Upgrading
 
+## From 6.4 to 6.5
+
+The `production` image is built on a static FrankenPHP build instead of `docker.io/dunglas/frankenphp`, so it no longer inherits FrankenPHP's exposed ports (80, 443, 443/udp and 2019). Its `Containerfile` has a `runtime` stage, published as `ghcr.io/foxws/laravel-frankenphp:php-8.5`, and the app stage starts from that image. See [FrankenPHP Image](docs/runtime.md).
+
+1. If you published the `production` preset, update it from the vendor's `stubs/production`:
+    - Copy the new `runtimes/php` script, and take the `frankenphp` and `runtime` stages and the `RUNTIME_IMAGE` arg from `runtimes/Containerfile`. The app stage starts with `FROM ${RUNTIME_IMAGE} AS production`.
+    - Remove the layers the runtime has from your app stage: the `TZ`, `LANG`, `DEBIAN_FRONTEND` and `APP_USER` env vars, the timezone, `ca-certificates`, `curl` and `gosu` packages, the `docker` user, the `/app` and `/config` directories, the `php.ini-production` copy, `install-php-extensions` and `setcap`.
+    - Copy `php-production.ini` to `${PHP_INI_DIR}/php.d/xx-php-user.ini` instead of `/usr/local/etc/php/conf.d/`.
+    - `PHP_CLI` and the quadlets' `APP_COMMAND` no longer need `-d variables_order=EGPCS`: the runtime's `php.ini` sets it. Leaving it in still works.
+
+2. The `PHP_EXTENSIONS` build arg now belongs to the `runtime` stage: extensions are compiled into the static binary. The runtime has the extensions the old image installed, except `ffi` and `inotify`. If you need others, build the `runtime` stage yourself and set `RUNTIME_IMAGE` to it (see [Other PHP extensions](docs/runtime.md#other-php-extensions)).
+
+3. Rebuild and restart the app's containers.
+
 ## From 6.3 to 6.4
 
 The idle check is a systemd template now, shared by every on-demand app on the host: `laravel-idle@.timer` and `laravel-idle@.service` replace each app's `my-app-idle.timer` and `my-app-idle.service`. The socket starts `laravel-idle@my-app.timer`, and the app's workers are in the drop-in `laravel-idle@my-app.service.d/idle.conf`. Installing it needs [`lpod`](docs/lpod.md) v3.1.0 or later. See [The idle check](docs/ondemand.md#the-idle-check).

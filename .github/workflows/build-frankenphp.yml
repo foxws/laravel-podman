@@ -1,0 +1,239 @@
+name: Build FrankenPHP
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'stubs/production/runtimes/Containerfile'
+      - 'stubs/production/runtimes/php'
+      - '.github/workflows/build-frankenphp.yml'
+  pull_request:
+    paths:
+      - 'stubs/production/runtimes/Containerfile'
+      - 'stubs/production/runtimes/php'
+      - '.github/workflows/build-frankenphp.yml'
+  release:
+    types: [published]
+  workflow_dispatch:
+
+# Only main and releases publish: pull requests and manual runs on other
+# branches build and smoke test the image without pushing it, so they can't
+# overwrite the floating php-8.5 tag. Pull requests from this repo do write
+# the layer cache.
+
+concurrency:
+  group: frankenphp-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: laravel-frankenphp
+  IMAGE: ghcr.io/${{ github.repository_owner }}/laravel-frankenphp
+  CACHE_IMAGE: ghcr.io/${{ github.repository_owner }}/laravel-frankenphp-cache
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (php-${{ matrix.php }}, ${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    # The static FrankenPHP build compiles PHP and every extension from source
+    timeout-minutes: 120
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Add another PHP version here to build/tag it too, e.g. ['8.6', '8.5'].
+        php: ['8.5']
+        platform: [linux/amd64, linux/arm64]
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+          # Mark exactly one PHP version as default: it alone gets the
+          # floating branch/sha/semver/latest tags in the merge job below.
+          - php: '8.5'
+            default: true
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Stage stubs as rendered output
+        # Mimics "podman:generate production" (a plain copy suffices here --
+        # the runtimes have no template placeholders), since the
+        # Containerfile's COPY paths expect podman/production to already exist.
+        run: |
+          mkdir -p podman
+          cp -r stubs/production podman/production
+
+      - name: Set platform pair
+        id: platform
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: echo "pair=${PLATFORM//\//-}" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GitHub Container Registry
+        if: ${{ github.event_name == 'release' || github.ref == 'refs/heads/main' || github.event.pull_request.head.repo.full_name == github.repository }}
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Determine build args
+        id: buildargs
+        env:
+          # buildah rejects a :tag on --cache-from/--cache-to, so the PHP
+          # version goes in the repo name instead.
+          CACHE_REPO: ${{ env.CACHE_IMAGE }}-php-${{ matrix.php }}
+        run: |
+          {
+            echo "args<<EOF"
+            echo "--target=runtime"
+            # static-php-cli looks up its sources through the GitHub API
+            echo "--secret=id=github_token,env=GITHUB_TOKEN"
+            echo "--cache-from=${CACHE_REPO}"
+            # Pull requests from this repo write the layer cache too, so the
+            # next run doesn't compile FrankenPHP again. Forks can't.
+            if [ "${{ github.event_name == 'release' || github.ref == 'refs/heads/main' || github.event.pull_request.head.repo.full_name == github.repository }}" = "true" ]; then
+              echo "--cache-to=${CACHE_REPO}"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build image
+        id: build
+        uses: redhat-actions/buildah-build@v3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: ci-php${{ matrix.php }}-${{ steps.platform.outputs.pair }}-${{ github.sha }}
+          containerfiles: podman/production/runtimes/Containerfile
+          context: .
+          platform: ${{ matrix.platform }}
+          build-args: |
+            PHP_VERSION=${{ matrix.php }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.description=Static FrankenPHP runtime for Laravel, from foxws/laravel-podman
+            org.opencontainers.image.licenses=MIT
+          layers: true
+          squash: false
+          extra-args: ${{ steps.buildargs.outputs.args }}
+
+      - name: Smoke test image
+        env:
+          IMAGE_REF: ${{ steps.build.outputs.image-with-tag }}
+        run: |
+          set -euo pipefail
+
+          run() { podman run --rm "${IMAGE_REF}" "$@"; }
+
+          run frankenphp version
+          run php -v | grep -q '^PHP 8\.'
+          run php -m | grep -qx uv
+          run php --ini | grep -q '/etc/frankenphp/php.ini'
+          run composer --version
+
+          # Horizon starts its supervisors and workers through PHP_BINARY
+          test "$(run php -r 'echo PHP_BINARY;')" = /usr/local/bin/php
+          test "$(run php -r 'passthru(PHP_BINARY." -r \"echo PHP_BINARY;\"");')" = /usr/local/bin/php
+
+          test "$(run php -d memory_limit=77M -r 'echo ini_get("memory_limit");')" = 77M
+          test "$(run php -r 'echo ini_get("variables_order");')" = EGPCS
+
+          run php -r 'foreach (["apcu", "igbinary", "imagick", "intl", "Zend OPcache", "pcntl", "pdo_mysql", "pdo_pgsql", "pdo_sqlite", "redis", "sockets", "uv", "zip"] as $extension) { extension_loaded($extension) || throw new RuntimeException("Missing {$extension}"); }'
+
+          # Queue workers time out jobs with pcntl signals
+          test "$(run php -r 'pcntl_async_signals(true); pcntl_signal(SIGALRM, function () { echo "alarm"; exit(0); }); pcntl_alarm(1); sleep(10); exit(1);')" = alarm
+
+          run php -r 'file_get_contents("https://repo.packagist.org/packages.json") !== false || exit(1);'
+
+          # mimalloc loads when preloaded
+          test "$(podman run --rm -e LD_PRELOAD=/usr/local/lib/libmimalloc.so "${IMAGE_REF}" php -r 'echo str_contains(file_get_contents("/proc/self/maps"), "libmimalloc") ? "yes" : "no";')" = yes
+
+          # Nothing exposed, ports come from the quadlets
+          test "$(podman image inspect --format '{{len .Config.ExposedPorts}}' "${IMAGE_REF}")" = 0
+
+      - name: Push image by tag
+        if: ${{ github.event_name == 'release' || github.ref == 'refs/heads/main' }}
+        id: push
+        uses: redhat-actions/push-to-registry@v3
+        with:
+          image: ${{ steps.build.outputs.image }}
+          tags: ${{ steps.build.outputs.tags }}
+          registry: ${{ env.REGISTRY }}/${{ github.repository_owner }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          digestfile: /tmp/digest.txt
+
+      - name: Upload digest
+        if: ${{ github.event_name == 'release' || github.ref == 'refs/heads/main' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: digests-php${{ matrix.php }}-${{ steps.platform.outputs.pair }}
+          path: /tmp/digest.txt
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: Merge & push manifest (php-${{ matrix.php }})
+    needs: build
+    if: ${{ github.event_name == 'release' || github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.5']
+        include:
+          # Only the default PHP version gets the floating
+          # branch/sha/semver/latest tags below.
+          - php: '8.5'
+            default: true
+
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: /tmp/digests
+          pattern: digests-php${{ matrix.php }}-*
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Generate image tags
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE }}
+          flavor: |
+            latest=false
+          tags: |
+            type=raw,value=php-${{ matrix.php }}
+            type=ref,event=branch,enable=${{ matrix.default == true }}
+            type=sha,format=long,prefix=commit-,enable=${{ matrix.default == true }}
+            type=semver,pattern={{version}},enable=${{ matrix.default == true }}
+            type=semver,pattern={{major}}.{{minor}},enable=${{ matrix.default == true }}
+            type=raw,value=latest,enable=${{ matrix.default == true && github.event_name == 'release' && !github.event.release.prerelease }}
+
+      - name: Create and push manifest list
+        run: |
+          podman manifest create manifest-list
+
+          for digest_file in /tmp/digests/*/digest.txt; do
+            digest=$(tr -d '[:space:]' < "$digest_file")
+            podman manifest add manifest-list "docker://${IMAGE}@${digest}"
+          done
+
+          while IFS= read -r tag; do
+            [ -z "$tag" ] && continue
+            podman manifest push --all manifest-list "docker://${tag}"
+          done <<< "${{ steps.meta.outputs.tags }}"

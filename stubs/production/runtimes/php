@@ -1,0 +1,93 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Runs the static FrankenPHP binary as the "php" command.
+#
+# FrankenPHP's php-cli doesn't parse "-d" on PHP 8.5, so the "-d" settings
+# before the script are written to an ini file that PHP loads through
+# PHP_INI_SCAN_DIR. "exec -a" makes PHP_BINARY point at this script instead
+# of the frankenphp binary, so Horizon, the scheduler and Composer start
+# their child processes through it too.
+
+settings=()
+args=()
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -d)
+            settings+=("${2:?php: -d needs a setting}")
+            shift 2
+            ;;
+        -d?*)
+            settings+=("${1#-d}")
+            shift
+            ;;
+        -*)
+            args+=("$1")
+            shift
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+if [ ${#settings[@]} -gt 0 ]; then
+    ini=''
+
+    # Quote values the way the CLI SAPI does: a "-d" value is left alone when
+    # it starts with a letter, digit or quote, so constants like E_ALL work.
+    for setting in "${settings[@]}"; do
+        key="${setting%%=*}"
+        value=1
+
+        if [ "${key}" != "${setting}" ]; then
+            value="${setting#*=}"
+        fi
+
+        if [ -n "${value}" ] && [[ "${value}" != [[:alnum:]\"\']* ]]; then
+            value="\"${value}\""
+        fi
+
+        ini+="${key}=${value}"$'\n'
+    done
+
+    # One folder per set of settings, so the file can be reused and never
+    # changes underneath a running process.
+    dir="${TMPDIR:-/tmp}/php-cli-$(id -u)/$(printf '%s' "${ini}" | sha256sum | cut -d ' ' -f 1)"
+
+    if [ ! -f "${dir}/cli.ini" ]; then
+        mkdir -p "${dir}"
+        printf '%s' "${ini}" > "${dir}/cli.ini.$$"
+        mv -f "${dir}/cli.ini.$$" "${dir}/cli.ini"
+    fi
+
+    # The empty entry before ":" keeps the default php.d folder
+    export PHP_INI_SCAN_DIR=":${dir}"
+fi
+
+# php-cli on PHP 8.5 only runs a script or "-r" code, so answer the info
+# options tools and people use most like the CLI SAPI does.
+# shellcheck disable=SC2016 # the "$" belongs to PHP
+if [ $# -eq 0 ] && [ ${#args[@]} -eq 1 ]; then
+    case "${args[0]}" in
+        -v | --version)
+            set -- -r 'printf("PHP %s (cli) (FrankenPHP) (%s)\nCopyright (c) The PHP Group\nZend Engine v%s, Copyright (c) Zend Technologies\n", PHP_VERSION, PHP_ZTS ? "ZTS" : "NTS", zend_version());'
+            args=()
+            ;;
+        -m)
+            set -- -r '$php = get_loaded_extensions(); $zend = get_loaded_extensions(true); natcasesort($php); natcasesort($zend); echo "[PHP Modules]\n", implode("\n", $php), "\n\n[Zend Modules]\n", implode("\n", $zend), "\n\n";'
+            args=()
+            ;;
+        -i)
+            set -- -r 'phpinfo();'
+            args=()
+            ;;
+        --ini)
+            set -- -r 'printf("Configuration File (php.ini) Path: %s\nLoaded Configuration File:         %s\nScan for additional .ini files in: %s\nAdditional .ini files parsed:      %s\n", PHP_CONFIG_FILE_PATH, php_ini_loaded_file() ?: "(none)", PHP_CONFIG_FILE_SCAN_DIR ?: "(none)", php_ini_scanned_files() ?: "(none)");'
+            args=()
+            ;;
+    esac
+fi
+
+exec -a "$(realpath "$0")" /usr/local/bin/frankenphp php-cli "${args[@]}" "$@"

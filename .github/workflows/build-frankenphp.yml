@@ -19,7 +19,8 @@ on:
 
 # Only main and releases publish: pull requests and manual runs on other
 # branches build and smoke test the image without pushing it, so they can't
-# overwrite the floating php-8.5 tag.
+# overwrite the floating php-8.5 tag. Pull requests from this repo do write
+# the layer cache.
 
 concurrency:
   group: frankenphp-${{ github.workflow }}-${{ github.ref }}
@@ -79,7 +80,7 @@ jobs:
         run: echo "pair=${PLATFORM//\//-}" >> "$GITHUB_OUTPUT"
 
       - name: Login to GitHub Container Registry
-        if: ${{ github.event_name == 'release' || github.ref == 'refs/heads/main' }}
+        if: ${{ github.event_name == 'release' || github.ref == 'refs/heads/main' || github.event.pull_request.head.repo.full_name == github.repository }}
         run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
 
       - name: Determine build args
@@ -95,7 +96,9 @@ jobs:
             # static-php-cli looks up its sources through the GitHub API
             echo "--secret=id=github_token,env=GITHUB_TOKEN"
             echo "--cache-from=${CACHE_REPO}"
-            if [ "${{ github.event_name == 'release' || github.ref == 'refs/heads/main' }}" = "true" ]; then
+            # Pull requests from this repo write the layer cache too, so the
+            # next run doesn't compile FrankenPHP again. Forks can't.
+            if [ "${{ github.event_name == 'release' || github.ref == 'refs/heads/main' || github.event.pull_request.head.repo.full_name == github.repository }}" = "true" ]; then
               echo "--cache-to=${CACHE_REPO}"
             fi
             echo "EOF"
@@ -143,7 +146,7 @@ jobs:
           test "$(run php -d memory_limit=77M -r 'echo ini_get("memory_limit");')" = 77M
           test "$(run php -r 'echo ini_get("variables_order");')" = EGPCS
 
-          run php -r 'foreach (["apcu", "igbinary", "imagick", "intl", "opcache", "pcntl", "pdo_mysql", "pdo_pgsql", "pdo_sqlite", "redis", "sockets", "uv", "zip"] as $extension) { extension_loaded($extension) || throw new RuntimeException("Missing {$extension}"); }'
+          run php -r 'foreach (["apcu", "igbinary", "imagick", "intl", "Zend OPcache", "pcntl", "pdo_mysql", "pdo_pgsql", "pdo_sqlite", "redis", "sockets", "uv", "zip"] as $extension) { extension_loaded($extension) || throw new RuntimeException("Missing {$extension}"); }'
 
           # Queue workers time out jobs with pcntl signals
           test "$(run php -r 'pcntl_async_signals(true); pcntl_signal(SIGALRM, function () { echo "alarm"; exit(0); }); pcntl_alarm(1); sleep(10); exit(1);')" = alarm

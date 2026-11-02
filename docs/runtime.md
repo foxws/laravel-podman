@@ -32,6 +32,17 @@ The static build has no separate `php` binary. `/usr/local/bin/php` is a script 
 - It applies the `-d` settings before the script, by writing them to an ini file that PHP loads through `PHP_INI_SCAN_DIR`. Composer passes `-d allow_url_fopen=… -d disable_functions=… -d memory_limit=…` to every `@php` script, such as `@php artisan package:discover`.
 - It sets `PHP_BINARY` to itself instead of the `frankenphp` binary. Horizon, the scheduler, `queue:listen` and Composer start their child processes with `PHP_BINARY`, so they keep working.
 
+## mimalloc
+
+The image has [mimalloc](https://github.com/microsoft/mimalloc), off by default. FrankenPHP [suggests it](https://frankenphp.dev/docs/static/) for glibc builds under heavy concurrency, in place of glibc's allocator. Turn it on for the containers that should use it, such as the app and Horizon, with an `Environment=` line in their quadlet:
+
+```ini
+[Container]
+Environment=LD_PRELOAD=/usr/local/lib/libmimalloc.so
+```
+
+Every process in the container uses it then, including Node.js and anything PHP starts. Compare requests per second and memory with and without it before you keep it.
+
 ## Other PHP extensions
 
 Extensions are compiled into the binary, so you can't install them on top of the image. To change them, publish the `production` preset, build its `runtime` stage with another `PHP_EXTENSIONS` list (comma-separated, it replaces the default), then build the app on it:

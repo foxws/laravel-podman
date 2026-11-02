@@ -47,10 +47,16 @@ ENV APP_USER="docker"
 
 # Main dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates curl gosu tzdata \
+    ca-certificates curl gosu tzdata libmimalloc3 \
     && apt-get -y autoremove \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# mimalloc, off by default. FrankenPHP suggests it for glibc builds under
+# heavy concurrency: set LD_PRELOAD=/usr/local/lib/libmimalloc.so on the
+# containers that should use it.
+RUN ln -s "$(dpkg -L libmimalloc3 | grep '/libmimalloc\.so\.3$')" /usr/local/lib/libmimalloc.so \
+    && test -e /usr/local/lib/libmimalloc.so
 
 # Set timezone
 RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezone

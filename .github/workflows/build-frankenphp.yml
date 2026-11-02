@@ -144,6 +144,9 @@ jobs:
 
           run php -r 'file_get_contents("https://repo.packagist.org/packages.json") !== false || exit(1);'
 
+          # mimalloc loads when preloaded
+          test "$(podman run --rm -e LD_PRELOAD=/usr/local/lib/libmimalloc.so "${IMAGE_REF}" php -r 'echo str_contains(file_get_contents("/proc/self/maps"), "libmimalloc") ? "yes" : "no";')" = yes
+
           # Nothing exposed, ports come from the quadlets
           test "$(podman image inspect --format '{{len .Config.ExposedPorts}}' "${IMAGE_REF}")" = 0
 

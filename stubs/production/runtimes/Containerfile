@@ -134,9 +134,9 @@ COPY podman/production/runtimes/php-production.ini ${PHP_INI_DIR}/php.d/xx-php-u
 # can read them.
 RUN npm install -g npm@latest pnpm@latest svgo@latest \
     && npm cache clean --force \
-    && mkdir -p ${PNPM_HOME}/store \
+    && mkdir -p ${PNPM_HOME}/store /home/docker/.cache/composer /home/docker/.cache/pnpm \
     && pnpm config set store-dir ${PNPM_HOME}/store \
-    && chown -R docker:docker ${PNPM_HOME} /config /data
+    && chown -R docker:docker ${PNPM_HOME} /home/docker/.cache /config /data
 
 # Entrypoint
 COPY --chmod=755 podman/production/runtimes/entrypoint.sh /usr/local/bin/entrypoint.sh

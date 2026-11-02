@@ -3,14 +3,14 @@ section: Configuration
 order: 7
 ---
 
-# Runtime Image
+# FrankenPHP Image
 
-The `production` preset's image is built on a [static FrankenPHP build](https://frankenphp.dev/docs/static/) on `debian:trixie-slim`: the `runtime` stage of its `Containerfile`. It has no app code, so [`build-runtime.yml`](../.github/workflows/build-runtime.yml) builds it straight from this repo and publishes it to `ghcr.io/foxws/laravel-podman-runtime:php-8.5`. The app stage starts from that image (the `RUNTIME_IMAGE` build arg), so building your app skips compiling FrankenPHP.
+The `production` preset's image is built on a [static FrankenPHP build](https://frankenphp.dev/docs/static/) on `debian:trixie-slim`: the `runtime` stage of its `Containerfile`. It has no app code, so [`build-frankenphp.yml`](../.github/workflows/build-frankenphp.yml) builds it straight from this repo and publishes it to `ghcr.io/foxws/laravel-frankenphp:php-8.5`. The app stage starts from that image (the `RUNTIME_IMAGE` build arg), so building your app skips compiling FrankenPHP.
 
 You can build your own images on it too, for example to add tools your app needs:
 
 ```dockerfile
-FROM ghcr.io/foxws/laravel-podman-runtime:php-8.5
+FROM ghcr.io/foxws/laravel-frankenphp:php-8.5
 
 RUN apt-get update && apt-get install -y --no-install-recommends ffmpeg \
     && rm -rf /var/lib/apt/lists/*

@@ -1,4 +1,4 @@
-name: Build Runtime
+name: Build FrankenPHP
 
 on:
   push:
@@ -7,25 +7,25 @@ on:
     paths:
       - 'stubs/production/runtimes/Containerfile'
       - 'stubs/production/runtimes/php'
-      - '.github/workflows/build-runtime.yml'
+      - '.github/workflows/build-frankenphp.yml'
   pull_request:
     paths:
       - 'stubs/production/runtimes/Containerfile'
       - 'stubs/production/runtimes/php'
-      - '.github/workflows/build-runtime.yml'
+      - '.github/workflows/build-frankenphp.yml'
   release:
     types: [published]
   workflow_dispatch:
 
 concurrency:
-  group: runtime-${{ github.workflow }}-${{ github.ref }}
+  group: frankenphp-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.event.repository.name }}-runtime
-  IMAGE: ghcr.io/${{ github.repository }}-runtime
-  CACHE_IMAGE: ghcr.io/${{ github.repository }}-runtime-cache
+  IMAGE_NAME: laravel-frankenphp
+  IMAGE: ghcr.io/${{ github.repository_owner }}/laravel-frankenphp
+  CACHE_IMAGE: ghcr.io/${{ github.repository_owner }}/laravel-frankenphp-cache
 
 permissions:
   contents: read
@@ -108,7 +108,7 @@ jobs:
             PHP_VERSION=${{ matrix.php }}
           labels: |
             org.opencontainers.image.source=https://github.com/${{ github.repository }}
-            org.opencontainers.image.description=Static FrankenPHP runtime image for foxws/laravel-podman
+            org.opencontainers.image.description=Static FrankenPHP runtime for Laravel, from foxws/laravel-podman
             org.opencontainers.image.licenses=MIT
           layers: true
           squash: false

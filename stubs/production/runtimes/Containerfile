@@ -6,7 +6,7 @@
 # binary), build --target=runtime and pass its tag as RUNTIME_IMAGE.
 ARG FRANKENPHP_VERSION=1.13.4
 ARG DEBIAN_VERSION=trixie
-ARG RUNTIME_IMAGE=ghcr.io/foxws/laravel-podman-runtime:php-8.5
+ARG RUNTIME_IMAGE=ghcr.io/foxws/laravel-frankenphp:php-8.5
 
 FROM docker.io/dunglas/frankenphp:static-builder-gnu-${FRANKENPHP_VERSION} AS frankenphp
 

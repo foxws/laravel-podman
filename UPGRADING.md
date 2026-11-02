@@ -2,7 +2,7 @@
 
 ## From 6.4 to 6.5
 
-The `production` image is built on a static FrankenPHP build instead of `docker.io/dunglas/frankenphp`, so it no longer inherits FrankenPHP's exposed ports (80, 443, 443/udp and 2019). Its `Containerfile` has a `runtime` stage, published as `ghcr.io/foxws/laravel-podman-runtime:php-8.5`, and the app stage starts from that image. See [Runtime Image](docs/runtime.md).
+The `production` image is built on a static FrankenPHP build instead of `docker.io/dunglas/frankenphp`, so it no longer inherits FrankenPHP's exposed ports (80, 443, 443/udp and 2019). Its `Containerfile` has a `runtime` stage, published as `ghcr.io/foxws/laravel-frankenphp:php-8.5`, and the app stage starts from that image. See [FrankenPHP Image](docs/runtime.md).
 
 1. If you published the `production` preset, update it from the vendor's `stubs/production`:
     - Copy the new `runtimes/php` script, and take the `frankenphp` and `runtime` stages and the `RUNTIME_IMAGE` arg from `runtimes/Containerfile`. The app stage starts with `FROM ${RUNTIME_IMAGE} AS production`.

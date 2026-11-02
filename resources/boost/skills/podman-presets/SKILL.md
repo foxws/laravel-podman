@@ -138,7 +138,7 @@ lpod install ondemand/{application}-ondemand.socket --replace
 
 Packages: edit `containers/stubs/{preset}/runtimes/Containerfile`.
 
-PHP extensions: `production` builds on the `runtime` preset's image (`ghcr.io/foxws/laravel-podman-runtime:php-8.5`), a static FrankenPHP build with the extensions compiled in, so `install-php-extensions` doesn't exist there. Publish `runtime`, build it with another comma-separated `PHP_EXTENSIONS` list (it replaces the default), and set the `RUNTIME_IMAGE` build arg of `production` to that image. `php` in that image is a script running `frankenphp php-cli` that applies `-d` settings and sets `PHP_BINARY` to itself; don't replace it with a symlink to `frankenphp`, or Horizon and the scheduler start their child processes with the wrong binary. The `devcontainer` and `development` presets still take a `PHP_EXTENSIONS` build arg of space-separated `install-php-extensions` names.
+PHP extensions: the `production` app stage starts from `RUNTIME_IMAGE` (`ghcr.io/foxws/laravel-podman-runtime:php-8.5`), the published `runtime` stage of the same `Containerfile`: a static FrankenPHP build with the extensions compiled in, so `install-php-extensions` doesn't exist there. Change the comma-separated `PHP_EXTENSIONS` (it replaces the default), build `--target=runtime` with a local tag, and set `RUNTIME_IMAGE` to it. `php` in that image is a script running `frankenphp php-cli` that applies `-d` settings and sets `PHP_BINARY` to itself; don't replace it with a symlink to `frankenphp`, or Horizon and the scheduler start their child processes with the wrong binary. The `devcontainer` and `development` presets still take a `PHP_EXTENSIONS` build arg of space-separated `install-php-extensions` names.
 
 ## Config keys
 

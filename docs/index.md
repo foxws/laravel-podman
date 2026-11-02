@@ -47,8 +47,7 @@ If you run production in these containers, install it as a regular dependency, n
 | Preset              | What it is                                                                                                                            |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
 | `development`       | App and services, with your working copy mounted for local editing. **Enabled by default.**                                           |
-| `production`        | [FrankenPHP](https://frankenphp.dev/) and [Octane](https://laravel.com/docs/octane) image with the app code baked in, for servers, built on the `runtime` image. Commented out by default. |
-| `runtime`           | Static [FrankenPHP](https://frankenphp.dev/docs/static/) base image of `production`. See [Runtime](runtime.md).                     |
+| `production`        | [FrankenPHP](https://frankenphp.dev/) and [Octane](https://laravel.com/docs/octane) image with the app code baked in, for servers, built on a static FrankenPHP [runtime image](runtime.md). Commented out by default. |
 | `devcontainer`      | [Dev Containers](https://containers.dev/) image for VS Code/JetBrains. See [Devcontainer](devcontainer.md). Commented out by default. |
 | `ondemand`          | Socket that starts the app on its first request, so it and its services can sleep when idle. See [On-demand services](ondemand.md). **Enabled by default.** |
 | `proxy`             | [Caddy](https://caddyserver.com/) reverse proxy in front of the other services. **Enabled by default.**                               |

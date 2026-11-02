@@ -1,10 +1,75 @@
-# Static FrankenPHP with PHP 8.5, built from the runtime preset. Pass
-# --build-arg RUNTIME_IMAGE=... (or add it under [Build] as BuildArg=) for
-# another PHP version, or for your own build of the runtime preset with other
-# PHP extensions.
+# Three stages: "frankenphp" compiles a static FrankenPHP, "runtime" puts it
+# on Debian, and the app is built on RUNTIME_IMAGE. That defaults to the
+# runtime stage as published by laravel-podman, so app builds skip the first
+# two stages. To build the runtime yourself, for another PHP version or other
+# extensions (PHP_EXTENSIONS, comma-separated; they're compiled into the
+# binary), build --target=runtime and pass its tag as RUNTIME_IMAGE.
+ARG FRANKENPHP_VERSION=1.13.4
+ARG DEBIAN_VERSION=trixie
 ARG RUNTIME_IMAGE=ghcr.io/foxws/laravel-podman-runtime:php-8.5
 
-FROM ${RUNTIME_IMAGE}
+FROM docker.io/dunglas/frankenphp:static-builder-gnu-${FRANKENPHP_VERSION} AS frankenphp
+
+ARG PHP_VERSION=8.5
+ARG PHP_EXTENSIONS="apcu,bcmath,ctype,curl,dom,exif,fileinfo,filter,gd,iconv,igbinary,imagick,intl,mbregex,mbstring,mysqlnd,opcache,openssl,password-argon2,pcntl,pdo,pdo_mysql,pdo_pgsql,pdo_sqlite,phar,posix,readline,redis,session,simplexml,sockets,sodium,sqlite3,tokenizer,uv,xml,xmlreader,xmlwriter,zip,zlib"
+
+# The glibc build links against the builder's glibc 2.28, so it runs on any
+# newer Debian. The build runs ./build-static.sh, the builder's default command.
+RUN PHP_VERSION="${PHP_VERSION}" PHP_EXTENSIONS="${PHP_EXTENSIONS}" OUTPUT_DIR=/output ./build-static.sh \
+    && mv /output/frankenphp-linux-* /output/frankenphp
+
+# The static build has no php.ini of its own. EGPCS fills $_ENV from the
+# container's environment.
+ADD https://raw.githubusercontent.com/php/php-src/PHP-${PHP_VERSION}/php.ini-production /output/php.ini
+RUN sed -i 's/^variables_order = .*/variables_order = "EGPCS"/' /output/php.ini \
+    && grep -q '^variables_order = "EGPCS"' /output/php.ini
+
+FROM docker.io/library/debian:${DEBIAN_VERSION}-slim AS runtime
+
+ARG UID=1000
+ARG GID=1000
+
+WORKDIR /app
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+ENV LANG=C.UTF-8
+ENV XDG_CONFIG_HOME=/config
+ENV XDG_DATA_HOME=/data
+ENV PHP_BINARY=/usr/local/bin/php
+ENV PHP_INI_DIR=/etc/frankenphp
+ENV APP_USER="docker"
+
+# Main dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates curl gosu tzdata \
+    && apt-get -y autoremove \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Set timezone
+RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezone
+
+# The static build looks for its CA certificates under OPENSSLDIR=/etc/ssl
+RUN ln -s certs/ca-certificates.crt /etc/ssl/cert.pem
+
+# FrankenPHP, the "php" command running its php-cli, and Composer
+COPY --from=frankenphp /output/frankenphp /usr/local/bin/frankenphp
+COPY --from=frankenphp /output/php.ini ${PHP_INI_DIR}/php.ini
+COPY --chmod=755 podman/production/runtimes/php /usr/local/bin/php
+COPY --from=docker.io/library/composer:2 /usr/bin/composer /usr/local/bin/composer
+
+RUN mkdir -p ${PHP_INI_DIR}/php.d
+
+# Create non-root user
+RUN groupadd --force -g ${GID} docker \
+    && useradd -u ${UID} -g docker -d /home/docker -s /bin/bash -m docker
+
+# Create directories and set ownership
+RUN mkdir -p /app /config /data \
+    && chown -R docker:docker /app /config /data
+
+FROM ${RUNTIME_IMAGE} AS production
 
 ARG UID=1000
 ARG GID=1000
@@ -15,7 +80,7 @@ WORKDIR /app
 
 ENV PNPM_HOME="/home/docker/.local/share/pnpm"
 ENV PATH="${PATH}:${PNPM_HOME}"
-ENV PHP_CLI="php -d variables_order=EGPCS /app/artisan"
+ENV PHP_CLI="php /app/artisan"
 ENV APP_COMMAND="${PHP_CLI} octane:frankenphp --host=0.0.0.0 --port=8000"
 
 # Main dependencies

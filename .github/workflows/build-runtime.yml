@@ -5,11 +5,13 @@ on:
     branches:
       - main
     paths:
-      - 'stubs/runtime/**'
+      - 'stubs/production/runtimes/Containerfile'
+      - 'stubs/production/runtimes/php'
       - '.github/workflows/build-runtime.yml'
   pull_request:
     paths:
-      - 'stubs/runtime/**'
+      - 'stubs/production/runtimes/Containerfile'
+      - 'stubs/production/runtimes/php'
       - '.github/workflows/build-runtime.yml'
   release:
     types: [published]
@@ -59,12 +61,12 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Stage stubs as rendered output
-        # Mimics "podman:generate runtime" (a plain copy suffices here -- no
-        # template placeholders), since the Containerfile's COPY paths expect
-        # podman/runtime to already exist.
+        # Mimics "podman:generate production" (a plain copy suffices here --
+        # the runtimes have no template placeholders), since the
+        # Containerfile's COPY paths expect podman/production to already exist.
         run: |
           mkdir -p podman
-          cp -r stubs/runtime podman/runtime
+          cp -r stubs/production podman/production
 
       - name: Set platform pair
         id: platform
@@ -85,6 +87,7 @@ jobs:
         run: |
           {
             echo "args<<EOF"
+            echo "--target=runtime"
             echo "--cache-from=${CACHE_REPO}"
             if [ "${{ github.event_name }}" != "pull_request" ]; then
               echo "--cache-to=${CACHE_REPO}"
@@ -98,7 +101,7 @@ jobs:
         with:
           image: ${{ env.IMAGE_NAME }}
           tags: ci-php${{ matrix.php }}-${{ steps.platform.outputs.pair }}-${{ github.sha }}
-          containerfiles: podman/runtime/runtimes/Containerfile
+          containerfiles: podman/production/runtimes/Containerfile
           context: .
           platform: ${{ matrix.platform }}
           build-args: |
@@ -128,7 +131,7 @@ jobs:
           test "$(run php -r 'passthru(PHP_BINARY." -r \"echo PHP_BINARY;\"");')" = /usr/local/bin/php
 
           test "$(run php -d memory_limit=77M -r 'echo ini_get("memory_limit");')" = 77M
-          test "$(run php -d variables_order=EGPCS -r 'echo ini_get("variables_order");')" = EGPCS
+          test "$(run php -r 'echo ini_get("variables_order");')" = EGPCS
 
           run php -r 'foreach (["apcu", "igbinary", "imagick", "intl", "opcache", "pcntl", "pdo_mysql", "pdo_pgsql", "pdo_sqlite", "redis", "sockets", "uv", "zip"] as $extension) { extension_loaded($extension) || throw new RuntimeException("Missing {$extension}"); }'
 

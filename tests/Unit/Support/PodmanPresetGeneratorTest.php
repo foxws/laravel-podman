@@ -80,4 +80,4 @@ it('renders every bundled preset into valid units', function (string $preset) {
 
     expect($contents)->not->toContain('{{')
         ->and($contents)->not->toContain('VolumeName=systemd-');
-})->with(['devcontainer', 'development', 'ondemand', 'production', 'proxy', 'runtime']);
+})->with(['devcontainer', 'development', 'ondemand', 'production', 'proxy']);

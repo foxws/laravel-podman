@@ -60,6 +60,7 @@ Templates contain `{{placeholder}}` tokens. `podman:publish` leaves them as they
 | `{{application}}` | `quadlet_prefix`, kebab-cased |
 | `{{containerPrefix}}` | `container_prefix` (default `systemd-`), so `{{containerPrefix}}{{application}}-pgsql` is the database container |
 | `{{proxy}}` | Name of the `proxy` service, network and volumes: `proxy`, or the `proxy` substitution (`PODMAN_PROXY_PREFIX`) |
+| `{{proxyCerts}}` | `local_certs` when `app.env` is `local`, so the `proxy` preset signs certificates with Caddy's own CA. Empty otherwise, so Caddy gets Let's Encrypt certificates |
 | `{{appEnv}}` | `app.env` |
 | `{{appName}}` | `app.name` |
 | `{{appUrl}}` | `app.url` |

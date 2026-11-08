@@ -92,7 +92,7 @@ With several devices, it's easier to run a local DNS server like [AdGuard Home](
 
 ## Trusting the local certificate
 
-In development, Caddy signs certificates with its own CA (`local_certs`). Trust it once:
+When `APP_ENV` is `local`, Caddy signs certificates with its own CA (`local_certs`). Trust it once:
 
 ```bash
 lpod proxy export-cert   # writes ~/proxy.crt (pass a path to override)
@@ -110,7 +110,7 @@ sudo cp ~/proxy.crt /etc/pki/ca-trust/source/anchors/caddy.crt && sudo update-ca
 sudo trust anchor ~/proxy.crt
 ```
 
-You don't need this in production. Use a real domain in `APP_URL` and `sites/*.Caddyfile`, and Caddy gets a Let's Encrypt certificate automatically.
+You don't need this in other environments. Use a real domain in `APP_URL` and `sites/*.Caddyfile`, and Caddy gets a Let's Encrypt certificate automatically. To choose yourself, set the `proxyCerts` [substitution](customizing.md#your-own-placeholders), e.g. `'proxyCerts' => ''` for Let's Encrypt in `local` too.
 
 ## Troubleshooting
 

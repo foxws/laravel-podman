@@ -42,6 +42,16 @@ class PodmanConfig
         return Str::kebab(Config::string('podman.proxy_prefix', 'proxy'));
     }
 
+    /**
+     * The proxy's certificate option: "local_certs" (Caddy's own CA) for
+     * local development, nothing elsewhere so Caddy gets publicly trusted
+     * certificates (Let's Encrypt).
+     */
+    public function proxyCerts(): string
+    {
+        return Config::string('app.env') === 'local' ? 'local_certs' : '';
+    }
+
     public function prefix(): string
     {
         return Str::kebab(Config::string('podman.quadlet_prefix'));

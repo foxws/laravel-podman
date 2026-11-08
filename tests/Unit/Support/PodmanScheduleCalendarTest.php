@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Foxws\Podman\Enums\TimerCalendar;
 use Foxws\Podman\Support\PodmanScheduleCalendar;
 use Illuminate\Console\Scheduling\Schedule;
 
@@ -24,33 +25,33 @@ it('fires only in the minutes a task is due', function () {
 });
 
 it('falls back to every minute without scheduled tasks', function () {
-    expect($this->calendar->calendars())->toBe([PodmanScheduleCalendar::EveryMinute]);
+    expect($this->calendar->calendars())->toBe([TimerCalendar::EveryMinute->value]);
 });
 
 it('falls back to every minute when a task runs every minute', function () {
     $this->schedule->command('model:prune')->daily();
     $this->schedule->command('queue:prune-batches')->everyMinute();
 
-    expect($this->calendar->calendars())->toBe([PodmanScheduleCalendar::EveryMinute]);
+    expect($this->calendar->calendars())->toBe([TimerCalendar::EveryMinute->value]);
 });
 
 it('falls back to every minute for sub-minute tasks', function () {
     $this->schedule->command('model:prune')->daily();
     $this->schedule->command('queue:prune-batches')->everyTenSeconds();
 
-    expect($this->calendar->calendars())->toBe([PodmanScheduleCalendar::EveryMinute]);
+    expect($this->calendar->calendars())->toBe([TimerCalendar::EveryMinute->value]);
 });
 
 it('falls back to every minute for cron syntax systemd cannot express', function () {
     $this->schedule->command('model:prune')->cron('0 0 L * *');
 
-    expect($this->calendar->calendars())->toBe([PodmanScheduleCalendar::EveryMinute]);
+    expect($this->calendar->calendars())->toBe([TimerCalendar::EveryMinute->value]);
 });
 
 it('falls back to every minute for a timezone systemd does not know', function () {
     $this->schedule->command('model:prune')->daily()->timezone('+02:00');
 
-    expect($this->calendar->calendars())->toBe([PodmanScheduleCalendar::EveryMinute]);
+    expect($this->calendar->calendars())->toBe([TimerCalendar::EveryMinute->value]);
 });
 
 it('uses the timezone of each task, or the app', function () {

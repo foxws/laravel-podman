@@ -6,6 +6,7 @@ namespace Foxws\Podman\Support;
 
 use Cron\CronExpression;
 use DateTimeZone;
+use Foxws\Podman\Enums\TimerCalendar;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
@@ -23,8 +24,6 @@ use InvalidArgumentException;
  */
 class PodmanScheduleCalendar
 {
-    public const string EveryMinute = '*-*-* *:*:00';
-
     /**
      * @var array<int, string>
      */
@@ -68,7 +67,7 @@ class PodmanScheduleCalendar
         $events = $this->schedule()->events();
 
         if ($events === []) {
-            return [self::EveryMinute];
+            return [TimerCalendar::EveryMinute->value];
         }
 
         $calendars = [];
@@ -77,14 +76,14 @@ class PodmanScheduleCalendar
             $eventCalendars = $this->eventCalendars($event);
 
             if ($eventCalendars === null) {
-                return [self::EveryMinute];
+                return [TimerCalendar::EveryMinute->value];
             }
 
             array_push($calendars, ...$eventCalendars);
         }
 
-        if (in_array(self::EveryMinute, $calendars, true)) {
-            return [self::EveryMinute];
+        if (in_array(TimerCalendar::EveryMinute->value, $calendars, true)) {
+            return [TimerCalendar::EveryMinute->value];
         }
 
         return array_values(array_unique($calendars));
@@ -143,7 +142,7 @@ class PodmanScheduleCalendar
         $weekdays = $this->normalizeWeekdays($weekdays);
 
         if ($minutes === null && $hours === null && $days === null && $months === null && $weekdays === null) {
-            return [self::EveryMinute];
+            return [TimerCalendar::EveryMinute->value];
         }
 
         $time = "{$this->format($hours, 0, 23)}:{$this->format($minutes, 0, 59)}:00 {$timezone}";

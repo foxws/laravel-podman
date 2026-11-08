@@ -7,6 +7,8 @@ description: Customize foxws/laravel-podman presets and Quadlet templates, such 
 
 `foxws/laravel-podman` renders preset templates into Podman Quadlet files. Settings live in `config/podman.php`.
 
+**Ask first:** Never run a command that deletes or overwrites data without the user's explicit confirmation first, such as `podman volume rm`, `lpod remove`, `podman secret rm` or `podman:publish --force`. Swapping the database or cache starts with a new, empty volume; leave the old one for the user to remove once they've moved their data. See "Destructive commands" in the `podman-lpod` skill for the full list.
+
 ## How it fits together
 
 - A preset is a folder with `quadlets/` (`*.quadlets` files) and `runtimes/` (`Containerfile`, `entrypoint.sh`, PHP ini, Caddy files).

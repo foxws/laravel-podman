@@ -7,6 +7,8 @@ description: Upgrade foxws/laravel-podman between major and minor versions (v3 t
 
 Check the installed version with `composer show foxws/laravel-podman`. Coming from v3, do "From v3 to v4" first, then "From v4 to v5", then "From v5 to v6", then "From 6.0 to 6.1", then "From 6.2 to 6.3", then "From 6.3 to 6.4".
 
+**Ask first:** Never run a command that deletes or overwrites data without the user's explicit confirmation first, such as `podman volume rm`, `podman volume import` into a volume with data, `lpod remove` or `lpod uninstall`. An upgrade that moves data to new volumes leaves the old ones in place; the user removes them once they've checked their data. See "Destructive commands" in the `podman-lpod` skill for the full list.
+
 The human guide is [UPGRADING.md](https://github.com/foxws/laravel-podman/blob/main/UPGRADING.md). It isn't shipped in `vendor/`, and these notes cover the same steps.
 
 ## From 6.3 to 6.4

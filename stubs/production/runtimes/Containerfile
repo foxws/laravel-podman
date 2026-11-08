@@ -1,103 +1,36 @@
-# FrankenPHP 1 with PHP 8.5. Pass --build-arg FRANKENPHP_VERSION=1-php8.4
-# (or add it under [Build] as BuildArg=) for another PHP version.
-ARG FRANKENPHP_VERSION=1-php8.5
+# Built on ghcr.io/foxws/laravel-frankenphp, which has FrankenPHP, the PHP
+# extensions, Composer, Node.js, pnpm, the PostgreSQL client and the
+# "docker" user, so building the app only copies it in and builds it. Pass
+# --build-arg RUNTIME_IMAGE=ghcr.io/foxws/laravel-frankenphp:php-8.4 (or add
+# it under [Build] as BuildArg=) for PHP 8.4. See docs/runtime.md.
+ARG RUNTIME_IMAGE=ghcr.io/foxws/laravel-frankenphp:php-8.5
 
-FROM docker.io/dunglas/frankenphp:${FRANKENPHP_VERSION}
+FROM ${RUNTIME_IMAGE}
 
 ARG UID=1000
 ARG GID=1000
-ARG NODE_VERSION=26
-ARG POSTGRES_VERSION=18
 ARG PHP_EXTENSIONS=""
 
 WORKDIR /app
 
-ENV DEBIAN_FRONTEND=noninteractive
-ENV TZ=UTC
-ENV LANG=C.UTF-8
-ENV PNPM_HOME="/home/docker/.local/share/pnpm"
-ENV PATH="${PATH}:${PNPM_HOME}"
 ENV PHP_CLI="php -d variables_order=EGPCS /app/artisan"
 ENV APP_COMMAND="${PHP_CLI} octane:frankenphp --host=0.0.0.0 --port=8000"
-ENV APP_USER="docker"
 
-# Set timezone
-RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezone
-
-# Main dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    gnupg curl ca-certificates gosu \
-    libavif-bin jpegoptim optipng pngquant gifsicle \
-    && apt-get -y autoremove \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Add PostgreSQL APT repository and install client
-RUN mkdir -p /etc/apt/keyrings \
-    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg \
-    && CODENAME=$(. /etc/os-release && echo "$VERSION_CODENAME") \
-    && echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt ${CODENAME}-pgdg main" | tee /etc/apt/sources.list.d/pgdg.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends postgresql-client-${POSTGRES_VERSION} \
-    && apt-get -y autoremove \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Add NodeSource APT repository and install Node.js
-RUN mkdir -p /etc/apt/keyrings \
-    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
-    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_VERSION}.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends nodejs \
-    && apt-get -y autoremove \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Create non-root user
-RUN groupadd --force -g ${GID} docker \
-    && useradd -u ${UID} -g docker -d /home/docker -s /bin/bash -m docker
-
-# Create directories and set ownership
-RUN mkdir -p /app /config \
-    && chown -R docker:docker /app /config
-
-# PHP Configuration
-RUN cp ${PHP_INI_DIR}/php.ini-production ${PHP_INI_DIR}/php.ini
-
-# Install PHP extensions
-RUN install-php-extensions @composer \
-    apcu bcmath exif ffi gd opcache \
-    igbinary imagick inotify intl pcntl \
-    pdo_pgsql redis sockets uv zip
+# The runtime image's "docker" user is 1000:1000. Renumber it when building
+# with another UID/GID, so the cache mounts below line up.
+RUN if [ "$(id -u docker)" != "${UID}" ] || [ "$(id -g docker)" != "${GID}" ]; then \
+        groupmod -o -g "${GID}" docker \
+        && usermod -o -u "${UID}" -g "${GID}" docker \
+        && chown -R docker:docker /home/docker /app /config /data; \
+    fi
 
 # Install additional PHP extensions if specified
 RUN if [ -n "$PHP_EXTENSIONS" ]; then \
     install-php-extensions $PHP_EXTENSIONS; \
 fi
 
-# Strip file capabilities from frankenphp. libcap2-bin is only needed to run
-# setcap, so install and purge it within this single layer.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends libcap2-bin \
-    && setcap -r /usr/local/bin/frankenphp \
-    && apt-get purge -y --auto-remove libcap2-bin \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
 # Custom PHP configuration
 COPY podman/production/runtimes/php-production.ini ${PHP_INI_DIR}/conf.d/xx-php-user.ini
-
-# Node.js Configuration
-#
-# pnpm runs as root and respects FrankenPHP's XDG_CONFIG_HOME=/config
-# and XDG_DATA_HOME=/data, writing files there as root even though both
-# were chowned to "docker" earlier -- re-chown so the "docker" user can
-# read them.
-RUN npm install -g npm@latest pnpm@latest svgo@latest \
-    && npm cache clean --force \
-    && mkdir -p ${PNPM_HOME}/store /home/docker/.cache/composer /home/docker/.cache/pnpm \
-    && pnpm config set store-dir ${PNPM_HOME}/store \
-    && chown -R docker:docker ${PNPM_HOME} /home/docker/.cache /config /data
 
 # Entrypoint
 COPY --chmod=755 podman/production/runtimes/entrypoint.sh /usr/local/bin/entrypoint.sh

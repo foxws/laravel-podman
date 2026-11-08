@@ -1,0 +1,141 @@
+# The base of the "production" and "development" presets' images, published
+# as ghcr.io/foxws/laravel-frankenphp:php-8.5 (target "runtime") and
+# ghcr.io/foxws/laravel-frankenphp:php-8.5-dev (target "development") by
+# .github/workflows/build-frankenphp.yml. The presets' Containerfiles start
+# from it (their RUNTIME_IMAGE build arg), so building an app only copies
+# the app in and builds it.
+#
+# It's the official FrankenPHP image with the PHP extensions, Composer,
+# Node.js, pnpm and the PostgreSQL client installed, flattened into a
+# "FROM scratch" image. A Containerfile can't remove the EXPOSE, HEALTHCHECK,
+# ENTRYPOINT and CMD it inherits; starting from scratch drops them, so the
+# containers only have the ports and health checks their quadlets set.
+#
+# To build it yourself, for other packages or another Node.js or PostgreSQL
+# version, see docs/runtime.md.
+ARG FRANKENPHP_VERSION=1-php8.5
+
+FROM docker.io/dunglas/frankenphp:${FRANKENPHP_VERSION} AS frankenphp
+
+ARG NODE_VERSION=26
+ARG POSTGRES_VERSION=18
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Main dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gnupg curl ca-certificates gosu \
+    libavif-bin jpegoptim optipng pngquant gifsicle \
+    && apt-get -y autoremove \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Add PostgreSQL APT repository and install client
+RUN mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://www.postgresql.org/media/keys/ACCC4CF8.asc | gpg --dearmor -o /etc/apt/keyrings/postgresql.gpg \
+    && CODENAME=$(. /etc/os-release && echo "$VERSION_CODENAME") \
+    && echo "deb [signed-by=/etc/apt/keyrings/postgresql.gpg] https://apt.postgresql.org/pub/repos/apt ${CODENAME}-pgdg main" | tee /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-${POSTGRES_VERSION} \
+    && apt-get -y autoremove \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Add NodeSource APT repository and install Node.js
+RUN mkdir -p /etc/apt/keyrings \
+    && curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg \
+    && echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_${NODE_VERSION}.x nodistro main" | tee /etc/apt/sources.list.d/nodesource.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends nodejs \
+    && apt-get -y autoremove \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install PHP extensions
+RUN install-php-extensions @composer \
+    apcu bcmath exif ffi gd opcache \
+    igbinary inotify intl pcntl \
+    pdo_pgsql redis sockets uv zip
+
+# Imagick's build regenerates its arginfo headers, and each parallel make job
+# downloads PHP-Parser for that into the same folder, which fails. One job
+# downloads it once.
+RUN IPE_PROCESSOR_COUNT=1 install-php-extensions imagick
+
+# Strip file capabilities from frankenphp. libcap2-bin is only needed to run
+# setcap, so install and purge it within this single layer.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libcap2-bin \
+    && setcap -r /usr/local/bin/frankenphp \
+    && apt-get purge -y --auto-remove libcap2-bin \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN npm install -g npm@latest pnpm@latest svgo@latest \
+    && npm cache clean --force \
+    && rm -rf /tmp/* /var/tmp/*
+
+FROM scratch AS runtime
+
+ARG UID=1000
+ARG GID=1000
+
+COPY --from=frankenphp / /
+
+# The official image's environment, which "FROM scratch" doesn't carry
+# over. install-php-extensions and docker-php-ext-* need the PHP_* and
+# PHPIZE_DEPS variables, and FrankenPHP needs GODEBUG. The workflow checks
+# that every variable of the official image is set here.
+ENV PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/home/docker/.local/share/pnpm"
+ENV PHPIZE_DEPS="autoconf dpkg-dev file g++ gcc libc-dev make pkg-config re2c"
+ENV PHP_INI_DIR=/usr/local/etc/php
+ENV PHP_CFLAGS="-fstack-protector-strong -fpic -fpie -O2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64"
+ENV PHP_CPPFLAGS="${PHP_CFLAGS}"
+ENV PHP_LDFLAGS="-Wl,-O1 -pie"
+ENV XDG_CONFIG_HOME=/config
+ENV XDG_DATA_HOME=/data
+ENV GODEBUG=cgocheck=0
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV TZ=UTC
+ENV LANG=C.UTF-8
+ENV APP_USER="docker"
+ENV PNPM_HOME="/home/docker/.local/share/pnpm"
+
+WORKDIR /app
+
+# Set timezone
+RUN ln -snf /usr/share/zoneinfo/${TZ} /etc/localtime && echo ${TZ} > /etc/timezone
+
+# PHP Configuration
+RUN cp ${PHP_INI_DIR}/php.ini-production ${PHP_INI_DIR}/php.ini
+
+# Create non-root user. The presets' Containerfiles renumber it when they're
+# built with another UID/GID.
+RUN groupadd --force -g ${GID} docker \
+    && useradd -u ${UID} -g docker -d /home/docker -s /bin/bash -m docker
+
+# Node.js Configuration
+#
+# pnpm runs as root and respects XDG_CONFIG_HOME=/config and
+# XDG_DATA_HOME=/data, writing files there as root -- chown them so the
+# "docker" user can read them.
+RUN mkdir -p /app /config /data ${PNPM_HOME}/store /home/docker/.cache/composer /home/docker/.cache/pnpm \
+    && pnpm config set store-dir ${PNPM_HOME}/store \
+    && chown -R docker:docker /app /config /data /home/docker
+
+FROM runtime AS development
+
+ENV PLAYWRIGHT_BROWSERS_PATH=0
+
+# PHP Configuration
+RUN cp ${PHP_INI_DIR}/php.ini-development ${PHP_INI_DIR}/php.ini
+
+RUN install-php-extensions xdebug
+
+# Playwright's OS-level browser deps; browsers are installed per-project via `npx playwright install`
+RUN npx -y playwright install-deps \
+    && npm cache clean --force \
+    && apt-get -y autoremove \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/* /root/.npm

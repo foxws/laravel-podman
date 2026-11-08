@@ -1,5 +1,22 @@
 # Upgrading
 
+## From 6.5 to 6.6
+
+The `production` and `development` images are built on [`ghcr.io/foxws/laravel-frankenphp`](docs/runtime.md), a prebuilt FrankenPHP image with the PHP extensions, Composer, Node.js, pnpm, the PostgreSQL client and the `docker` user. Building the app no longer runs those `apt-get` and `install-php-extensions` layers. The image doesn't inherit the official image's exposed ports (80, 443, 443/udp and 2019), health check or entrypoint, so `podman ps` no longer lists those ports. See [FrankenPHP Image](docs/runtime.md).
+
+If you didn't publish the `production` or `development` preset, regenerate and rebuild (step 2): nothing else changes.
+
+1. If you published the `production` or `development` preset, you can keep its `runtimes/Containerfile` as it is: it still builds on `dunglas/frankenphp`. To move to the new image, take the vendor's `stubs/{preset}/runtimes/Containerfile` and add your changes back to it:
+    - Keep your own packages and extensions: `install-php-extensions` and the `PHP_EXTENSIONS` build arg still work on the new image.
+    - The `FRANKENPHP_VERSION`, `NODE_VERSION` and `POSTGRES_VERSION` build args are gone from the app's Containerfile. For PHP 8.4, set `BuildArg=RUNTIME_IMAGE=ghcr.io/foxws/laravel-frankenphp:php-8.4` (`php-8.4-dev` for `development`). For other Node.js or PostgreSQL versions, [build the image yourself](docs/runtime.md#building-it-yourself).
+
+2. Regenerate and rebuild the app's image:
+
+    ```bash
+    php artisan podman:generate production   # or development
+    lpod my-app-build restart
+    ```
+
 ## From 6.4 to 6.5
 
 The `production` scheduler timer only fires in the minutes a task is due, instead of every minute. `podman:generate` reads the app's schedule and renders one `OnCalendar=` line per due time, plus a wake-up 30 seconds before each, so the database and cache are ready in time. The timer keeps running while the app sleeps, so scheduled tasks run on time instead of waiting for the next request. See [The scheduler while sleeping](docs/ondemand.md#the-scheduler-while-sleeping).

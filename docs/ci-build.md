@@ -198,6 +198,10 @@ The `devcontainer` preset doesn't need this workflow. It has no placeholders and
 - The PHP version marked `default: true` also gets the `main`, commit-sha and `latest` tags.
 - To build another PHP version, add it to the `php:` matrix.
 
+## The FrankenPHP image
+
+The base of the `production` and `development` images builds the same way. [`build-frankenphp.yml`](../.github/workflows/build-frankenphp.yml) publishes `images/frankenphp/Containerfile` to `ghcr.io/foxws/laravel-frankenphp`, tagged `php-8.5` and `php-8.5-dev` per PHP version, with release and commit tags as well (see [FrankenPHP Image](runtime.md)). It also runs every week, for FrankenPHP, PHP and Debian updates. Before pushing, it runs a smoke test on the image: the extensions, the `docker` user, serving a PHP page as that user, and that no ports, health check or entrypoint came along from the official image.
+
 ## Links
 
 - [Customizing](customizing.md)

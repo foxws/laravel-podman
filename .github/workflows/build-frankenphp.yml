@@ -1,0 +1,254 @@
+name: Build FrankenPHP
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'images/frankenphp/**'
+      - '.github/workflows/build-frankenphp.yml'
+  pull_request:
+    paths:
+      - 'images/frankenphp/**'
+      - '.github/workflows/build-frankenphp.yml'
+  release:
+    types: [published]
+  # Weekly, for FrankenPHP, PHP and Debian security updates. The layer cache
+  # is keyed on the base image, so an unchanged base reuses it.
+  schedule:
+    - cron: '17 4 * * 1'
+  workflow_dispatch:
+
+concurrency:
+  group: frankenphp-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: laravel-frankenphp
+  IMAGE: ghcr.io/${{ github.repository_owner }}/laravel-frankenphp
+  CACHE_IMAGE: ghcr.io/${{ github.repository_owner }}/laravel-frankenphp-cache
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build (php-${{ matrix.php }}${{ matrix.variant == 'development' && '-dev' || '' }}, ${{ matrix.platform }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # Add another PHP version here to build/tag it too, e.g. ['8.6', '8.5', '8.4'].
+        php: ['8.5', '8.4']
+        # The Containerfile's targets: "runtime" is the production preset's
+        # base, "development" adds Xdebug and Playwright's deps.
+        variant: [runtime, development]
+        platform: [linux/amd64, linux/arm64]
+        include:
+          - platform: linux/amd64
+            runner: ubuntu-latest
+          - platform: linux/arm64
+            runner: ubuntu-24.04-arm
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Set platform pair
+        id: platform
+        env:
+          PLATFORM: ${{ matrix.platform }}
+        run: echo "pair=${PLATFORM//\//-}" >> "$GITHUB_OUTPUT"
+
+      - name: Login to GitHub Container Registry
+        if: ${{ github.event_name != 'pull_request' }}
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Determine build args
+        id: buildargs
+        env:
+          # buildah rejects a :tag on --cache-from/--cache-to, so the PHP
+          # version/variant go in the repo name instead.
+          CACHE_REPO: ${{ env.CACHE_IMAGE }}-php-${{ matrix.php }}-${{ matrix.variant }}
+        run: |
+          {
+            echo "args<<EOF"
+            echo "--target=${{ matrix.variant }}"
+            echo "--pull=always"
+            echo "--cache-from=${CACHE_REPO}"
+            if [ "${{ github.event_name }}" != "pull_request" ]; then
+              echo "--cache-to=${CACHE_REPO}"
+            fi
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build image
+        id: build
+        uses: redhat-actions/buildah-build@v3
+        with:
+          image: ${{ env.IMAGE_NAME }}
+          tags: ci-php${{ matrix.php }}-${{ matrix.variant }}-${{ steps.platform.outputs.pair }}-${{ github.sha }}
+          containerfiles: images/frankenphp/Containerfile
+          context: images/frankenphp
+          platform: ${{ matrix.platform }}
+          build-args: |
+            FRANKENPHP_VERSION=1-php${{ matrix.php }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.description=FrankenPHP runtime for Laravel, from foxws/laravel-podman
+            org.opencontainers.image.licenses=MIT
+          layers: true
+          squash: false
+          extra-args: ${{ steps.buildargs.outputs.args }}
+
+      - name: Smoke test image
+        env:
+          IMAGE_REF: ${{ steps.build.outputs.image-with-tag }}
+          UPSTREAM: docker.io/dunglas/frankenphp:1-php${{ matrix.php }}
+          PHP: ${{ matrix.php }}
+          VARIANT: ${{ matrix.variant }}
+        run: |
+          set -euo pipefail
+
+          run() { podman run --rm "${IMAGE_REF}" "$@"; }
+          inspect() { podman image inspect --format "$1" "${IMAGE_REF}"; }
+
+          run frankenphp version
+          run php -v | grep -q "^PHP ${PHP}\."
+          run composer --version
+          run node --version
+          run pnpm --version
+          run psql --version
+          run gosu --version
+          run sh -c 'command -v install-php-extensions docker-php-ext-enable'
+
+          run php -r 'foreach (["apcu", "bcmath", "exif", "ffi", "gd", "igbinary", "imagick", "inotify", "intl", "Zend OPcache", "pcntl", "pdo_pgsql", "redis", "sockets", "uv", "zip"] as $extension) { extension_loaded($extension) || throw new RuntimeException("Missing {$extension}"); }'
+
+          # php.ini-development with Xdebug, or php.ini-production without
+          display_errors="$(run php -r 'echo filter_var(ini_get("display_errors"), FILTER_VALIDATE_BOOLEAN) ? "on" : "off";')"
+          xdebug="$(run php -r 'echo extension_loaded("xdebug") ? "on" : "off";')"
+          if [ "${VARIANT}" = development ]; then
+            test "${display_errors}:${xdebug}" = on:on
+          else
+            test "${display_errors}:${xdebug}" = off:off
+          fi
+
+          # The docker user, and what it owns
+          test "$(run id -u docker):$(run id -g docker)" = 1000:1000
+          test "$(run stat -c '%U' /app /config /data /home/docker /home/docker/.local/share/pnpm/store | sort -u)" = docker
+
+          # FrankenPHP runs as a user without capabilities, so setcap -r took
+          podman run --rm --user docker --cap-drop=all "${IMAGE_REF}" frankenphp version
+
+          # It serves PHP
+          podman run -d --name smoke -p 127.0.0.1:8000:8000 "${IMAGE_REF}" sh -c \
+            'mkdir -p /tmp/www && echo "<?php echo PHP_VERSION;" > /tmp/www/index.php && exec frankenphp php-server --listen :8000 --root /tmp/www'
+          for _ in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:8000/ | grep -q "^${PHP}\." && break
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:8000/ | grep -q "^${PHP}\."
+          podman rm -f smoke
+
+          # Nothing inherited from the official image: ports come from the
+          # quadlets, health checks too, and the presets set the entrypoint
+          test "$(inspect '{{len .Config.ExposedPorts}}')" = 0
+          test -z "$(inspect '{{.Config.Healthcheck}}' | grep -v '^<nil>$' || true)"
+          test "$(inspect '{{len .Config.Entrypoint}}')" = 0
+
+          # Every variable of the official image is set, except the ones
+          # only its build uses
+          podman image exists "${UPSTREAM}" || podman pull --platform "${{ matrix.platform }}" "${UPSTREAM}"
+          ours="$(inspect '{{range .Config.Env}}{{println .}}{{end}}' | cut -d= -f1)"
+          missing=0
+          for key in $(podman image inspect --format '{{range .Config.Env}}{{println .}}{{end}}' "${UPSTREAM}" | cut -d= -f1 | grep -Evx 'PHP_VERSION|PHP_URL|PHP_ASC_URL|PHP_SHA256|GPG_KEYS'); do
+            if ! grep -qx "${key}" <<< "${ours}"; then
+              echo "::error::${key} from ${UPSTREAM} isn't set"
+              missing=1
+            fi
+          done
+          test "${missing}" = 0
+
+          echo "Size: $(inspect '{{.Size}}' | numfmt --to=iec) (official image: $(podman image inspect --format '{{.Size}}' "${UPSTREAM}" | numfmt --to=iec))"
+
+      - name: Push image by tag
+        if: ${{ github.event_name != 'pull_request' }}
+        id: push
+        uses: redhat-actions/push-to-registry@v3
+        with:
+          image: ${{ steps.build.outputs.image }}
+          tags: ${{ steps.build.outputs.tags }}
+          registry: ${{ env.REGISTRY }}/${{ github.repository_owner }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+          digestfile: /tmp/digest.txt
+
+      - name: Upload digest
+        if: ${{ github.event_name != 'pull_request' }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: digests-php${{ matrix.php }}-${{ matrix.variant }}-${{ steps.platform.outputs.pair }}
+          path: /tmp/digest.txt
+          if-no-files-found: error
+          retention-days: 1
+
+  merge:
+    name: Merge & push manifest (php-${{ matrix.php }}${{ matrix.variant == 'development' && '-dev' || '' }})
+    needs: build
+    if: ${{ github.event_name != 'pull_request' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php: ['8.5', '8.4']
+        variant: [runtime, development]
+
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: /tmp/digests
+          pattern: digests-php${{ matrix.php }}-${{ matrix.variant }}-*
+
+      - name: Login to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | podman login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: Generate image tags
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ${{ env.IMAGE }}
+          flavor: |
+            latest=false
+            suffix=${{ matrix.variant == 'development' && '-dev' || '' }}
+          # php-8.5 is what the presets use. The release tags pin it:
+          # php-8.5-6.6.0 is the image as it was when 6.6.0 was released.
+          tags: |
+            type=raw,value=php-${{ matrix.php }}
+            type=semver,pattern=php-${{ matrix.php }}-{{version}}
+            type=semver,pattern=php-${{ matrix.php }}-{{major}}.{{minor}}
+            type=sha,format=long,prefix=php-${{ matrix.php }}-commit-
+
+      - name: Create and push manifest list
+        run: |
+          podman manifest create manifest-list
+
+          for digest_file in /tmp/digests/*/digest.txt; do
+            digest=$(tr -d '[:space:]' < "$digest_file")
+            podman manifest add manifest-list "docker://${IMAGE}@${digest}"
+          done
+
+          while IFS= read -r tag; do
+            [ -z "$tag" ] && continue
+            podman manifest push --all manifest-list "docker://${tag}"
+          done <<< "${{ steps.meta.outputs.tags }}"

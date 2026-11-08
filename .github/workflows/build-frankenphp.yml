@@ -126,6 +126,10 @@ jobs:
           run pnpm --version
           run psql --version
           run gosu --version
+
+          # The image optimizers spatie/image-optimizer runs
+          run sh -c 'for tool in jpegoptim optipng pngquant gifsicle avifenc cwebp svgo; do command -v "$tool" > /dev/null || { echo "Missing $tool"; exit 1; }; done'
+
           run sh -c 'command -v install-php-extensions docker-php-ext-enable'
 
           run php -r 'foreach (["apcu", "bcmath", "exif", "ffi", "gd", "igbinary", "imagick", "inotify", "intl", "Zend OPcache", "pcntl", "pdo_pgsql", "redis", "sockets", "uv", "zip"] as $extension) { extension_loaded($extension) || throw new RuntimeException("Missing {$extension}"); }'

@@ -2,6 +2,26 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 6.5.0 - 2026-11-08
+
+The `production` scheduler timer only fires in the minutes a task is due, instead of every minute. `podman:generate` reads the app's schedule and renders one `OnCalendar=` line per due time into the new `{{scheduleCalendar}}` placeholder, plus a wake-up 30 seconds before each, so the database and cache are ready in time. An hourly task and a nightly one now wake the stack about 25 times a day instead of 1440. The timer keeps running while the app sleeps, so scheduled tasks run on time instead of waiting for the next request. See "The scheduler while sleeping" in docs/ondemand.md.
+
+Regenerate and reinstall the timer whenever the schedule changes, for example as a deploy step. It falls back to every minute for sub-minute tasks, cron syntax systemd can't express (`L`, `W`, `#`) and UTC offset timezones. The wait after a wake-up needs systemd 248 or later.
+
+Published `production` presets keep firing every minute, as before, until `systemd/schedule.timer` uses `{{scheduleCalendar}}` and `quadlets/schedule.quadlets` has the new `ExecStartPre=`. The idle check now only stops a scheduler timer that fires every minute, and runs between :10 and :25. See UPGRADING.md.
+
+The `proxy` preset only uses Caddy's local certificates when `app.env` is `local`, through the new `{{proxyCerts}}` placeholder. Elsewhere, Caddy gets Let's Encrypt certificates, as the docs describe. Make sure the domain points at the host and ports 80 and 443 are reachable, or set the `proxyCerts` substitution to `local_certs` to keep the old behavior. Published proxy presets keep their literal `local_certs`.
+
+The Boost skills ask for confirmation before any command that deletes or overwrites data, such as `podman volume rm`, `podman system prune` or `podman secret rm`.
+
+### What's Changed
+
+* Ask before destructive commands in the Boost skills by @francoism90 in https://github.com/foxws/laravel-podman/pull/78
+* Fire the scheduler timer only when a task is due by @francoism90 in https://github.com/foxws/laravel-podman/pull/77
+* Only use Caddy's local certificates in the local environment by @francoism90 in https://github.com/foxws/laravel-podman/pull/71
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/6.4.2...6.5.0
+
 ## 6.4.2 - 2026-11-02
 
 ### What's Changed
@@ -276,12 +296,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -326,6 +348,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -397,6 +420,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -409,6 +433,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

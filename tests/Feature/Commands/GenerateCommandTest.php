@@ -379,6 +379,17 @@ it('generates an app key before building the frontend of the production image', 
         ->toBeLessThan(strpos($containerfile, 'pnpm build'));
 });
 
+it('builds the app image on the published FrankenPHP image', function (string $preset, string $image) {
+    $this->artisan('podman:generate', ['preset' => $preset])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/{$preset}/runtimes/Containerfile"))
+        ->toContain("ARG RUNTIME_IMAGE={$image}\n\nFROM \${RUNTIME_IMAGE}\n")
+        ->not->toContain('dunglas/frankenphp');
+})->with([
+    'production' => ['production', 'ghcr.io/foxws/laravel-frankenphp:php-8.5'],
+    'development' => ['development', 'ghcr.io/foxws/laravel-frankenphp:php-8.5-dev'],
+]);
+
 it('stops development queue workers with the on-demand app', function (string $worker) {
     $this->artisan('podman:generate', ['preset' => 'development'])->assertExitCode(0);
 

@@ -7,6 +7,7 @@ namespace Foxws\Podman\Support;
 use Cron\CronExpression;
 use DateTimeZone;
 use Foxws\Podman\Enums\TimerCalendar;
+use Foxws\Podman\Enums\Weekday;
 use Illuminate\Console\Scheduling\Event;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Config;
@@ -25,23 +26,11 @@ use InvalidArgumentException;
 class PodmanScheduleCalendar
 {
     /**
-     * @var array<int, string>
-     */
-    protected const array Weekdays = [0 => 'Sun', 1 => 'Mon', 2 => 'Tue', 3 => 'Wed', 4 => 'Thu', 5 => 'Fri', 6 => 'Sat'];
-
-    /**
      * @var array<string, int>
      */
     protected const array MonthNames = [
         'JAN' => 1, 'FEB' => 2, 'MAR' => 3, 'APR' => 4, 'MAY' => 5, 'JUN' => 6,
         'JUL' => 7, 'AUG' => 8, 'SEP' => 9, 'OCT' => 10, 'NOV' => 11, 'DEC' => 12,
-    ];
-
-    /**
-     * @var array<string, int>
-     */
-    protected const array WeekdayNames = [
-        'SUN' => 0, 'MON' => 1, 'TUE' => 2, 'WED' => 3, 'THU' => 4, 'FRI' => 5, 'SAT' => 6,
     ];
 
     public function __construct(
@@ -133,7 +122,7 @@ class PodmanScheduleCalendar
         $hours = $this->expand($hour, 0, 23);
         $days = $this->expand($day, 1, 31);
         $months = $this->expand($month, 1, 12, self::MonthNames);
-        $weekdays = $this->expand($weekday, 0, 7, self::WeekdayNames);
+        $weekdays = $this->expand($weekday, 0, 7, Weekday::cronNames());
 
         if (in_array(false, [$minutes, $hours, $days, $months, $weekdays], true)) {
             return null;
@@ -281,7 +270,7 @@ class PodmanScheduleCalendar
      */
     protected function formatWeekdays(array $weekdays): string
     {
-        return implode(',', array_map(fn (int $day): string => self::Weekdays[$day], $weekdays));
+        return implode(',', array_map(fn (int $day): string => Weekday::from($day)->systemdName(), $weekdays));
     }
 
     /**

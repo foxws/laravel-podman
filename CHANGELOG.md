@@ -2,6 +2,20 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 6.6.0 - 2026-11-08
+
+The `production` and `development` images are built on `ghcr.io/foxws/laravel-frankenphp`, a prebuilt FrankenPHP image with the PHP extensions, Composer, Node.js, pnpm, the PostgreSQL client and the `docker` user. Building the app no longer runs those `apt-get` and `install-php-extensions` layers: it pulls the image, copies the app in and builds it. `php-8.5` is the `production` base, and `php-8.5-dev` adds `php.ini-development`, Xdebug and Playwright's browser deps for `development`. There are `php-8.4` and `php-8.4-dev` tags too, and release tags such as `php-8.5-6.6.0` to pin one. The image is rebuilt every week for FrankenPHP, PHP and Debian updates. See docs/runtime.md.
+
+The image is the official `dunglas/frankenphp` image flattened into a `FROM scratch` image, so it doesn't inherit its exposed ports (80, 443, 443/udp and 2019), health check or entrypoint. `podman ps` no longer lists those ports on every container. `install-php-extensions` and the `PHP_EXTENSIONS` build arg still work on top of it.
+
+Unpublished presets only need `podman:generate` and a rebuild. Published `production` and `development` presets keep building on `dunglas/frankenphp` until you move them over. The `FRANKENPHP_VERSION`, `NODE_VERSION` and `POSTGRES_VERSION` build args are gone from the app's Containerfile. For PHP 8.4, set `BuildArg=RUNTIME_IMAGE=ghcr.io/foxws/laravel-frankenphp:php-8.4`. See UPGRADING.md.
+
+### What's Changed
+
+* Build the production and development images on a shared FrankenPHP runtime by @francoism90 in https://github.com/foxws/laravel-podman/pull/79
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/6.5.0...6.6.0
+
 ## 6.5.0 - 2026-11-08
 
 The `production` scheduler timer only fires in the minutes a task is due, instead of every minute. `podman:generate` reads the app's schedule and renders one `OnCalendar=` line per due time into the new `{{scheduleCalendar}}` placeholder, plus a wake-up 30 seconds before each, so the database and cache are ready in time. An hourly task and a nightly one now wake the stack about 25 times a day instead of 1440. The timer keeps running while the app sleeps, so scheduled tasks run on time instead of waiting for the next request. See "The scheduler while sleeping" in docs/ondemand.md.
@@ -297,12 +311,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -348,6 +364,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -421,6 +438,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -433,6 +451,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

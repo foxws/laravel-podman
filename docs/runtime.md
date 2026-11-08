@@ -27,7 +27,7 @@ The image is rebuilt every week and on every release, for FrankenPHP, PHP and De
 
 - The official [FrankenPHP image](https://frankenphp.dev/docs/docker/) (`dunglas/frankenphp:1-php8.5`), with `install-php-extensions` and `docker-php-ext-*`
 - The PHP extensions `apcu bcmath exif ffi gd igbinary imagick inotify intl opcache pcntl pdo_pgsql redis sockets uv zip`, plus `xdebug` in the `-dev` image
-- Composer, Node.js 26 with npm, pnpm and svgo, the PostgreSQL 18 client, `gosu`, and `libavif-bin jpegoptim optipng pngquant gifsicle` for image optimization
+- Composer, Node.js 26 with npm, pnpm and svgo, the PostgreSQL 18 client, `gosu`, and `libavif-bin jpegoptim optipng pngquant gifsicle webp` for image optimization (the tools [spatie/image-optimizer](https://github.com/spatie/image-optimizer) uses)
 - The `docker` user (UID/GID 1000). The presets renumber it when the app quadlet's `BuildArg=UID=`/`GID=` differ
 - `frankenphp` without file capabilities, so it runs as the `docker` user. The quadlets publish unprivileged ports
 

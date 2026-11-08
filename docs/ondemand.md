@@ -119,7 +119,7 @@ The check is a systemd template, `laravel-idle@.timer` and `laravel-idle@.servic
 
 The app's own settings, such as its [workers](#choosing-the-workers), are in the drop-in `laravel-idle@my-app.service.d/idle.conf`. Without it, the check uses `queue horizon`.
 
-Every minute, while the app is asleep, the check:
+Every minute (between :10 and :25, clear of the scheduler), while the app is asleep, the check:
 
 1. Skips this minute if a scheduled `schedule:run` is still running, so the jobs it dispatches still find a worker.
 2. Runs `php artisan podman:idle` in each running worker of `idle_workers`. If the app has work in progress, it stops here and keeps everything running. A worker that isn't running is skipped.
@@ -288,6 +288,16 @@ The proxy doesn't need to retry. The connection is held until the app is ready, 
 ## The scheduler while sleeping
 
 In `production`, `my-app-schedule.timer` only fires in the minutes a task is due (see [Customizing](customizing.md)). It keeps running while the app sleeps: when a task is due, the timer starts the scheduler, which starts the database and cache it `Requires=`. Once `schedule:run` exits, nothing needs them anymore and they go back to sleep. The app itself stays asleep.
+
+`schedule:run` only runs the tasks due in the minute it starts in, so waking the database and cache can't be allowed to push it into the next minute. The timer therefore also fires 30 seconds before each due minute. The scheduler then starts the database and cache, waits for the due minute, and runs `schedule:run` in it. If the services took longer than 30 seconds, it runs as soon as they're ready, which still leaves the rest of the due minute. The timer's trigger at the due minute itself only starts the scheduler when a wake-up didn't, such as before a task that runs every minute of an hour. The wait needs systemd 248 or later.
+
+```ini
+[Timer]
+OnCalendar=*-*-* *:00:00 UTC
+OnCalendar=*-*-* 02:30:00 UTC
+OnCalendar=*-*-* *:59:30 UTC
+OnCalendar=*-*-* 02:29:30 UTC
+```
 
 Keep the stack asleep longer by running frequent tasks less often, and giving quick tasks the same time, such as `->hourly()` or `->dailyAt('02:30')`. Tasks due in the same minute share one wake-up.
 

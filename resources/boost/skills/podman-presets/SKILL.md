@@ -67,7 +67,7 @@ VolumeName={{application}}-valkey
 | `{{viteUpstream}}`, `{{reverbUpstream}}`, `{{s3Upstream}}`, `{{s3ConsoleUpstream}}`, `{{mailUpstream}}` | The presets' services: `systemd-{app}-vite:5173`, `-reverb:6001`, `-rustfs:9000`, `-rustfs:9001`, `-mailpit:8025` (web UI) |
 | `{{ondemand}}` | `yes` when `ondemand.enabled`, otherwise `no`. Used for `StopWhenUnneeded=` on the app and services |
 | `{{ondemandListen}}`, `{{ondemandPort}}`, `{{ondemandIdleTimeout}}`, `{{ondemandIdleWorkers}}` | `ondemand.listen`, `ondemand.port`, `ondemand.idle_timeout`, `ondemand.idle_workers` (space-separated) |
-| `{{scheduleCalendar}}` | One `OnCalendar=` line per time a task in the app's schedule is due, or `OnCalendar=*-*-* *:*:00` when it can't be expressed (sub-minute tasks, `L`/`W`/`#`, UTC offsets) |
+| `{{scheduleCalendar}}` | One `OnCalendar=` line per time a task in the app's schedule is due (at :00), plus a wake-up 30 seconds before each (at :30, after which `schedule.quadlets` waits for the due minute), or `OnCalendar=*-*-* *:*:00` when it can't be expressed (sub-minute tasks, `L`/`W`/`#`, UTC offsets) |
 
 Add your own in `config/podman.php`, usually from `.env` so templates and the app read the same values. Braces are optional, `null` renders as an empty string, and values may contain built-in placeholders (not custom ones). They also override built-in placeholders:
 

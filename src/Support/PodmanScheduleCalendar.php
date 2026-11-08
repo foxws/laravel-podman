@@ -19,12 +19,24 @@ use InvalidArgumentException;
  * instead of every minute. "schedule:run" runs the tasks due in the
  * minute it starts, so firing in exactly those minutes runs every task.
  *
+ * Each due minute also gets a wake-up 30 seconds before it. The scheduler
+ * then starts the database and cache ahead of time, and waits for the due
+ * minute before it runs "schedule:run", so a slow start can't push it
+ * into the next minute and skip the tasks.
+ *
  * Falls back to every minute when the schedule is empty, has sub-minute
  * tasks, or uses cron syntax systemd can't express (such as "L", "W" or
  * "#").
+ *
+ * @phpstan-type CalendarSpec array{weekdays: list<int>|null, months: list<int>|null, days: list<int>|null, lastDayOfMonth: bool, hours: list<int>|null, minutes: list<int>|null, timezone: string}
  */
 class PodmanScheduleCalendar
 {
+    /**
+     * How many seconds before a due minute the scheduler wakes up.
+     */
+    public const int WakeUpLeadSeconds = 30;
+
     /**
      * @var array<string, int>
      */
@@ -38,50 +50,119 @@ class PodmanScheduleCalendar
     ) {}
 
     /**
-     * The "OnCalendar=" lines for the scheduler timer, one per line.
+     * The "OnCalendar=" lines for the scheduler timer, one per line: the
+     * due minutes, then their wake-ups.
      */
     public function render(): string
     {
         return implode("\n", array_map(
             fn (string $calendar): string => "OnCalendar={$calendar}",
-            $this->calendars(),
+            [...$this->calendars(), ...$this->wakeUpCalendars()],
         ));
     }
 
     /**
+     * The minutes a task is due.
+     *
      * @return list<string>
      */
     public function calendars(): array
     {
-        $events = $this->schedule()->events();
+        $specs = $this->specs();
 
-        if ($events === []) {
+        if ($specs === null) {
             return [TimerCalendar::EveryMinute->value];
         }
 
-        $calendars = [];
-
-        foreach ($events as $event) {
-            $eventCalendars = $this->eventCalendars($event);
-
-            if ($eventCalendars === null) {
-                return [TimerCalendar::EveryMinute->value];
-            }
-
-            array_push($calendars, ...$eventCalendars);
-        }
-
-        if (in_array(TimerCalendar::EveryMinute->value, $calendars, true)) {
-            return [TimerCalendar::EveryMinute->value];
-        }
-
-        return array_values(array_unique($calendars));
+        return $this->formatSpecs($specs, 0);
     }
 
     /**
+     * The wake-ups, 30 seconds before each due minute. A wake-up that's
+     * missing (such as before a task due every minute of an hour) only
+     * means the scheduler starts at the due minute, as without wake-ups.
+     *
+     * @return list<string>
+     */
+    public function wakeUpCalendars(): array
+    {
+        $specs = $this->specs();
+
+        if ($specs === null) {
+            return [];
+        }
+
+        $wakeUps = [];
+
+        foreach ($specs as $spec) {
+            array_push($wakeUps, ...$this->wakeUpSpecs($spec));
+        }
+
+        return $this->formatSpecs($wakeUps, 60 - self::WakeUpLeadSeconds);
+    }
+
+    /**
+     * Converts a cron expression to systemd calendar events, or null when
+     * systemd can't express it.
+     *
      * @return list<string>|null
      */
-    protected function eventCalendars(Event $event): ?array
+    public function fromCron(string $expression, string $timezone = 'UTC'): ?array
+    {
+        $specs = $this->cronSpecs($expression, $timezone);
+
+        if ($specs === null) {
+            return null;
+        }
+
+        foreach ($specs as $spec) {
+            if ($this->isEveryMinute($spec)) {
+                return [TimerCalendar::EveryMinute->value];
+            }
+        }
+
+        return $this->formatSpecs($specs, 0);
+    }
+
+    /**
+     * The schedule's calendar specs, or null when the timer has to fire
+     * every minute.
+     *
+     * @return list<CalendarSpec>|null
+     */
+    protected function specs(): ?array
+    {
+        $events = $this->schedule()->events();
+
+        if ($events === []) {
+            return null;
+        }
+
+        $specs = [];
+
+        foreach ($events as $event) {
+            $eventSpecs = $this->eventSpecs($event);
+
+            if ($eventSpecs === null) {
+                return null;
+            }
+
+            array_push($specs, ...$eventSpecs);
+        }
+
+        foreach ($specs as $spec) {
+            if ($this->isEveryMinute($spec)) {
+                return null;
+            }
+        }
+
+        return $specs;
+    }
+
+    /**
+     * @return list<CalendarSpec>|null
+     */
+    protected function eventSpecs(Event $event): ?array
     {
         if ($event->isRepeatable()) {
             return null;
@@ -93,18 +174,17 @@ class PodmanScheduleCalendar
             return null;
         }
 
-        return $this->fromCron($event->expression, $timezone);
+        return $this->cronSpecs($event->expression, $timezone);
     }
 
     /**
-     * Converts a cron expression to systemd calendar events, or null when
-     * systemd can't express it. Cron runs a task when either the day of the
-     * month or the weekday matches if both are set, while systemd needs both
-     * to match, so such an expression becomes two calendar events.
+     * Cron runs a task when either the day of the month or the weekday
+     * matches if both are set, while systemd needs both to match, so such
+     * an expression becomes two specs.
      *
-     * @return list<string>|null
+     * @return list<CalendarSpec>|null
      */
-    public function fromCron(string $expression, string $timezone = 'UTC'): ?array
+    protected function cronSpecs(string $expression, string $timezone): ?array
     {
         try {
             $parts = (new CronExpression($expression))->getParts();
@@ -128,33 +208,156 @@ class PodmanScheduleCalendar
             return null;
         }
 
-        $weekdays = $this->normalizeWeekdays($weekdays);
+        $spec = [
+            'weekdays' => $this->normalizeWeekdays($weekdays),
+            'months' => $months,
+            'days' => $days,
+            'lastDayOfMonth' => false,
+            'hours' => $hours,
+            'minutes' => $minutes,
+            'timezone' => $timezone,
+        ];
 
-        if ($minutes === null && $hours === null && $days === null && $months === null && $weekdays === null) {
-            return [TimerCalendar::EveryMinute->value];
-        }
-
-        $time = "{$this->format($hours, 0, 23)}:{$this->format($minutes, 0, 59)}:00 {$timezone}";
-
-        if ($days !== null && $weekdays !== null) {
+        if ($spec['days'] !== null && $spec['weekdays'] !== null) {
             return [
-                "{$this->formatDate($months, $days)} {$time}",
-                "{$this->formatWeekdays($weekdays)} {$this->formatDate($months, null)} {$time}",
+                [...$spec, 'weekdays' => null],
+                [...$spec, 'days' => null],
             ];
         }
 
-        $prefix = $weekdays === null ? '' : "{$this->formatWeekdays($weekdays)} ";
-
-        return ["{$prefix}{$this->formatDate($months, $days)} {$time}"];
+        return [$spec];
     }
 
     /**
-     * @param  list<int>|null  $months
-     * @param  list<int>|null  $days
+     * The specs for the minute before the spec's minutes. Going back from
+     * the first minute of a day also goes back a weekday or a day of the
+     * month, and from the first day of a month to its last day.
+     *
+     * @param  CalendarSpec  $spec
+     * @return list<CalendarSpec>
      */
-    protected function formatDate(?array $months, ?array $days): string
+    protected function wakeUpSpecs(array $spec): array
     {
-        return "*-{$this->format($months, 1, 12)}-{$this->format($days, 1, 31)}";
+        if ($spec['minutes'] === null || $spec['lastDayOfMonth']) {
+            return [];
+        }
+
+        $wakeUps = [];
+        $minutes = $this->previous($spec['minutes']);
+
+        if ($minutes !== []) {
+            $wakeUps[] = [...$spec, 'minutes' => $minutes];
+        }
+
+        if (! in_array(0, $spec['minutes'], true)) {
+            return $wakeUps;
+        }
+
+        if ($spec['hours'] === null) {
+            $wakeUps[] = [...$spec, 'minutes' => [59]];
+
+            return $wakeUps;
+        }
+
+        $hours = $this->previous($spec['hours']);
+
+        if ($hours !== []) {
+            $wakeUps[] = [...$spec, 'hours' => $hours, 'minutes' => [59]];
+        }
+
+        if (! in_array(0, $spec['hours'], true)) {
+            return $wakeUps;
+        }
+
+        $dayBefore = [...$spec, 'hours' => [23], 'minutes' => [59]];
+
+        if ($spec['weekdays'] !== null) {
+            $weekdays = array_map(fn (int $day): int => ($day + 6) % 7, $spec['weekdays']);
+            sort($weekdays);
+
+            $wakeUps[] = [...$dayBefore, 'weekdays' => $weekdays];
+
+            return $wakeUps;
+        }
+
+        if ($spec['days'] === null) {
+            $wakeUps[] = $dayBefore;
+
+            return $wakeUps;
+        }
+
+        $days = $this->previous($spec['days'], 1);
+
+        if ($days !== []) {
+            $wakeUps[] = [...$dayBefore, 'days' => $days];
+        }
+
+        if (in_array(1, $spec['days'], true)) {
+            $months = $spec['months'] === null ? null : array_map(fn (int $month): int => ($month + 10) % 12 + 1, $spec['months']);
+
+            if ($months !== null) {
+                sort($months);
+            }
+
+            $wakeUps[] = [...$dayBefore, 'days' => null, 'lastDayOfMonth' => true, 'months' => $months];
+        }
+
+        return $wakeUps;
+    }
+
+    /**
+     * The values one lower, leaving out the range's first value, which
+     * goes back into the next larger unit (such as minute 0 to the hour
+     * before).
+     *
+     * @param  list<int>  $values
+     * @return list<int>
+     */
+    protected function previous(array $values, int $min = 0): array
+    {
+        $lower = [];
+
+        foreach ($values as $value) {
+            if ($value > $min) {
+                $lower[] = $value - 1;
+            }
+        }
+
+        return $lower;
+    }
+
+    /**
+     * @param  CalendarSpec  $spec
+     */
+    protected function isEveryMinute(array $spec): bool
+    {
+        return $spec['minutes'] === null && $spec['hours'] === null && $spec['days'] === null
+            && $spec['months'] === null && $spec['weekdays'] === null && ! $spec['lastDayOfMonth'];
+    }
+
+    /**
+     * @param  list<CalendarSpec>  $specs
+     * @return list<string>
+     */
+    protected function formatSpecs(array $specs, int $second): array
+    {
+        return array_values(array_unique(array_map(
+            fn (array $spec): string => $this->formatSpec($spec, $second),
+            $specs,
+        )));
+    }
+
+    /**
+     * @param  CalendarSpec  $spec
+     */
+    protected function formatSpec(array $spec, int $second): string
+    {
+        $weekdays = $spec['weekdays'] === null ? '' : "{$this->formatWeekdays($spec['weekdays'])} ";
+        $months = $this->format($spec['months'], 1, 12);
+        $date = $spec['lastDayOfMonth'] ? "*-{$months}~01" : "*-{$months}-{$this->format($spec['days'], 1, 31)}";
+        $time = sprintf('%s:%s:%02d', $this->format($spec['hours'], 0, 23), $this->format($spec['minutes'], 0, 59), $second);
+
+        return "{$weekdays}{$date} {$time} {$spec['timezone']}";
     }
 
     /**

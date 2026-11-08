@@ -6,6 +6,10 @@
 Description=Laravel idle check timer for %i
 PartOf=%i-ondemand.socket
 
+#
+# The exact second doesn't matter, so systemd may delay it by up to 15
+# seconds to share a wake-up with other timers. It fires between :10 and
+# :25, clear of the scheduler at :00 and its wake-ups at :30.
 [Timer]
-OnCalendar=*-*-* *:*:30
-AccuracySec=1s
+OnCalendar=*-*-* *:*:10
+AccuracySec=15s

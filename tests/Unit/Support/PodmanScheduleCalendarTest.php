@@ -21,12 +21,29 @@ it('fires only in the minutes a task is due', function () {
     expect($this->calendar->render())->toBe(<<<'UNIT'
         OnCalendar=*-*-* *:00:00 UTC
         OnCalendar=*-*-* 02:30:00 UTC
+        OnCalendar=*-*-* *:59:30 UTC
+        OnCalendar=*-*-* 02:29:30 UTC
         UNIT);
 });
 
 it('falls back to every minute without scheduled tasks', function () {
-    expect($this->calendar->calendars())->toBe([TimerCalendar::EveryMinute->value]);
+    expect($this->calendar->calendars())->toBe([TimerCalendar::EveryMinute->value])
+        ->and($this->calendar->wakeUpCalendars())->toBe([])
+        ->and($this->calendar->render())->toBe('OnCalendar=*-*-* *:*:00');
 });
+
+it('wakes up 30 seconds before each due minute', function (string $expression, array $wakeUps) {
+    $this->schedule->command('model:prune')->cron($expression);
+
+    expect($this->calendar->wakeUpCalendars())->toBe($wakeUps);
+})->with([
+    'within the hour' => ['15,45 * * * *', ['*-*-* *:14,44:30 UTC']],
+    'in the hour before' => ['0 */6 * * *', ['*-*-* 05,11,17:59:30 UTC', '*-*-* 23:59:30 UTC']],
+    'on the weekday before' => ['0 0 * * 1', ['Sun *-*-* 23:59:30 UTC']],
+    'on the day before' => ['0 0 15 * *', ['*-*-14 23:59:30 UTC']],
+    'on the last day of the month before' => ['0 0 1 1,7 *', ['*-06,12~01 23:59:30 UTC']],
+    'not before every minute of an hour' => ['* 2 * * *', []],
+]);
 
 it('falls back to every minute when a task runs every minute', function () {
     $this->schedule->command('model:prune')->daily();

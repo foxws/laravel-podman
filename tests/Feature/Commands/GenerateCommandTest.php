@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\File;
 
 beforeEach(function () {
@@ -207,7 +208,9 @@ it('renders a shared idle check that stops the queue workers, then the scheduler
         ->toContain(<<<'UNIT'
             ExecCondition=/bin/sh -c 'case "$$(systemctl --user is-active %i.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
             ExecStart=-/bin/sh -c 'for worker in $$LARAVEL_IDLE_WORKERS; do ! systemctl --user --quiet is-active %i-$$worker.service || systemctl --user stop --no-block %i-$$worker.service; done'
-            ExecStart=-/bin/sh -c '! systemctl --user --quiet is-active %i-schedule.timer || exec systemctl --user stop --no-block %i-schedule.timer'
+            UNIT)
+        ->toContain(<<<'UNIT'
+            ExecStart=-/bin/sh -c '! systemctl --user --quiet is-active %i-schedule.timer || ! systemctl --user cat %i-schedule.timer | grep -qxF "OnCalendar=*-*-* *:*:00" || exec systemctl --user stop --no-block %i-schedule.timer'
             UNIT)
         ->not->toContain('acme');
 });
@@ -250,7 +253,7 @@ it('renders an idle check for the system service manager when installed as root'
     $this->artisan('podman:generate', ['preset' => 'ondemand'])->assertExitCode(0);
 
     expect(File::get("{$this->publishPath}/ondemand/laravel-idle@.service"))
-        ->toContain("ExecStart=-/bin/sh -c '! systemctl --quiet is-active %i-schedule.timer || exec systemctl stop --no-block %i-schedule.timer'")
+        ->toContain("ExecStart=-/bin/sh -c '! systemctl --quiet is-active %i-schedule.timer || ! systemctl cat %i-schedule.timer | grep -qxF \"OnCalendar=*-*-* *:*:00\" || exec systemctl stop --no-block %i-schedule.timer'")
         ->not->toContain('--user');
 });
 
@@ -277,6 +280,40 @@ it('runs the production queue worker and scheduler independently of the app', fu
         ->toContain('Type=oneshot')
         ->and(File::get("{$path}/{$application}-schedule.timer"))
         ->toContain('OnCalendar=*-*-* *:*:00');
+});
+
+it('renders the scheduler timer from the app\'s schedule', function () {
+    config(['app.timezone' => 'UTC']);
+
+    $schedule = app(Schedule::class);
+    $schedule->command('horizon:snapshot')->hourly();
+    $schedule->command('model:prune')->dailyAt('02:30');
+
+    $this->artisan('podman:generate', ['preset' => 'production'])->assertExitCode(0);
+
+    $application = config('podman.quadlet_prefix');
+
+    expect(File::get("{$this->publishPath}/production/{$application}-schedule.timer"))
+        ->toContain(<<<'UNIT'
+            [Timer]
+            OnCalendar=*-*-* *:00:00 UTC
+            OnCalendar=*-*-* 02:30:00 UTC
+            OnCalendar=*-*-* *:59:30 UTC
+            OnCalendar=*-*-* 02:29:30 UTC
+            AccuracySec=1s
+            UNIT)
+        ->not->toContain('OnCalendar=*-*-* *:*:00');
+});
+
+it('lets the scheduler wait for the due minute after a wake-up', function () {
+    config(['podman.quadlet_prefix' => 'acme', 'podman.quadlet_uid' => 1000]);
+
+    $this->artisan('podman:generate', ['preset' => 'production'])->assertExitCode(0);
+
+    expect(File::get("{$this->publishPath}/production/schedule.quadlets"))
+        ->toContain(<<<'UNIT'
+            ExecStartPre=-/bin/sh -c 'trigger=$$(systemctl --user show -P LastTriggerUSec --timestamp=unix acme-schedule.timer); trigger=$${trigger#@}; case "$$trigger" in ""|*[!0-9]*) exit 0;; esac; [ $$((trigger %% 60)) -ge 30 ] || exit 0; wait=$$(( (trigger / 60 + 1) * 60 - $$(date +%%s) )); [ "$$wait" -le 0 ] || exec sleep "$$wait"'
+            UNIT);
 });
 
 it('points the proxy at the app or its on-demand socket', function () {

@@ -17,6 +17,7 @@ class PodmanSubstitutions
     public function __construct(
         protected PodmanQuadletPath $path = new PodmanQuadletPath,
         protected PodmanConfig $config = new PodmanConfig,
+        protected PodmanScheduleCalendar $scheduleCalendar = new PodmanScheduleCalendar,
     ) {}
 
     /**
@@ -84,6 +85,7 @@ class PodmanSubstitutions
             '{{ondemandPort}}' => (string) $this->config->onDemandPort(),
             '{{ondemandIdleTimeout}}' => $this->config->onDemandIdleTimeout(),
             '{{ondemandIdleWorkers}}' => implode(' ', $this->config->onDemandIdleWorkers()),
+            '{{scheduleCalendar}}' => $this->scheduleCalendar->render(),
         ];
     }
 }

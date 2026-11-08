@@ -1,5 +1,32 @@
 # Upgrading
 
+## From 6.4 to 6.5
+
+The `production` scheduler timer only fires in the minutes a task is due, instead of every minute. `podman:generate` reads the app's schedule and renders one `OnCalendar=` line per due time, plus a wake-up 30 seconds before each, so the database and cache are ready in time. The timer keeps running while the app sleeps, so scheduled tasks run on time instead of waiting for the next request. See [The scheduler while sleeping](docs/ondemand.md#the-scheduler-while-sleeping).
+
+Nothing breaks: a published timer that fires every minute keeps working as before, and the idle check still stops it while the app sleeps.
+
+1. If you published the `production` preset, update two files from the vendor's `stubs/production`:
+
+    - In `systemd/schedule.timer`, replace the `OnCalendar=` line with `{{scheduleCalendar}}`. Keep `AccuracySec=1s`.
+    - In `quadlets/schedule.quadlets`, add the `ExecStartPre=` line (and its comment) to `[Service]`. It waits for the due minute after a wake-up. Without it, a wake-up runs `schedule:run` 30 seconds early, when nothing is due, and the trigger at the due minute then runs the tasks.
+
+2. If you published the `ondemand` preset, update `systemd/laravel-idle@.service` and `systemd/laravel-idle@.timer` from the vendor's `stubs/ondemand`, or delete the preset when it has no other changes. The idle check only stops a scheduler timer that fires every minute, and runs between :10 and :25, clear of the scheduler.
+
+3. Regenerate and reinstall:
+
+    ```bash
+    php artisan podman:generate production
+    php artisan podman:generate ondemand
+    lpod install production/my-app-schedule.timer --replace
+    lpod install production/schedule.quadlets --replace
+    lpod install ondemand/my-app-ondemand.socket --replace
+    ```
+
+4. The timer is rendered from the schedule when you run `podman:generate`, so add `podman:generate production` and reinstalling the timer to your deploy steps, or run them after changing the schedule. A task added since then won't run.
+
+The wait needs systemd 248 or later (`systemctl --version`). On older versions, a wake-up runs `schedule:run` early, as in step 1, and the tasks still run at the due minute. The timer fires every minute, as before, when the schedule is empty, has a task that runs every minute or more often, uses `L`, `W` or `#`, or a timezone that's a UTC offset instead of a name.
+
 ## From 6.3 to 6.4
 
 The idle check is a systemd template now, shared by every on-demand app on the host: `laravel-idle@.timer` and `laravel-idle@.service` replace each app's `my-app-idle.timer` and `my-app-idle.service`. The socket starts `laravel-idle@my-app.timer`, and the app's workers are in the drop-in `laravel-idle@my-app.service.d/idle.conf`. Installing it needs [`lpod`](docs/lpod.md) v3.1.0 or later. See [The idle check](docs/ondemand.md#the-idle-check).

@@ -65,7 +65,7 @@ PODMAN_ONDEMAND_ENABLED=false
 | --- | --- | --- |
 | Vite, Inertia SSR | Stop with the app | Stop with the app |
 | Queue worker, Horizon | Stop with the app ([or keep running](#keeping-the-queue-worker-running)) | Start at boot, stop once no jobs are left |
-| Scheduler | Stops with the app | Runs `schedule:run` every minute while the app is awake |
+| Scheduler | Stops with the app | Runs `schedule:run` when a task is due, [also while the app sleeps](#the-scheduler-while-sleeping) |
 | Database, cache, Reverb, Mailpit and other services | [Sleep](#sleeping-services) once nothing needs them | [Sleep](#sleeping-services) once nothing needs them |
 
 ## Sleeping services
@@ -75,7 +75,7 @@ The database, cache and other services stop once nothing needs them: the app is 
 Each of these services has `StopWhenUnneeded=yes`. systemd stops such a service as soon as no running unit `Requires=` or `Wants=` it. The order is:
 
 1. The app goes idle and stops, along with its sidecars.
-2. The [idle check](#the-idle-check) stops the queue workers once no jobs are left, and the `production` scheduler timer.
+2. The [idle check](#the-idle-check) stops the queue workers once no jobs are left. The `production` scheduler timer keeps running, unless it fires every minute.
 3. Nothing needs the database and cache anymore, so they stop too.
 4. The next request starts the app. The app starts the services, workers and scheduler timer it needs, and waits until the database and cache are healthy before it connects.
 
@@ -119,12 +119,12 @@ The check is a systemd template, `laravel-idle@.timer` and `laravel-idle@.servic
 
 The app's own settings, such as its [workers](#choosing-the-workers), are in the drop-in `laravel-idle@my-app.service.d/idle.conf`. Without it, the check uses `queue horizon`.
 
-Every minute, while the app is asleep, the check:
+Every minute (between :10 and :25, clear of the scheduler), while the app is asleep, the check:
 
 1. Skips this minute if a scheduled `schedule:run` is still running, so the jobs it dispatches still find a worker.
 2. Runs `php artisan podman:idle` in each running worker of `idle_workers`. If the app has work in progress, it stops here and keeps everything running. A worker that isn't running is skipped.
 3. Checks that the app is still asleep, in case a request woke it during the check.
-4. Stops the workers, and the scheduler timer in `production`.
+4. Stops the workers. In `production`, it also stops the scheduler timer if it fires every minute, which would otherwise keep the database and cache awake.
 
 The next request starts the workers again through the app's `Wants=` line. That line lists `queue` by default. If you use Horizon, put `horizon` there instead.
 
@@ -285,10 +285,30 @@ The socket is a plain TCP port on the host, so any reverse proxy can sit in fron
 
 The proxy doesn't need to retry. The connection is held until the app is ready, which takes a few seconds, well within most proxies' default timeouts.
 
+## The scheduler while sleeping
+
+In `production`, `my-app-schedule.timer` only fires in the minutes a task is due (see [Customizing](customizing.md)). It keeps running while the app sleeps: when a task is due, the timer starts the scheduler, which starts the database and cache it `Requires=`. Once `schedule:run` exits, nothing needs them anymore and they go back to sleep. The app itself stays asleep.
+
+`schedule:run` only runs the tasks due in the minute it starts in, so waking the database and cache can't be allowed to push it into the next minute. The timer therefore also fires 30 seconds before each due minute. The scheduler then starts the database and cache, waits for the due minute, and runs `schedule:run` in it. If the services took longer than 30 seconds, it runs as soon as they're ready, which still leaves the rest of the due minute. The timer's trigger at the due minute itself only starts the scheduler when a wake-up didn't, such as before a task that runs every minute of an hour. The wait needs systemd 248 or later.
+
+```ini
+[Timer]
+OnCalendar=*-*-* *:00:00 UTC
+OnCalendar=*-*-* 02:30:00 UTC
+OnCalendar=*-*-* *:59:30 UTC
+OnCalendar=*-*-* 02:29:30 UTC
+```
+
+Keep the stack asleep longer by running frequent tasks less often, and giving quick tasks the same time, such as `->hourly()` or `->dailyAt('02:30')`. Tasks due in the same minute share one wake-up.
+
+- The scheduler only starts the database and cache. If a task needs another service, such as `rustfs`, publish the preset and add it to `Wants=` and `After=` in `schedule.quadlets`.
+- Jobs a task dispatches wait for the queue worker, which starts with the next request. Run the work in the task itself if it must happen while the app sleeps.
+- A timer that fires every minute, such as one published before this change, would keep the stack awake, so the idle check stops it until the next request, as before. Regenerate it, or replace its `OnCalendar=` line with `{{scheduleCalendar}}`.
+
 ## Caveats
 
 - **Cold starts.** The first request after idling takes about 1–3 seconds with `production`, and longer with the `development` preset's file watcher. When the services were asleep too, it also waits for them to start.
-- **The scheduler doesn't run while the stack sleeps.** Tasks that must run on time, like nightly backups or reports, need `PODMAN_ONDEMAND_ENABLED=false`.
+- **The scheduler only runs while the stack sleeps if its timer fires when tasks are due.** With sub-minute tasks, or cron syntax systemd can't express, it fires every minute and stops while the app sleeps. See [The scheduler while sleeping](#the-scheduler-while-sleeping).
 - **Open connections keep the app awake.** WebSockets or SSE through the app, and uptime monitors that request it more often than `idle_timeout`, keep it from stopping. Point monitors at the proxy instead.
 - **Host ports don't wake anything.** A database client, or a request to RustFS or Mailpit through the `proxy` preset, can't start a sleeping service. Open the app first, e.g. with `lpod my-app open`. Starting the service by hand doesn't help, because nothing needs it and systemd stops it again.
 - **`lpod my-app up` doesn't keep the app running**, for the same reason. Send a request instead, e.g. with `lpod my-app open`, and run `lpod my-app artisan ...` while it's awake.

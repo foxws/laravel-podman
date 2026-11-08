@@ -70,6 +70,7 @@ Templates contain `{{placeholder}}` tokens. `podman:publish` leaves them as they
 | `{{runtimePath}}` | The preset's rendered `runtimes/` folder, e.g. `podman/production/runtimes` |
 | `{{systemctl}}` | `systemctl --user`, or `systemctl` when `quadlet_uid` is `0` (root) |
 | `{{ondemand}}`, `{{ondemandListen}}`, `{{ondemandPort}}`, `{{ondemandIdleTimeout}}`, `{{appUpstream}}` | [On-demand](ondemand.md) settings |
+| `{{scheduleCalendar}}` | One `OnCalendar=` line per time a task in the app's schedule is due, for the `production` scheduler timer. See [Services](#services) |
 | `{{viteHost}}`, `{{reverbHost}}`, `{{s3Host}}`, `{{s3ConsoleHost}}`, `{{mailHost}}` | Subdomains of `{{appHost}}` the `proxy` preset routes: `vite.`, `ws.`, `s3.`, `fs.` and `mail.` |
 | `{{viteUpstream}}`, `{{reverbUpstream}}`, `{{s3Upstream}}`, `{{s3ConsoleUpstream}}`, `{{mailUpstream}}` | The presets' services on the app's network: `systemd-{app}-vite:5173`, `-reverb:6001`, `-rustfs:9000`, `-rustfs:9001` and `-mailpit:8025` (web UI). Reverb's port assumes `REVERB_SERVER_PORT=6001`, as the presets expose. Override one in `substitutions` when a service runs elsewhere |
 
@@ -123,7 +124,9 @@ Every preset except `devcontainer` and `s3` includes `app` plus these services. 
 
 `production` also includes `schedule` and `inertia-ssr`, which run alongside the app. `reverb` ([Laravel Reverb](https://laravel.com/docs/reverb)) is included too, but doesn't start by default. See [Adding Reverb](#adding-reverb).
 
-In `production`, the queue worker and Horizon start at boot, and `systemd/schedule.timer` runs `schedule:run` every minute. Install the timer with `lpod install production/my-app-schedule.timer`.
+In `production`, the queue worker and Horizon start at boot, and `systemd/schedule.timer` runs `schedule:run`. Install the timer with `lpod install production/my-app-schedule.timer`.
+
+The timer only fires in the minutes a task is due. `podman:generate` reads the app's schedule and renders one `OnCalendar=` line per due time into the `{{scheduleCalendar}}` placeholder, so a schedule with an hourly task and a nightly one wakes the stack 25 times a day instead of 1440. `schedule:run` runs every task due in the minute it starts, so no task is skipped. Regenerate and reinstall the timer after changing the schedule. It fires every minute instead when the schedule is empty, has a task that runs every minute or more often (`everySecond()` and friends), uses cron syntax systemd can't express (`L`, `W` or `#`), or a timezone that isn't a name like `Europe/Amsterdam`.
 
 ### Swapping the database or cache
 
@@ -213,7 +216,7 @@ The presets only add SELinux and ownership flags to a mount where they're needed
 
 | Mount | Flags | Why |
 | --- | --- | --- |
-| Named volumes shared by the app's services (`/config`, `/data`, `/cache`) | none | Podman's SELinux policy already labels named volumes for containers. On first use, Podman also gives the volume the owner of the folder in the image. `z` and `U` would walk the whole volume on every start, and the scheduler starts a container every minute. |
+| Named volumes shared by the app's services (`/config`, `/data`, `/cache`) | none | Podman's SELinux policy already labels named volumes for containers. On first use, Podman also gives the volume the owner of the folder in the image. `z` and `U` would walk the whole volume on every start, and the scheduler starts a container each time it runs. |
 | Your working copy (`/app` in `development`) | `z` | Host folders need a container label. The `development` app also has `U`, which gives files back to you if something changed their owner. |
 | A volume used by one service, such as the database | `Z,U` | `Z` gives it a label private to that container. `U` hands it to the user the image runs as. |
 

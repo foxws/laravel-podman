@@ -1,8 +1,12 @@
+# Runs "schedule:run" only in the minutes a task is due, rendered from the
+# app's schedule by "podman:generate". Regenerate and reinstall it after
+# changing the schedule. It falls back to every minute when the schedule
+# has sub-minute tasks or cron syntax systemd can't express.
 [Unit]
 Description=Laravel Schedule timer
 
 [Timer]
-OnCalendar=*-*-* *:*:00
+{{scheduleCalendar}}
 AccuracySec=1s
 
 [Install]

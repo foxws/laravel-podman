@@ -21,4 +21,8 @@ ExecCondition=/bin/sh -c 'for worker in $$LARAVEL_IDLE_WORKERS; do ! {{systemctl
 # A request may have woken the app while "podman:idle" ran.
 ExecCondition=/bin/sh -c 'case "$$({{systemctl}} is-active %i.service)" in inactive|failed) exit 0;; *) exit 1;; esac'
 ExecStart=-/bin/sh -c 'for worker in $$LARAVEL_IDLE_WORKERS; do ! {{systemctl}} --quiet is-active %i-$$worker.service || {{systemctl}} stop --no-block %i-$$worker.service; done'
-ExecStart=-/bin/sh -c '! {{systemctl}} --quiet is-active %i-schedule.timer || exec {{systemctl}} stop --no-block %i-schedule.timer'
+# A scheduler timer that only fires when a task is due keeps running, so
+# scheduled tasks still run while the app sleeps. One that fires every
+# minute would keep the database and cache awake, so it stops until the
+# next request starts it again.
+ExecStart=-/bin/sh -c '! {{systemctl}} --quiet is-active %i-schedule.timer || ! grep -qxF "OnCalendar=*-*-* *:*:00" "$$({{systemctl}} show -P FragmentPath %i-schedule.timer)" || exec {{systemctl}} stop --no-block %i-schedule.timer'

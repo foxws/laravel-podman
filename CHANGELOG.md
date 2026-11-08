@@ -2,6 +2,16 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 6.6.1 - 2026-11-08
+
+The FrankenPHP image (`ghcr.io/foxws/laravel-frankenphp`) has `cwebp` now. It already had the other image optimizers [spatie/image-optimizer](https://github.com/spatie/image-optimizer) runs (`jpegoptim`, `optipng`, `pngquant`, `gifsicle`, `avifenc` and `svgo`), but without `cwebp` it skipped WebP images without an error. Rebuild the app's image to pick it up. Apps that installed `webp` in their own Containerfile can drop it.
+
+### What's Changed
+
+* Add cwebp to the FrankenPHP image by @francoism90 in https://github.com/foxws/laravel-podman/pull/80
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/6.6.0...6.6.1
+
 ## 6.6.0 - 2026-11-08
 
 The `production` and `development` images are built on `ghcr.io/foxws/laravel-frankenphp`, a prebuilt FrankenPHP image with the PHP extensions, Composer, Node.js, pnpm, the PostgreSQL client and the `docker` user. Building the app no longer runs those `apt-get` and `install-php-extensions` layers: it pulls the image, copies the app in and builds it. `php-8.5` is the `production` base, and `php-8.5-dev` adds `php.ini-development`, Xdebug and Playwright's browser deps for `development`. There are `php-8.4` and `php-8.4-dev` tags too, and release tags such as `php-8.5-6.6.0` to pin one. The image is rebuilt every week for FrankenPHP, PHP and Debian updates. See docs/runtime.md.
@@ -312,12 +322,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -364,6 +376,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -439,6 +452,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -451,6 +465,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

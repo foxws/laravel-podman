@@ -54,8 +54,13 @@ RUN mkdir -p /etc/apt/keyrings \
 # Install PHP extensions
 RUN install-php-extensions @composer \
     apcu bcmath exif ffi gd opcache \
-    igbinary imagick inotify intl pcntl \
+    igbinary inotify intl pcntl \
     pdo_pgsql redis sockets uv zip
+
+# Imagick's build regenerates its arginfo headers, and each parallel make job
+# downloads PHP-Parser for that into the same folder, which fails. One job
+# downloads it once.
+RUN IPE_PROCESSOR_COUNT=1 install-php-extensions imagick
 
 # Strip file capabilities from frankenphp. libcap2-bin is only needed to run
 # setcap, so install and purge it within this single layer.

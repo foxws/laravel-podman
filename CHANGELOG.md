@@ -2,6 +2,16 @@
 
 All notable changes to `laravel-podman` will be documented in this file.
 
+## 7.0.0 - 2026-11-19
+
+This release requires PHP 8.5 or newer and Laravel 13. PHP 8.4 and Laravel 11 and 12 are no longer supported, and PHP 8.6 is now tested in CI. Stay on 6.x if you still run PHP 8.4 or an older Laravel version. The FrankenPHP images are unchanged and still built for PHP 8.5 and 8.4.
+
+### What's Changed
+
+* Drop PHP 8.4 and add PHP 8.6 by @francoism90 in https://github.com/foxws/laravel-podman/pull/81
+
+**Full Changelog**: https://github.com/foxws/laravel-podman/compare/6.6.1...7.0.0
+
 ## 6.6.1 - 2026-11-08
 
 The FrankenPHP image (`ghcr.io/foxws/laravel-frankenphp`) has `cwebp` now. It already had the other image optimizers [spatie/image-optimizer](https://github.com/spatie/image-optimizer) runs (`jpegoptim`, `optipng`, `pngquant`, `gifsicle`, `avifenc` and `svgo`), but without `cwebp` it skipped WebP images without an error. Rebuild the app's image to pick it up. Apps that installed `webp` in their own Containerfile can drop it.
@@ -323,12 +333,14 @@ lpod install development/queue.quadlets --replace   # or horizon.quadlets
 
 
 
+
 ```
 **Published presets:** in `quadlets/queue.quadlets` or `quadlets/horizon.quadlets`, remove `PartOf=`/`After=` on the app, and add:
 
 ```ini
 Requires={{application}}-pgsql.container {{application}}-valkey.container
 After={{application}}-pgsql.container {{application}}-valkey.container
+
 
 
 
@@ -376,6 +388,7 @@ To apply it, regenerate `frankenphp-octane` and rebuild your image.
 
 ```dockerfile
 RUN ${PHP_CLI} key:generate
+
 
 
 
@@ -453,6 +466,7 @@ lpod install development/app.quadlets --replace
 
 
 
+
 ```
 **Published presets:** in `quadlets/app.quadlets`, replace the health lines with these. Your old lines include `HealthInterval=2s` and `HealthStartPeriod=120s`, which are no longer needed:
 
@@ -465,6 +479,7 @@ HealthCmd=curl -fsS -o /dev/null http://127.0.0.1:8000/up
 HealthInterval=1m
 HealthTimeout=5s
 HealthRetries=3
+
 
 
 

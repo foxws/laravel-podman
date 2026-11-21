@@ -15,6 +15,9 @@ metadata:
 
 This package turns your Laravel app's config into [Podman Quadlet](https://docs.podman.io/en/latest/markdown/podman-quadlet.1.html) units. [systemd runs them](https://docs.podman.io/en/latest/markdown/podman-systemd.unit.5.html) as containers on your host. Every bundled part can be swapped for your own, like Nginx instead of Caddy or MySQL instead of Postgres.
 
+> [!IMPORTANT]
+> [foxws/pods](https://github.com/foxws/pods) is considered the replacement for this package, and the focus is moving there. Pods is a self-hosted web UI for Podman Quadlet: it installs applications from Git as plain Quadlet files and manages them on one or more hosts over SSH, without a package in your app. [lpod](https://github.com/foxws/lpod) works best together with Pods.
+
 ## Requirements
 
 - **Linux with systemd**, rootless or system-wide. macOS, Windows and WSL are not supported.

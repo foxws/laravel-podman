@@ -9,6 +9,9 @@ order: 2
 
 The source and releases are at [foxws/lpod](https://github.com/foxws/lpod).
 
+> [!TIP]
+> lpod works best with [foxws/pods](https://github.com/foxws/pods), a web UI that runs lpod on each of your hosts over SSH. Pods is considered the replacement for this package.
+
 ## Installation
 
 ```bash

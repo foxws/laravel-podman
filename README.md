@@ -9,6 +9,9 @@ Run your Laravel app and its services as [Podman Quadlet](https://docs.podman.io
 
 The package renders ready-to-use presets from your app's config: the app on Octane and FrankenPHP, a database, cache, queue worker, search, object storage, a mail catcher and a Caddy proxy. You install them with one command each. There's no all-in-one runtime and no lock-in: the output is plain Quadlet files you can read, change or replace.
 
+> [!IMPORTANT]
+> [foxws/pods](https://github.com/foxws/pods) is considered the replacement for this package, and the focus is moving there. Pods is a self-hosted web UI for Podman Quadlet: it installs applications from Git as plain Quadlet files and manages them on one or more hosts over SSH, without a package in your app. [lpod](https://github.com/foxws/lpod) works best together with Pods.
+
 Upgrading from an earlier major version? See [UPGRADING.md](UPGRADING.md).
 
 ## Features
